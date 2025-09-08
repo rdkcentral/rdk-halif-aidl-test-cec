@@ -171,15 +171,15 @@ build_ut_core()
 }
 
 ###############################################################################
-# Function to Build mock services
+# Function to Build vcomponent services
 ###############################################################################
-build_mock_services()
+build_vcomponent_services()
 {
-    make -j"$(nproc)" -C "${TOP}/mockservice" BUILD_DIR="${TOP_BUILD_DIR}" UT_CORE_DIR="${UT_CORE_DIR}"
+    make -j"$(nproc)" -C "${TOP}/vcomponent" BUILD_DIR="${TOP_BUILD_DIR}" UT_CORE_DIR="${UT_CORE_DIR}"
     if [ $? -ne 0 ]; then
-        echo -e "${BOLD}╔══════════════════════════════════════════════╗${RESET}"
-        echo -e "${BOLD}* ${RED}Failed to build the Mock Service. Exiting.${RESET}   ${BOLD}*${RESET}"
-        echo -e "${BOLD}╚══════════════════════════════════════════════╝${RESET}"
+        echo -e "${BOLD}╔════════════════════════════════════════════════╗${RESET}"
+        echo -e "${BOLD}* ${RED}Failed to build the vcomponent Service. Exiting.${RESET}"
+        echo -e "${BOLD}╚════════════════════════════════════════════════╝${RESET}"
         exit 1
     fi
 }
@@ -211,7 +211,7 @@ install_test()
     install -t ${INSTALL_PATH} run.sh
 
     cp -r ${PROFILES_DIR} ${INSTALL_PATH}
-    cp -r "${TOP}/mockservice/mock_configurations" ${INSTALL_PATH}
+    cp -r "${TOP}/vcomponent/vcomponent_configurations" ${INSTALL_PATH}
 }
 
 ###############################################################################
@@ -222,7 +222,7 @@ clean_test()
     echo -e "${BOLD}removing *.o${RESET}"
 
     rm -rf test/*.o
-    rm -rf ${TOP}/mockservice/src/*.o
+    rm -rf ${TOP}/vcomponent/src/*.o
     rm -rf ${TOP}/src/*.o
 }
 
@@ -274,7 +274,7 @@ elif [[ "$1" == TARGET=* ]]; then
     build_aidl_libs
     build_ut_core
     build_halif_test
-    build_mock_services
+    build_vcomponent_services
     install_test
     echo -e "${BOLD}╔════════════════════════════════╗${RESET}"
     echo -e "${BOLD}* ${GREEN}Build Successful${RESET}               ${BOLD}*${RESET}"
