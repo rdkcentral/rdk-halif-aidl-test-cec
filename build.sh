@@ -115,6 +115,12 @@ generate_hal_interfaces()
         -DAIDL_TARGET=$component  \
         -B ${HAL_TOP_BUILD_DIR} \
         $RDK_HAL_DIR
+        if [ $? -ne 0 ]; then
+            echo -e "${BOLD}╔══════════════════════════════════════════════╗${RESET}"
+            echo -e "${BOLD}* ${RED}Failed to Convert AIDL files. Exiting.${RESET}"
+            echo -e "${BOLD}╚══════════════════════════════════════════════╝${RESET}"
+            exit 1
+        fi
     done
 }
 
@@ -193,7 +199,7 @@ build_halif_test()
     make -j`nproc` -C ${TOP}
     if [ $? -ne 0 ]; then
         echo -e "${BOLD}╔════════════════════════════════════════════╗${RESET}"
-        echo -e "${BOLD}* ${RED}Failed to build the main tests. Exiting.${RESET}   ${BOLD}*${RESET}"
+        echo -e "${BOLD}* ${RED}Failed to build the main tests. Exiting.${RESET}"
         echo -e "${BOLD}╚════════════════════════════════════════════╝${RESET}"
         exit 1
     fi
