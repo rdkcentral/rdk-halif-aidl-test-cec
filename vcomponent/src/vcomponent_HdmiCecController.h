@@ -16,7 +16,7 @@
  */
 
 /** @brief
-* vts_mock_HdmiCec.h
+* vcomponent_HdmiCec.h
 *
 * Header file for the HdmiCec service implementation
 */

@@ -1,0 +1,11 @@
+# Connected devices to CEC network
+include_0: vcomponent_configurations/devices/hdmicec_device_avreceiver.yaml
+include_1: vcomponent_configurations/devices/hdmicec_device_bluerayplayer.yaml
+include_2: vcomponent_configurations/devices/hdmicec_device_dvr.yaml
+include_3: vcomponent_configurations/devices/hdmicec_device_livingroomtv.yaml
+
+# CEC responses
+include_4: vcomponent_configurations/hdmicec_vcomponent_cec_responses.yaml
+
+hdmicec:
+  version: 0x05

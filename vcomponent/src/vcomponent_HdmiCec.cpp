@@ -18,7 +18,7 @@
  */
 
 /** @brief
-* vts_mock_HdmiCec.cpp
+* vcomponent_HdmiCec.cpp
 *
 * Implementation of HdmiCec service
 */
@@ -28,9 +28,10 @@
 #include <ut.h>
 #include <ut_log.h>
 
-#include "vts_mock_HdmiCecInit.h"
-#include "vts_mock_HdmiCec.h"
-#include "vts_mock_HdmiCecController.h"
+#include "vcomponent_HdmiCec_init.h"
+#include "vcomponent_HdmiCec.h"
+#include "vcomponent_HdmiCecController.h"
+#include "vcomponent_HdmiCec_parse_config.h"
 
 namespace com
 {
@@ -53,7 +54,7 @@ namespace com
                 {
                     if (!_aidl_return)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]getState: Invalid arguments");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]getState: Invalid arguments");
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_NULL_POINTER);
                     }
                     *_aidl_return = mCurrentState;
@@ -63,14 +64,14 @@ namespace com
                 {
                     if (!_aidl_return)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]getProperty: Invalid arguments");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]getProperty: Invalid arguments");
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_NULL_POINTER);
                     }
                     com::rdk::hal::PropertyValue value;
                     switch (property)
                     {
                         case hdmicec::Property::HAL_CEC_VERSION:
-                            value.value = com::rdk::hal::PropertyValue::Value::make<com::rdk::hal::PropertyValue::Value::intValue>(gHdmiCecConfig.version);
+                            value.value = com::rdk::hal::PropertyValue::Value::make<com::rdk::hal::PropertyValue::Value::intValue>(gCecConfiguration.cec_version);
                             break;
                         case hdmicec::Property::METRIC_DIRECTED_MESSAGES_SENT:
                             value.value = com::rdk::hal::PropertyValue::Value::make<com::rdk::hal::PropertyValue::Value::intValue>(mDirectedMessagesSent);
@@ -99,7 +100,7 @@ namespace com
                 {
                     if (!_aidl_return)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]getLogicalAddresses: Invalid arguments");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]getLogicalAddresses: Invalid arguments");
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_NULL_POINTER);
                     }
 
@@ -117,12 +118,12 @@ namespace com
                 {
                     if (!cecControllerListener || !_aidl_return)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]open: Invalid arguments");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]open: Invalid arguments");
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_NULL_POINTER);
                     }
                     if(mCurrentState != State::CLOSED)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]open: Invalid state to open: %s", toString(mCurrentState));
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]open: Invalid state to open: %s", toString(mCurrentState));
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_ILLEGAL_STATE);
                     }
 
@@ -134,15 +135,15 @@ namespace com
                     auto stat = mOwner->linkToDeath(this);
                     if (stat == android::INVALID_OPERATION)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]open: Failed to register death callback as interface is local");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]open: Failed to register death callback as interface is local");
                     }
                     else if (stat != android::OK)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]open: Failed to link to death: %d - %s", (int) stat, strerror(-stat));
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]open: Failed to link to death: %d - %s", (int) stat, strerror(-stat));
                     }
                     else
                     {
-                       UT_LOG_INFO("[HDMICEC_MOCK]open: Registered death callback");
+                       UT_LOG_INFO("[VCOMPONENT_HDMICEC]open: Registered death callback");
                     }
 
                     changeState(State::STARTED);
@@ -157,14 +158,14 @@ namespace com
 
                     if (!hdmiCecController || !_aidl_return)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]close: Invalid arguments");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]close: Invalid arguments");
                         *_aidl_return = false;
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_NULL_POINTER);
                     }
 
                     if(mCurrentState != State::STARTED)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]close: Invalid state to close: %s", toString(mCurrentState).c_str());
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]close: Invalid state to close: %s", toString(mCurrentState).c_str());
                         *_aidl_return = false;
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_ILLEGAL_STATE);
                     }
@@ -187,7 +188,7 @@ namespace com
                 {
                     if (!cecEventListener || !_aidl_return)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]registerEventListener: Invalid arguments");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]registerEventListener: Invalid arguments");
                         *_aidl_return = false;
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_NULL_POINTER);
                     }
@@ -198,12 +199,12 @@ namespace com
                     auto stat = asBinder->linkToDeath(this);
                     if (stat == android::INVALID_OPERATION)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]registerEventListener: Failed to register death callback as interface is local");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]registerEventListener: Failed to register death callback as interface is local");
                         *_aidl_return = false;
                     }
                     else if (stat != android::OK)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]registerEventListener: Failed to link to death: %d - %s", (int) stat, strerror(-stat));
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]registerEventListener: Failed to link to death: %d - %s", (int) stat, strerror(-stat));
                         *_aidl_return = false;
                     }
 
@@ -214,7 +215,7 @@ namespace com
                     }
                     else
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]registerEventListener: IHdmiCecEventListener instance is already registered");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]registerEventListener: IHdmiCecEventListener instance is already registered");
                         *_aidl_return = false;
                         return ::android::binder::Status::fromExceptionCode(::android::binder::Status::Exception::EX_ILLEGAL_STATE);
                     }
@@ -226,7 +227,7 @@ namespace com
                 {
                     if (!cecEventListener || !_aidl_return)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]unregisterEventListener: Invalid arguments");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]unregisterEventListener: Invalid arguments");
                         *_aidl_return = false;
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_NULL_POINTER);
                     }
@@ -241,7 +242,7 @@ namespace com
                     }
                     else
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]unregisterEventListener: Failed to unregister as IHdmiCecEventListener instance has not registered for events");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]unregisterEventListener: Failed to unregister as IHdmiCecEventListener instance has not registered for events");
                         *_aidl_return = false;
                         return ::android::binder::Status::fromExceptionCode(::android::binder::Status::Exception::EX_ILLEGAL_STATE);
                     }
@@ -253,7 +254,7 @@ namespace com
                 void HdmiCec::changeState(com::rdk::hal::State newState)
                 {
                     std::scoped_lock lock(mSafeLock, mMutex);
-                    UT_LOG_INFO("[HDMICEC_MOCK]State Changed from %s to %s", toString(mCurrentState).c_str(), toString(newState).c_str());
+                    UT_LOG_INFO("[VCOMPONENT_HDMICEC]State Changed from %s to %s", toString(mCurrentState).c_str(), toString(newState).c_str());
 
                     const State oldState = mCurrentState;
                     mCurrentState = newState;
@@ -281,7 +282,7 @@ namespace com
                     mEventlistenerList.erase(binder);
                     if (mOwner == binder)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]Client who opened the sink died.. Resetting the state");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]Client who opened the sink died.. Resetting the state");
                         mControllerListener = nullptr;
                         mCurrentState = State::CLOSED;
                     }
@@ -299,17 +300,17 @@ namespace com
                     for (const auto& address : logicalAddresses)
                     {
                         if (address < 0 || address > 0xE) {
-                            UT_LOG_ERROR("[HDMICEC_MOCK]addLogicalAddresses: Address %d out of range", address);
+                            UT_LOG_ERROR("[VCOMPONENT_HDMICEC]addLogicalAddresses: Address %d out of range", address);
                             return false;
                         }
                         if (std::find(mLogicalAddresses.begin(), mLogicalAddresses.end(), address) != mLogicalAddresses.end())
                         {
-                            UT_LOG_ERROR("[HDMICEC_MOCK]addLogicalAddresses: Address %d already present", address);
+                            UT_LOG_ERROR("[VCOMPONENT_HDMICEC]addLogicalAddresses: Address %d already present", address);
                             return false;
                         }
-                        if (std::find(gHdmiCecConfig.connectedDevices.begin(), gHdmiCecConfig.connectedDevices.end(), address) != gHdmiCecConfig.connectedDevices.end())
+                        if (std::find(gCecConfiguration.connected_devices.begin(), gCecConfiguration.connected_devices.end(), address) != gCecConfiguration.connected_devices.end())
                         {
-                            UT_LOG_ERROR("[HDMICEC_MOCK]addLogicalAddresses: Address %d already Assigned to other device", address);
+                            UT_LOG_ERROR("[VCOMPONENT_HDMICEC]addLogicalAddresses: Address %d already Assigned to other device", address);
                             return false;
                         }
                     }
@@ -326,12 +327,12 @@ namespace com
                     {
                         if (address < 0 || address > 0xE)
                         {
-                            UT_LOG_ERROR("[HDMICEC_MOCK]removeLogicalAddresses: Address %d out of range", address);
+                            UT_LOG_ERROR("[VCOMPONENT_HDMICEC]removeLogicalAddresses: Address %d out of range", address);
                             return false;
                         }
                         if (std::find(mLogicalAddresses.begin(), mLogicalAddresses.end(), address) == mLogicalAddresses.end())
                         {
-                            UT_LOG_ERROR("[HDMICEC_MOCK]removeLogicalAddresses: Address %d not present", address);
+                            UT_LOG_ERROR("[VCOMPONENT_HDMICEC]removeLogicalAddresses: Address %d not present", address);
                             return false;
                         }
                     }

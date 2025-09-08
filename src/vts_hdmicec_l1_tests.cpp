@@ -123,13 +123,13 @@ UT_ADD_TEST(VTS_L1_HDMICEC, getState_pos)
     sp<IHdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
     sp<IHdmiCecEventListener> eventListener = new HdmiCecEventListener();
     std::optional<PropertyValue> cecVersion;
-    vector<int32_t> logicalAddresses = {4, 5};
-    vector<int32_t> remAddresses1 = {4};
-    vector<int32_t> remAddresses2 = {5};
+    vector<int32_t> logicalAddresses = {3, 6};
+    vector<int32_t> remAddresses1 = {3};
+    vector<int32_t> remAddresses2 = {6};
     vector<int32_t> getlogicalAddresses;
-    vector<uint8_t> directMsg = {0x34, 0x04};
-    vector<uint8_t> directMsg_res = {0x34, 0x46};
-    vector<uint8_t> broadMsg = {0xF4, 0x32};
+    vector<uint8_t> directMsg = {0x53, 0x04};
+    vector<uint8_t> directMsg_res = {0x53, 0x46};
+    vector<uint8_t> broadMsg = {0xF3, 0x32};
     hdmicec::SendMessageStatus msgStatus;
 
 

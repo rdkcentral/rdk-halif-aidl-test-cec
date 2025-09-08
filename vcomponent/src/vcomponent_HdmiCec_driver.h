@@ -16,7 +16,7 @@
  */
 
 /** @brief
-* vts_mock_HdmiCec_driver.h
+* vcomponent_HdmiCec_driver.h
 *
 * Header file for the HdmiCec driver implementation
 */
@@ -35,9 +35,9 @@
 #include <ut.h>
 #include <ut_log.h>
 
-#include "vts_mock_HdmiCecInit.h"
-#include "vts_mock_HdmiCec.h"
-#include "vts_mock_HdmiCecController.h"
+#include "vcomponent_HdmiCec_init.h"
+#include "vcomponent_HdmiCec.h"
+#include "vcomponent_HdmiCecController.h"
 
 using namespace com::rdk::hal;
 using namespace std;
@@ -50,11 +50,11 @@ struct MessageTask
     hdmicec::SendMessageStatus status;
 };
 
-void hdmicec_mock_driver_init(
+void vcomponent_HdmiCec_driver_init(
     std::function<void(const std::vector<uint8_t>&, hdmicec::SendMessageStatus*)> sendMessageCallback,
     std::function<void(const std::vector<uint8_t>&)> receiveMessageCallback);
-void hdmicec_mock_driver_sendMessage(const vector<uint8_t>& message, hdmicec::SendMessageStatus* status);
-void hdmicec_mock_driver_receiveMessage(cecCommands_t &response, uint8_t dst, uint8_t src);
-void hdmicec_mock_driver_shutdown();
+void vcomponent_HdmiCec_driver_sendMessage(const vector<uint8_t>& message, hdmicec::SendMessageStatus* status);
+void vcomponent_HdmiCec_driver_receiveMessage(cecOpcode_t &response, uint8_t actual_src, uint8_t actual_dst);
+void vcomponent_HdmiCec_driver_shutdown();
 
 #endif //__HDMICEC_DRIVER_H__

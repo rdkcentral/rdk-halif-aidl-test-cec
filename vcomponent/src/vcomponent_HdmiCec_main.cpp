@@ -18,7 +18,7 @@
  */
 
 /** @brief
-* vts_mock_HdmiCecService.cpp
+* vcomponent_HdmiCec_main.cpp
 *
 * Main entry point for the HdmiCec service
 */
@@ -28,22 +28,23 @@
 #include <ut.h>
 #include <ut_log.h>
 
-#include "vts_mock_HdmiCecInit.h"
-#include "vts_mock_HdmiCec.h"
+#include "vcomponent_HdmiCec_init.h"
+#include "vcomponent_HdmiCec.h"
+#include "vcomponent_HdmiCec_parse_config.h"
 
 using namespace com::rdk::hal::hdmicec;
 
-#define DEFAULT_MOCK_CONFIG_FILE "mock_configurations/vts_hdmi_cec_mock_v1.yaml"
+#define DEFAULT_VCOMPONENT_CONFIG_FILE "configurations/hdmicec_vcomponent_configuration.yaml"
 
 int main(int argc, char** argv)
 {
-    std::string configFile = DEFAULT_MOCK_CONFIG_FILE;
+    std::string configFile = DEFAULT_VCOMPONENT_CONFIG_FILE;
     if(argc > 1)
     {
         std::string arg = argv[1];
         if(arg == "-h" || arg == "--help")
         {
-            UT_LOG_INFO("[HDMICEC_MOCK]HdmiCecService -h | --help | -c | --config <file>");
+            UT_LOG_INFO("[VCOMPONENT_HDMICEC]HdmiCecService -h | --help | -c | --config <file>");
             return 0;
         }
         else if((arg == "-c" || arg == "--config") && argc > 2)
@@ -52,17 +53,17 @@ int main(int argc, char** argv)
         }
         else
         {
-            UT_LOG_ERROR("[HDMICEC_MOCK]Unknown option: %s", arg);
-            UT_LOG_ERROR("[HDMICEC_MOCK]Use -h or --help for usage information");
+            UT_LOG_ERROR("[VCOMPONENT_HDMICEC]Unknown option: %s", arg);
+            UT_LOG_ERROR("[VCOMPONENT_HDMICEC]Use -h or --help for usage information");
             return 1;
         }
     }
 
-    UT_LOG_INFO("[HDMICEC_MOCK]Using configuration file: %s", configFile.c_str());
+    UT_LOG_INFO("[VCOMPONENT_HDMICEC]Using configuration file: %s", configFile.c_str());
 
     if(HdmiCecInit((char *)configFile.c_str()) == false)
     {
-        UT_LOG_ERROR("[HDMICEC_MOCK]Failed to initialize HdmiCec service with config file: %s", configFile.c_str());
+        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]Failed to initialize HdmiCec service with config file: %s", configFile.c_str());
         return -1;
     }
 

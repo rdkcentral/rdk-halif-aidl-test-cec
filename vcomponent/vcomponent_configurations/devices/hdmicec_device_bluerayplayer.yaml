@@ -1,0 +1,21 @@
+hdmicec:
+  device:
+    - name: "BluRayPlayer"
+      language: "eng"
+      cec_version: 0x05
+      logical_address: 4
+      physical_address: [0x10, 0x00] #"1.0.0.0"
+      vendor_id: "0x0000E0"       # Pioneer
+      device_type: 4 # 0 - "TV"
+                     # 1 - "Recording Device"
+                     # 2 - "Reserved"
+                     # 3 - "Tuner"
+                     # 4 - "Playback device"
+                     # 5 - "Audio System"
+      power_status: 0x00 # 0x00 - on
+                         # 0x01 - Standby
+                         # 0x02 - In transition Standby to On
+                         # 0x03 - In transition On to Standby
+      fault: 0x0   # 0x0 - no fault
+                   # 0x1 - Partial fault
+                   # 0x2 - faulty device

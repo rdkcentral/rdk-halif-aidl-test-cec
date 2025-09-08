@@ -18,7 +18,7 @@
  */
 
 /** @brief
-* vts_mock_HdmiCec.cpp
+* vcomponent_HdmiCec.cpp
 *
 * Implementation of HdmiCec service
 */
@@ -28,10 +28,11 @@
 #include <ut.h>
 #include <ut_log.h>
 
-#include "vts_mock_HdmiCecInit.h"
-#include "vts_mock_HdmiCec.h"
-#include "vts_mock_HdmiCecController.h"
-#include "vts_mock_HdmiCec_driver.h"
+#include "vcomponent_HdmiCec_init.h"
+#include "vcomponent_HdmiCec.h"
+#include "vcomponent_HdmiCecController.h"
+#include "vcomponent_HdmiCec_parse_config.h"
+#include "vcomponent_HdmiCec_driver.h"
 
 namespace com
 {
@@ -44,7 +45,7 @@ namespace com
                 HdmiCecController::HdmiCecController(HdmiCec *parentHdmiCec)
                 {
                     mParentHdmiCec = parentHdmiCec;
-                    hdmicec_mock_driver_init(
+                    vcomponent_HdmiCec_driver_init(
                             [this](const std::vector<uint8_t>& msg, hdmicec::SendMessageStatus* status) {
                                 this->sendMessageCallcback(msg, status);
                             },
@@ -56,14 +57,14 @@ namespace com
 
                 HdmiCecController::~HdmiCecController()
                 {
-                    hdmicec_mock_driver_shutdown();
+                    vcomponent_HdmiCec_driver_shutdown();
                 }
 
                 android::binder::Status HdmiCecController::addLogicalAddresses(const vector<int32_t>& logicalAddresses, bool* _aidl_return)
                 {
                     if (!_aidl_return)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]addLogicalAddresses: Invalid arguments");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]addLogicalAddresses: Invalid arguments");
                         *_aidl_return = false;
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_NULL_POINTER);
                     }
@@ -71,7 +72,7 @@ namespace com
                     // Check state
                     if (mParentHdmiCec->getCurrentState() != State::STARTED)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]addLogicalAddresses: Invalid state, must be STARTED");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]addLogicalAddresses: Invalid state, must be STARTED");
                         *_aidl_return = false;
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_ILLEGAL_STATE);
                     }
@@ -85,14 +86,14 @@ namespace com
                 {
                     if (!_aidl_return)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]removeLogicalAddresses: Invalid arguments");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]removeLogicalAddresses: Invalid arguments");
                         *_aidl_return = false;
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_NULL_POINTER);
                     }
 
                     if (mParentHdmiCec->getCurrentState() != State::STARTED)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]addLogicalAddresses: Invalid state, must be STARTED");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]addLogicalAddresses: Invalid state, must be STARTED");
                         *_aidl_return = false;
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_ILLEGAL_STATE);
                     }
@@ -106,21 +107,21 @@ namespace com
                 {
                     if (!_aidl_return)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]sendMessage: Invalid arguments");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]sendMessage: Invalid arguments");
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_NULL_POINTER);
                     }
 
                     // Check state
                     if (mParentHdmiCec->getCurrentState() != State::STARTED)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]sendMessage: Invalid state, must be STARTED");
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]sendMessage: Invalid state, must be STARTED");
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_ILLEGAL_STATE);
                     }
 
                     // Validate message size
                     if (message.size() < 2 || message.size() > 16)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]sendMessage: Invalid message size: %zu", message.size());
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]sendMessage: Invalid message size: %zu", message.size());
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_ILLEGAL_ARGUMENT);
                     }
 
@@ -141,11 +142,11 @@ namespace com
 
                     if (!valid)
                     {
-                        UT_LOG_ERROR("[HDMICEC_MOCK]sendMessage: Source logical address 0x%X not registered", src);
+                        UT_LOG_ERROR("[VCOMPONENT_HDMICEC]sendMessage: Source logical address 0x%X not registered", src);
                         return android::binder::Status::fromExceptionCode(android::binder::Status::EX_ILLEGAL_ARGUMENT);
                     }
 
-                    hdmicec_mock_driver_sendMessage(message, _aidl_return);
+                    vcomponent_HdmiCec_driver_sendMessage(message, _aidl_return);
 
                     return android::binder::Status::ok();
                 }

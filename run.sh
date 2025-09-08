@@ -20,8 +20,8 @@
 #* ******************************************************************************
 
 RUN_DIR=$(realpath "$(dirname "$0")")
-MOCK_SERVICE_NAME=MockHdmiCecService
-MOCK_CONFIG_PATH=${RUN_DIR}/mock_configurations/vts_hdmicec_mock_v1.yaml
+VCOMPONENT_SERVICE_NAME=VComponentHdmiCecService
+VCOMPONENT_CONFIG_PATH=${RUN_DIR}/vcomponent_configurations/hdmicec_vcomponent_configuration.yaml
 
 # Function to check if a process is running
 check_process()
@@ -52,33 +52,33 @@ prompt_string()
     echo "$response"
 }
 
-start_mock_service()
+start_vcomponent_service()
 {
-    echo "Starting ${MOCK_SERVICE_NAME} with config: ${MOCK_CONFIG_PATH}"
+    echo "Starting ${VCOMPONENT_SERVICE_NAME} with config: ${VCOMPONENT_CONFIG_PATH}"
     local user_config
-    user_config=$(prompt_string "Mock Service Config Path (Default: ${MOCK_CONFIG_PATH})")
+    user_config=$(prompt_string "Mock Service Config Path (Default: ${VCOMPONENT_CONFIG_PATH})")
     if [ -z "$user_config" ]; then
-        user_config="$MOCK_CONFIG_PATH"
+        user_config="$VCOMPONENT_CONFIG_PATH"
     fi
-    ${RUN_DIR}/$MOCK_SERVICE_NAME -c "$user_config" &
-    mockservice_pid=$!
+    ${RUN_DIR}/$VCOMPONENT_SERVICE_NAME -c "$user_config" &
+    vcomponentservice_pid=$!
     # Wait for service to be ready
     sleep 1
 }
 
-if check_process $MOCK_SERVICE_NAME; then
-    echo "${MOCK_SERVICE_NAME} is already running"
-    mocservice_pid=$(pgrep -f $MOCK_SERVICE_NAME)
-    if prompt_yes_no "Do you want to re-start ${MOCK_SERVICE_NAME}?"; then
-        echo "Killing existing ${MOCK_SERVICE_NAME} (PID: $mocservice_pid)"
+if check_process $VCOMPONENT_SERVICE_NAME; then
+    echo "${VCOMPONENT_SERVICE_NAME} is already running"
+    mocservice_pid=$(pgrep -f $VCOMPONENT_SERVICE_NAME)
+    if prompt_yes_no "Do you want to re-start ${VCOMPONENT_SERVICE_NAME}?"; then
+        echo "Killing existing ${VCOMPONENT_SERVICE_NAME} (PID: $mocservice_pid)"
         kill $mocservice_pid
-        sleep 1
-        start_mock_service
+        sleep 2
+        start_vcomponent_service
     else
-        echo "Continuing with existing ${MOCK_SERVICE_NAME} (PID: $mocservice_pid)"
+        echo "Continuing with existing ${VCOMPONENT_SERVICE_NAME} (PID: $mocservice_pid)"
     fi
 else
-    start_mock_service
+    start_vcomponent_service
 fi
 
 echo "Executing [vts_hdmicec_hal_test]"
