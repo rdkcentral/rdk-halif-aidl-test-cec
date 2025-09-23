@@ -36,6 +36,7 @@ Consumer Electronics Control (CEC) is a single-wire bidirectional bus within an 
 |Verify states using listener|Validate that the CEC event listener is registered, verify states using listener callback. Callbacks needs to be verified|open(),registerEventListener(), unregisterEventListener(), close(), HdmiCecEventListener.onStateChanged() , HdmiCecControllerListener.onStateChanged()|
 |Validate property|Verify the property value for the input property key. If the metric is implemented by the vendor then the value should be zero else -1|getProperty()|
 |Validate logical address|Verify the logical addresses that have been set. Note that, after calling removeLogicalAddresses(), getLogicalAddresses() should return empty array |open(), addLogicalAddresses(), getLogicalAddresses(),removeLogicalAddresses() close() |
+|Negative test for sendmessage|Verify SendMessageStatus recieved is BUSY, when a sendMessage() is called without any connected devices and also no callbacks are received  |open(), registerEventListener(), sendMessage(), HdmiCecControllerListener.onMessageSent(), HdmiCecControllerListener.onMessageReceived(), HdmiCecEventListener.onMessageReceived(), unregisterEventListener(), close()|
 
 
 
@@ -45,6 +46,7 @@ Consumer Electronics Control (CEC) is a single-wire bidirectional bus within an 
 |Test|	Description	|HAL APIs used|
 |-----|------------|-------------|
 |Send or Receive CEC Commands|	Send/Receive below commands 	|open(), registerEventListener(), sendMessage(), HdmiCecControllerListener.onMessageSent(), HdmiCecControllerListener.onMessageReceived(), HdmiCecEventListener.onMessageReceived(), unregisterEventListener(), close()|
+|Stress Test|Send CEC messages at high frequency ex: 1000 messages per second|open(), registerEventListener(), sendMessage(), HdmiCecControllerListener.onMessageSent(), HdmiCecControllerListener.onMessageReceived(), HdmiCecEventListener.onMessageReceived(), unregisterEventListener(), close()|
 
 |CEC Message| Validation Method|
 |----|----|
