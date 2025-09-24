@@ -207,7 +207,6 @@ using namespace com::rdk::hal::hdmicec;
 #define HDMICEC_GET_PROPERTY_SUCCESS(hdmicecHandle, property, propertyValue) \
     do { \
         ::android::binder::Status status; \
-        ::com::rdk::hal::State state; \
         UT_LOG_DEBUG("Calling getProperty(IN:property[%s], OUT:propertyValue[]", hdmicec::toString(property).c_str()); \
         status = (hdmicecHandle)->getProperty(property, &propertyValue); \
         if(propertyValue.has_value()) \
@@ -225,6 +224,8 @@ using namespace com::rdk::hal::hdmicec;
                     propertyValue->value->get<PropertyValue::Value::Tag::stringValue>().string(), \
                     UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
                     UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
+                    break; \
+                default: \
                     break; \
             } \
         } \
@@ -326,6 +327,7 @@ using namespace com::rdk::hal::hdmicec;
             UT_Control_GetMapString(bool_mapTable_cec, _aidl_return), \
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
+        UT_ASSERT_TRUE(_aidl_return); \
         UT_ASSERT_TRUE(status.isOk()); \
         UT_ASSERT_EQUAL(status.exceptionCode(), Status::EX_NONE); \
     } while (0);
@@ -341,6 +343,7 @@ using namespace com::rdk::hal::hdmicec;
             UT_Control_GetMapString(bool_mapTable_cec, _aidl_return), \
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
+        UT_ASSERT_TRUE(_aidl_return); \
         UT_ASSERT_TRUE(status.isOk()); \
         UT_ASSERT_EQUAL(status.exceptionCode(), Status::EX_NONE); \
     } while (0)

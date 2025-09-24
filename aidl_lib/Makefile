@@ -18,39 +18,46 @@
 #*
 #* ******************************************************************************
 
-.PHONY: all
+.PHONY: all clean
+
+CXX      ?= g++
 
 AIDL_LIB_NAME := aidl_client
+AIDL_LIB      := lib$(AIDL_LIB_NAME).so
 
-AIDL_LIB := lib$(AIDL_LIB_NAME).so
+BUILD_DIR     ?= $(CURDIR)/../build
+AIDL_GEN_DIR  ?= $(BUILD_DIR)/current
+AIDL_SRC_DIR  := $(AIDL_GEN_DIR)/cpp/com/rdk/hal
 
-BUILD_DIR ?= $(CURDIR)/../build
-
-AIDL_GEN_DIR ?= $(BUILD_DIR)/current
-
-AIDL_SRC_DIR := ${AIDL_GEN_DIR}/cpp/com/rdk/hal/
-
-# Source files
+# Source and object files
 AIDL_SRC := $(shell find $(AIDL_SRC_DIR) -type f \( -name '*.cpp' -o -name '*.c' \))
+AIDL_OBJ := $(AIDL_SRC:%.cpp=%.o)
 
+AIDL_LIB_PATH := $(BUILD_DIR)/usr/lib/$(AIDL_LIB)
 
-AIDL_LIB_INC_FLAGS := -I$(AIDL_GEN_DIR)/h
-AIDL_LIB_INC_FLAGS += -I$(BUILD_DIR)/usr/include
+# Flags
+AIDL_LIB_INC_FLAGS := -I$(AIDL_GEN_DIR)/h \
+                      -I$(BUILD_DIR)/usr/include
 
-AIDL_LIB_LD_LIBS := -lbinder -lutils
+AIDL_LIB_LD_LIBS   := -lbinder -lutils
 
-AIDL_LIB_LDFLAGS := -L$(BUILD_DIR)/usr/lib
-AIDL_LIB_LDFLAGS += -Wl,-rpath-link=$(BUILD_DIR)/usr/lib
+AIDL_LIB_LDFLAGS   := -L$(BUILD_DIR)/usr/lib \
+                      -Wl,-rpath-link=$(BUILD_DIR)/usr/lib
 
-AIDL_LIB_CFLAGS := -Wall -Wextra -std=c++17 -ggdb
+AIDL_LIB_CFLAGS    := -Wall -Wextra -std=c++17 -ggdb -fPIC
 
-AIDL_LIB := $(BUILD_DIR)/usr/lib/$(AIDL_LIB)
+# Default target
+all: $(AIDL_LIB_PATH)
 
+# Build shared library
+$(AIDL_LIB_PATH): $(AIDL_OBJ)
+	$(CXX) -shared $(AIDL_LIB_LDFLAGS) $^ -o $@ $(AIDL_LIB_LD_LIBS)
 
-all: $(AIDL_LIB)
-
-$(AIDL_LIB): $(AIDL_SRC:%.cpp=%.o)
-	g++ -shared $(AIDL_LIB_LDFLAGS) $^ -o $@ $(AIDL_LIB_LD_LIBS)
-
+# Compile objects
 %.o: %.cpp
-	g++ $(AIDL_LIB_CFLAGS) $(AIDL_LIB_INC_FLAGS) -fPIC -c $< -o $@
+	$(CXX) $(AIDL_LIB_CFLAGS) $(AIDL_LIB_INC_FLAGS) -c $< -o $@
+
+# Clean target
+clean:
+	@echo "Cleaning object files and library..."
+	rm -f $(AIDL_OBJ) $(AIDL_LIB_PATH)

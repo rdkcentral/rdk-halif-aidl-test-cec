@@ -106,3 +106,5 @@ $(TARGET_EXEC):
 
 clean:
 	make -C $(UT_CORE_DIR) -j TARGET=$(TARGET) VARIANT=$(VARIANT) clean
+	rm -rf $(HDMI_CEC_TEST_DIR)/*.o
+	rm -rf $(ROOT_DIR)/test/*.o

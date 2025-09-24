@@ -38,6 +38,8 @@ Set below environment variable:
 
 - UT_CORE_VERSION: Specific version of the UT-Core framework (e.g., 4.7.0). Defaults to the latest tagged version.
 
+- VCOMPONENT_HDMI_CEC_VERSTION: Specific version of the HDMI CEC Virtual Component (e.g 1.0.0). Defaults to the latest HEAD.
+
 - RDK_HALIF_AIDL_VERSION: Specific version of the AIDL HAL Specification (e.g, 0.7.1). Defaults to the latest HEAD.
 
 Example:
@@ -45,6 +47,7 @@ Example:
 ```bash
 export UT_CORE_VERSION=4.7.0
 export RDK_HALIF_AIDL_VERSION=0.7.1
+export VCOMPONENT_HDMI_CEC_VERSTION=1.0.0
 export AIDL_BIN=/path/linux_binder_idl/out/aidl
 export LINUX_BINDER_OUT_DIR=/path//linux_binder_idl/local/
 ```
@@ -58,7 +61,7 @@ export ENABLE_UT_INFO_LOGGING=1
 Run the build script:
 
 ```bash
-./build.sh TARGET=linux
+./build.sh Target=linux
 ```
 
 The build.sh script:
@@ -82,15 +85,14 @@ build/bin/
 ├── liblog.so
 ├── libut_control.so
 ├── libutils.so
-├── mock_configurations
-│   ├── vts_hdmicec_mock_api_response_v1.yaml
-│   ├── vts_hdmicec_mock_cec_response_v1.yaml
-│   └── vts_hdmicec_mock_v1.yaml
-├── MockHdmiCecService
 ├── profiles
 │   └── hfp-hdmicec_mock.yaml
 ├── run.sh
 ├── servicemanager
+├── vcomponent_configurations
+│   ├── hdmicec_vcomponent_cec_responses.yaml
+│   └── hdmicec_vcomponent_configuration.yaml
+├── VComponentHdmiCecService
 └── vts_hdmicec_hal_test
 
 ```
