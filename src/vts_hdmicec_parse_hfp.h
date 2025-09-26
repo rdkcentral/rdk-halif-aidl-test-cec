@@ -72,6 +72,13 @@
 #include <ut_kvp_profile.h>
 #include <ut_log.h>
 
+struct hdmicec_device_info
+{
+    int32_t hal_cec_version;
+};
+
+extern hdmicec_device_info gHdmiCecDeviceInfo;
+
 UT_status_t vts_hdmicec_parse_hfp();
 
 #endif //__VTS_HDMICEC_PARSE_HFP_H__

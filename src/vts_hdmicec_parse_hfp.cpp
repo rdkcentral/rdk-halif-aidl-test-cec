@@ -67,8 +67,11 @@
 
 using namespace std;
 
+hdmicec_device_info gHdmiCecDeviceInfo = {0};
+
 UT_status_t vts_hdmicec_parse_hfp()
 {
+    gHdmiCecDeviceInfo.hal_cec_version = UT_KVP_PROFILE_GET_UINT32("IHdmiCec.HAL_CEC_VERSION");
     return UT_STATUS_OK;
 }
 

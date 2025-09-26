@@ -56,6 +56,7 @@
  * @file vts_hdmicec_l1_tests.c
  *
  */
+#include "vts_hdmicec_parse_hfp.h"
 #include "vts_hdmicec.h"
 
 extern sp<IHdmiCec> gHDMICECHandle;
@@ -98,6 +99,394 @@ public:
 };
 
 /**
+* @brief Tests the getState API
+*
+* This test verifies that the getState API returns the expected state
+*
+* **Test Group ID:** Basic: 01@n
+* **Test Case ID:** 001@n
+* **Priority:** High@n
+* @n
+* **Pre-Conditions:** None@n
+* **Dependencies:** None@n
+* **User Interaction:** None@n
+* @n
+* **Test Procedure:**@n
+* |Variation / Step|Description|Test Data|Expected Result|Notes|
+* |----------------|-----------|---------|---------------|-----|
+* |01|Call getState()|None|State should be CLOSED|should pass|
+
+*/
+UT_ADD_TEST(VTS_L1_HDMICEC, getState_pos)
+{
+    com::rdk::hal::State state;
+
+    HDMICEC_GET_STATE(gHDMICECHandle, state);
+
+    UT_ASSERT_EQUAL(state, State::CLOSED);
+}
+
+/**
+* @brief Tests the getProperty API
+*
+* This test verifies that the getProperty API returns expected property value
+*
+* **Test Group ID:** Basic: 01@n
+* **Test Case ID:** 002@n
+* **Priority:** High@n
+* @n
+* **Pre-Conditions:** None@n
+* **Dependencies:** None@n
+* **User Interaction:** None@n
+* @n
+* **Test Procedure:**@n
+* |Variation / Step|Description|Test Data|Expected Result|Notes|
+* |----------------|-----------|---------|---------------|-----|
+* |01|Call getProperty()|cec version from hfp|cec version should match with hfp and metrics should be 0 if implemented|should pass|
+
+*/
+UT_ADD_TEST(VTS_L1_HDMICEC, getProperty_pos)
+{
+    std::optional<PropertyValue> cecVersion;
+
+    std::vector<Property> testProperties = {hdmicec::Property::METRIC_DIRECTED_MESSAGES_SENT,
+                                            hdmicec::Property::METRIC_BROADCAST_MESSAGES_SENT,
+                                            hdmicec::Property::METRIC_DIRECTED_MESSAGES_SENT_AND_ACKED,
+                                            hdmicec::Property::METRIC_BROADCAST_MESSAGE_SENT_AND_ACKED,
+                                            hdmicec::Property::METRIC_ARBITRATION_FAILURES};
+
+    HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::HAL_CEC_VERSION, cecVersion);
+
+    UT_ASSERT_TRUE(cecVersion.has_value());
+    UT_ASSERT_EQUAL(cecVersion->value->get<PropertyValue::Value::Tag::intValue>(), gHdmiCecDeviceInfo.hal_cec_version);
+
+    for (auto property : testProperties)
+    {
+        std::optional<PropertyValue> propertyValue;
+        int32_t value = 0;
+        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, property, propertyValue);
+        UT_ASSERT_TRUE(propertyValue.has_value());
+        value = propertyValue->value->get<PropertyValue::Value::Tag::intValue>();
+        if(value != -1)
+        {
+            UT_ASSERT_EQUAL(value, 0);
+        }
+    }
+}
+
+/**
+* @brief Tests the getProperty API for negative scenarios
+*
+* This test verifies that the getProperty API returns expected property value for invalid properties
+*
+* **Test Group ID:** Basic: 01@n
+* **Test Case ID:** 003@n
+* **Priority:** High@n
+* @n
+* **Pre-Conditions:** None@n
+* **Dependencies:** None@n
+* **User Interaction:** None@n
+* @n
+* **Test Procedure:**@n
+* |Variation / Step|Description|Test Data|Expected Result|Notes|
+* |----------------|-----------|---------|---------------|-----|
+* |01|Call getProperty() with invalid propery||should pass|
+
+*/
+UT_ADD_TEST(VTS_L1_HDMICEC, getProperty_neg)
+{
+    std::optional<PropertyValue> propertyValue;
+
+    int32_t firstValue = static_cast<int32_t>(Property::HAL_CEC_VERSION);
+    Property Invalidproperty = static_cast<Property>(firstValue - 1);
+
+    HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, Invalidproperty, propertyValue);
+
+    UT_ASSERT_FALSE(propertyValue.has_value());
+}
+
+/**
+* @brief Tests the getLogicalAddresses API
+*
+* This test verifies that the getLogicalAddresses API returns expected property value
+*
+* **Test Group ID:** Basic: 01@n
+* **Test Case ID:** 004@n
+* **Priority:** High@n
+* @n
+* **Pre-Conditions:** None@n
+* **Dependencies:** None@n
+* **User Interaction:** None@n
+* @n
+* **Test Procedure:**@n
+* |Variation / Step|Description|Test Data|Expected Result|Notes|
+* |----------------|-----------|---------|---------------|-----|
+* |01|Call getLogicalAddresses()||logical address vector should be empty|should pass|
+
+*/
+UT_ADD_TEST(VTS_L1_HDMICEC, getLogicalAddresses_pos)
+{
+    vector<int32_t> getlogicalAddresses;
+
+    HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(gHDMICECHandle, getlogicalAddresses);
+
+    UT_ASSERT_TRUE(getlogicalAddresses.empty());
+}
+
+/**
+* @brief Tests the open API
+*
+* This test verifies that the open API returns expected status value and checks the state transitions
+*
+* **Test Group ID:** Basic: 01@n
+* **Test Case ID:** 005@n
+* **Priority:** High@n
+* @n
+* **Pre-Conditions:** None@n
+* **Dependencies:** None@n
+* **User Interaction:** None@n
+* @n
+* **Test Procedure:**@n
+* |Variation / Step|Description|Test Data|Expected Result|Notes|
+* |----------------|-----------|---------|---------------|-----|
+* |01|Call open()||should return proper handle for controller|should pass|
+* |02|Call close()||return status should be ok|should pass|
+*/
+UT_ADD_TEST(VTS_L1_HDMICEC, open_pos)
+{
+    sp<IHdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
+    sp<IHdmiCecController> hdmiCecController = nullptr;
+
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+
+    HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
+}
+
+/**
+* @brief Tests the open API for netagive scenarios
+*
+* This test verifies that the open API handles the negative scenarios
+*
+* **Test Group ID:** Basic: 01@n
+* **Test Case ID:** 006@n
+* **Priority:** High@n
+* @n
+* **Pre-Conditions:** None@n
+* **Dependencies:** None@n
+* **User Interaction:** None@n
+* @n
+* **Test Procedure:**@n
+* |Variation / Step|Description|Test Data|Expected Result|Notes|
+* |----------------|-----------|---------|---------------|-----|
+* |01|Call open() with null listener||controller should be null and return status should be EX_ILLEGAL_ARGUMENT|should pass|
+* |02|Call open() with valid listener||should return proper handle for controller|should pass|
+* |03|Call open() with valid listener again||should return null controller handle and status should be EX_ILLEGAL_STATE|should pass|
+* |04|Call close()||return status should be ok|should pass|
+*/
+UT_ADD_TEST(VTS_L1_HDMICEC, open_neg)
+{
+    sp<IHdmiCecControllerListener> invalidControllerListener = nullptr;
+    sp<IHdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
+    sp<IHdmiCecController> hdmiCecController_1 = nullptr;
+    sp<IHdmiCecController> hdmiCecController_2 = nullptr;
+
+    // Expect open to fail with null listener
+    HDMICEC_OPEN_FAILURE(gHDMICECHandle, invalidControllerListener, hdmiCecController_1, State::CLOSED, Status::EX_ILLEGAL_ARGUMENT);
+
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController_1, true);
+    HDMICEC_OPEN_FAILURE(gHDMICECHandle, controllerListener, hdmiCecController_2, State::STARTED, Status::EX_ILLEGAL_STATE);
+
+    HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController_1, true);
+}
+
+/**
+* @brief Tests the close API
+*
+* This test verifies that the close API returns expected status value and checks the state transitions
+*
+* **Test Group ID:** Basic: 01@n
+* **Test Case ID:** 006@n
+* **Priority:** High@n
+* @n
+* **Pre-Conditions:** None@n
+* **Dependencies:** None@n
+* **User Interaction:** None@n
+* @n
+* **Test Procedure:**@n
+* |Variation / Step|Description|Test Data|Expected Result|Notes|
+* |----------------|-----------|---------|---------------|-----|
+* |01|Call open()||should return proper handle for controller|should pass|
+* |02|Call close()||return status should be ok|should pass|
+*/
+UT_ADD_TEST(VTS_L1_HDMICEC, close_pos)
+{
+    sp<IHdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
+    sp<IHdmiCecController> hdmiCecController = nullptr;
+
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+
+    HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
+}
+
+/**
+* @brief Tests the close API for netagive scenarios
+*
+* This test verifies that the close API handles the negative scenarios
+*
+* **Test Group ID:** Basic: 01@n
+* **Test Case ID:** 008@n
+* **Priority:** High@n
+* @n
+* **Pre-Conditions:** None@n
+* **Dependencies:** None@n
+* **User Interaction:** None@n
+* @n
+* **Test Procedure:**@n
+* |Variation / Step|Description|Test Data|Expected Result|Notes|
+* |----------------|-----------|---------|---------------|-----|
+* |01|Call open() with null listener||controller should be null and return status should be EX_ILLEGAL_ARGUMENT|should pass|
+* |02|Call open() with valid listener||should return proper handle for controller|should pass|
+* |03|Call open() with valid listener again||should return null controller handle and status should be EX_ILLEGAL_STATE|should pass|
+* |04|Call close()||return status should be ok|should pass|
+*/
+UT_ADD_TEST(VTS_L1_HDMICEC, close_neg)
+{
+    sp<IHdmiCecControllerListener> invalidControllerListener = nullptr;
+    sp<IHdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
+    sp<IHdmiCecController> hdmiCecController = nullptr;
+    sp<IHdmiCecController> InvalidHdmiCecController = nullptr;
+
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+
+    HDMICEC_CLOSE_FAILURE(gHDMICECHandle, InvalidHdmiCecController, State::STARTED, Status::EX_NONE);
+    HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
+    HDMICEC_CLOSE_FAILURE(gHDMICECHandle, hdmiCecController, State::CLOSED, Status::EX_NONE);
+}
+
+/**
+* @brief Tests the registerEventListener API
+*
+* This test verifies that the registerEventListener API returns expected status value
+*
+* **Test Group ID:** Basic: 01@n
+* **Test Case ID:** 009@n
+* **Priority:** High@n
+* @n
+* **Pre-Conditions:** None@n
+* **Dependencies:** None@n
+* **User Interaction:** None@n
+* @n
+* **Test Procedure:**@n
+* |Variation / Step|Description|Test Data|Expected Result|Notes|
+* |----------------|-----------|---------|---------------|-----|
+* |01|Call registerEventListener()||should register event listener|should pass|
+* |02|Call unregisterEventListener()||should un-register event listener|should pass|
+*/
+UT_ADD_TEST(VTS_L1_HDMICEC, registerEventListener_pos)
+{
+    sp<IHdmiCecEventListener> eventListener = new HdmiCecEventListener();
+
+    HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
+
+    HDMICEC_UNREGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
+}
+
+/**
+* @brief Tests the registerEventListener API for netagive scenarios
+*
+* This test verifies that the registerEventListener API handles the negative scenarios
+*
+* **Test Group ID:** Basic: 01@n
+* **Test Case ID:** 010@n
+* **Priority:** High@n
+* @n
+* **Pre-Conditions:** None@n
+* **Dependencies:** None@n
+* **User Interaction:** None@n
+* @n
+* **Test Procedure:**@n
+* |Variation / Step|Description|Test Data|Expected Result|Notes|
+* |----------------|-----------|---------|---------------|-----|
+* |01|Call registerEventListener() with invalid listener||should return false|should pass|
+* |02|Call registerEventListener() with valid listener||should return true|should pass|
+* |03|Call registerEventListener() with valid listener again||should return false|should pass|
+* |04|Call unregisterEventListener()||should un-register event listener|should pass|
+*/
+UT_ADD_TEST(VTS_L1_HDMICEC, registerEventListener_neg)
+{
+    sp<IHdmiCecEventListener> invalidEventListener = nullptr;
+    sp<IHdmiCecEventListener> eventListener_1 = new HdmiCecEventListener();
+    sp<IHdmiCecEventListener> eventListener_2 = new HdmiCecEventListener();
+
+    HDMICEC_REGISTER_EVENT_FAILURE(gHDMICECHandle, invalidEventListener, Status::EX_NONE);
+
+    HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener_1);
+    HDMICEC_REGISTER_EVENT_FAILURE(gHDMICECHandle, eventListener_2, Status::EX_NONE);
+
+    HDMICEC_UNREGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener_1);
+}
+
+/**
+* @brief Tests the unregisterEventListener API
+*
+* This test verifies that the unregisterEventListener API returns expected status value
+*
+* **Test Group ID:** Basic: 01@n
+* **Test Case ID:** 011@n
+* **Priority:** High@n
+* @n
+* **Pre-Conditions:** None@n
+* **Dependencies:** None@n
+* **User Interaction:** None@n
+* @n
+* **Test Procedure:**@n
+* |Variation / Step|Description|Test Data|Expected Result|Notes|
+* |----------------|-----------|---------|---------------|-----|
+* |01|Call registerEventListener()||should register event listener|should pass|
+* |02|Call unregisterEventListener()||should un-register event listener|should pass|
+*/
+UT_ADD_TEST(VTS_L1_HDMICEC, unregisterEventListener_pos)
+{
+    sp<IHdmiCecEventListener> eventListener = new HdmiCecEventListener();
+
+    HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
+
+    HDMICEC_UNREGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
+}
+
+/**
+* @brief Tests the unregisterEventListener API for netagive scenarios
+*
+* This test verifies that the unregisterEventListener API handles the negative scenarios
+*
+* **Test Group ID:** Basic: 01@n
+* **Test Case ID:** 012@n
+* **Priority:** High@n
+* @n
+* **Pre-Conditions:** None@n
+* **Dependencies:** None@n
+* **User Interaction:** None@n
+* @n
+* **Test Procedure:**@n
+* |Variation / Step|Description|Test Data|Expected Result|Notes|
+* |----------------|-----------|---------|---------------|-----|
+* |01|Call unregisterEventListener() with invalid listener||should return false|should pass|
+* |02|Call registerEventListener() with valid listener||should return true|should pass|
+* |03|Call unregisterEventListener() with valid listener||should return true|should pass|
+* |04|Call unregisterEventListener() with valid listener again||should return false|should pass|
+*/
+UT_ADD_TEST(VTS_L1_HDMICEC, unregisterEventListener_neg)
+{
+    sp<IHdmiCecEventListener> invalidEventListener = nullptr;
+    sp<IHdmiCecEventListener> eventListener = new HdmiCecEventListener();
+
+    HDMICEC_UNREGISTER_EVENT_FAILURE(gHDMICECHandle, invalidEventListener, Status::EX_NONE);
+    HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
+    HDMICEC_UNREGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
+    HDMICEC_UNREGISTER_EVENT_FAILURE(gHDMICECHandle, eventListener, Status::EX_NONE);
+}
+
+/**
 * @brief Tests the
 *
 * This test verifies that the
@@ -116,7 +505,7 @@ public:
 * |01||None||Should Pass|
 
 */
-UT_ADD_TEST(VTS_L1_HDMICEC, getState_pos)
+UT_ADD_TEST(VTS_L1_HDMICEC, test)
 {
     com::rdk::hal::State state;
     sp<IHdmiCecController> hdmiCecController = nullptr;
