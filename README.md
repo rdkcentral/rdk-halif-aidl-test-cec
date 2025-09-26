@@ -108,7 +108,7 @@ tar -zcf hdmicec_vts.tar.gz bin
 
 - Transfer to Target Device:
 
-Copy the tarball to the target device (e.g., using scp):
+Copy the tar-ball to the target device (e.g., using scp):
 
 ```bash
 scp hdmicec_vts.tar.gz root@target-device:/home/root/
@@ -117,7 +117,7 @@ scp hdmicec_vts.tar.gz root@target-device:/home/root/
 
 - Extract on Target Device:
 
-Log into the target device and extract the tarball:
+Log into the target device and extract the tar-ball:
 
 ```bash
 ssh root@target-device
@@ -127,6 +127,16 @@ cd bin
 ```
 
 - Run the VTS Test on Target Device
+
+If the target is vDevice, then run and configure the vComponent
+
+```bash
+#Run the vComponent service
+./VComponentHdmiCecService &
+
+#Configure the vComponent
+./hdmicec_post_command.sh vcomponent_configurations/commands/hdmicec_device_map_init.yaml 8080
+```
 
 Run below command to execute the VTS Test:
 

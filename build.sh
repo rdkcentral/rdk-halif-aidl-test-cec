@@ -254,6 +254,7 @@ install_test()
 
     cp -r ${PROFILES_DIR} ${INSTALL_PATH}
     cp -r "${VCOMPONENT_DIR}/vcomponent_configurations" ${INSTALL_PATH}
+    cp -r "${VCOMPONENT_DIR}/hdmicec_post_command.sh" ${INSTALL_PATH}
 }
 
 ###############################################################################
