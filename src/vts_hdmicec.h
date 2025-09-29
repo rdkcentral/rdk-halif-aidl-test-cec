@@ -165,9 +165,12 @@ using namespace com::rdk::hal::hdmicec;
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
         \
-        UT_ASSERT_FALSE(status.isOk()); \
-        UT_ASSERT_EQUAL(hdmiCecController.get(), nullptr); \
+        if (expectedException == Status::EX_NONE) \
+            UT_ASSERT_TRUE(status.isOk()); \
+        else \
+            UT_ASSERT_FALSE(status.isOk()); \
         UT_ASSERT_EQUAL(status.exceptionCode(), expectedException); \
+        UT_ASSERT_EQUAL(hdmiCecController.get(), nullptr); \
         HDMICEC_GET_STATE(hdmicecHandle, state); \
         UT_ASSERT_EQUAL_FATAL(state, expectedState); \
     } while (0)
@@ -200,12 +203,15 @@ using namespace com::rdk::hal::hdmicec;
         com::rdk::hal::State state; \
         UT_LOG_DEBUG("Calling close(IN:hdmiCecController[%p], OUT:_aidl_return[])", hdmiCecController.get()); \
         status = hdmicecHandle->close(hdmiCecController, &_aidl_return); \
-        UT_LOG_DEBUG("Result close(IN:hdmiCecController[%p], OUT:_aidl_return[%s %d]), status:[isOK:%s, exception:%s]", \
-            hdmiCecController.get(), UT_Control_GetMapString(bool_mapTable_cec, _aidl_return), _aidl_return,\
+        UT_LOG_DEBUG("Result close(IN:hdmiCecController[%p], OUT:_aidl_return[%s]), status:[isOK:%s, exception:%s]", \
+            hdmiCecController.get(), UT_Control_GetMapString(bool_mapTable_cec, _aidl_return),\
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
-        UT_ASSERT_FALSE(status.isOk()); \
         UT_ASSERT_FALSE(_aidl_return); \
+        if (expectedException == Status::EX_NONE) \
+            UT_ASSERT_TRUE(status.isOk()); \
+        else \
+            UT_ASSERT_FALSE(status.isOk()); \
         UT_ASSERT_EQUAL(status.exceptionCode(), expectedException); \
         HDMICEC_GET_STATE(hdmicecHandle, state); \
         UT_ASSERT_EQUAL_FATAL(state, expectedState); \
@@ -245,6 +251,22 @@ using namespace com::rdk::hal::hdmicec;
         } \
         UT_ASSERT_TRUE(status.isOk()); \
         UT_ASSERT_EQUAL(status.exceptionCode(), Status::EX_NONE); \
+    } while (0)
+
+#define HDMICEC_GET_PROPERTY_FAILURE(hdmicecHandle, property, propertyValue, exception) \
+    do { \
+        ::android::binder::Status status; \
+        UT_LOG_DEBUG("Calling getProperty(IN:property[%s], OUT:propertyValue[]", hdmicec::toString(property).c_str()); \
+        status = (hdmicecHandle)->getProperty(property, &propertyValue); \
+        UT_LOG_DEBUG("Result getProperty(IN:property[%s], OUT:propertyValue[]), status:[isOK:%s, exception:%s]", hdmicec::toString(property).c_str(), \
+                    UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
+                    UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
+        UT_ASSERT_FALSE(propertyValue.has_value()); \
+        if (exception == Status::EX_NONE) \
+            UT_ASSERT_TRUE(status.isOk()); \
+        else \
+            UT_ASSERT_FALSE(status.isOk()); \
+        UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
     } while (0)
 
 #define HDMICEC_REGISTER_EVENT_SUCCESS(hdmicecHandle, eventListener) \
@@ -305,7 +327,10 @@ using namespace com::rdk::hal::hdmicec;
             eventListener.get(), UT_Control_GetMapString(bool_mapTable_cec, _aidl_return), \
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
-        UT_ASSERT_TRUE(status.isOk()); \
+        if (exception == Status::EX_NONE) \
+            UT_ASSERT_TRUE(status.isOk()); \
+        else \
+            UT_ASSERT_FALSE(status.isOk()); \
         UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
         UT_ASSERT_FALSE(_aidl_return); \
     } while (0)
@@ -339,6 +364,25 @@ using namespace com::rdk::hal::hdmicec;
         UT_ASSERT_EQUAL(status.exceptionCode(), Status::EX_NONE); \
     } while (0);
 
+#define HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmicecControlHandle, logicalAddresses, exception) \
+    do { \
+        ::android::binder::Status status; \
+        bool _aidl_return; \
+        UT_LOG_DEBUG("Calling addLogicalAddresses(IN:logicalAddresses[%s], OUT:_aidl_return[])", vecIntToString(logicalAddresses).c_str()); \
+        status = hdmiCecController->addLogicalAddresses(logicalAddresses, &_aidl_return); \
+        UT_LOG_DEBUG("Result addLogicalAddresses(IN:logicalAddresses[%s], OUT:_aidl_return[%s]), status:[isOK:%s, exception:%s]", \
+            vecIntToString(logicalAddresses).c_str(), \
+            UT_Control_GetMapString(bool_mapTable_cec, _aidl_return), \
+            UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
+            UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
+        UT_ASSERT_FALSE(_aidl_return); \
+        if (exception == Status::EX_NONE) \
+            UT_ASSERT_TRUE(status.isOk()); \
+        else \
+            UT_ASSERT_FALSE(status.isOk()); \
+        UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
+    } while (0);
+
 #define HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmicecControlHandle, logicalAddresses) \
     do { \
         ::android::binder::Status status; \
@@ -355,6 +399,25 @@ using namespace com::rdk::hal::hdmicec;
         UT_ASSERT_EQUAL(status.exceptionCode(), Status::EX_NONE); \
     } while (0)
 
+#define HDMICEC_REMOVE_LOGICAL_ADDRESS_FAILURE(hdmicecControlHandle, logicalAddresses, exception) \
+    do { \
+        ::android::binder::Status status; \
+        bool _aidl_return; \
+        UT_LOG_DEBUG("Calling removeLogicalAddresses(IN:logicalAddresses[%s], OUT:_aidl_return[])", vecIntToString(logicalAddresses).c_str()); \
+        status = hdmiCecController->removeLogicalAddresses(logicalAddresses, &_aidl_return); \
+        UT_LOG_DEBUG("Result removeLogicalAddresses(OUT:logicalAddresses[%s], OUT:_aidl_return[%s]), status:[isOK:%s, exception:%s]", \
+            vecIntToString(logicalAddresses).c_str(), \
+            UT_Control_GetMapString(bool_mapTable_cec, _aidl_return), \
+            UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
+            UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
+        UT_ASSERT_FALSE(_aidl_return); \
+        if (exception == Status::EX_NONE) \
+            UT_ASSERT_TRUE(status.isOk()); \
+        else \
+            UT_ASSERT_FALSE(status.isOk()); \
+        UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
+    } while (0)
+
 #define HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, message, sendStatus) \
     do { \
         ::android::binder::Status status; \
@@ -367,6 +430,23 @@ using namespace com::rdk::hal::hdmicec;
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
         UT_ASSERT_TRUE(status.isOk()); \
         UT_ASSERT_EQUAL(status.exceptionCode(), Status::EX_NONE); \
+    } while (0)
+
+#define HDMICEC_SEND_MESSAGE_FAILURE(hdmiCecController, message, sendStatus, exception) \
+    do { \
+        ::android::binder::Status status; \
+        UT_LOG_DEBUG("Calling sendMessage(IN:message[%s], OUT:sendStatus[])", vecByteToHexString(message).c_str()); \
+        status = hdmiCecController->sendMessage(message, &sendStatus); \
+        UT_LOG_DEBUG("Result sendMessage(IN:message[%s], OUT:sendStatus[%s]), status:[isOK:%s, exception:%s]", \
+            vecByteToHexString(message).c_str(), \
+            hdmicec::toString(sendStatus).c_str(), \
+            UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
+            UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
+        if (exception == Status::EX_NONE) \
+            UT_ASSERT_TRUE(status.isOk()); \
+        else \
+            UT_ASSERT_FALSE(status.isOk()); \
+        UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
     } while (0)
 
 /* Contoller Listener Class */

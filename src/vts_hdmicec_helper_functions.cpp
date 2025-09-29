@@ -91,7 +91,7 @@ const ut_control_keyStringMapping_t statusHdmiCecException_mapTable[] =
 
 std::string vecIntToString(std::vector<int32_t>& addrs)
 {
-    std::string s;
+    std::string s = "";
     for (size_t i = 0; i < addrs.size(); ++i)
     {
         s += std::to_string(addrs[i]);

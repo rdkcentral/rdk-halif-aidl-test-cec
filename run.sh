@@ -21,7 +21,6 @@
 
 RUN_DIR=$(realpath "$(dirname "$0")")
 VCOMPONENT_SERVICE_NAME=VComponentHdmiCecService
-VCOMPONENT_CONFIG_PATH=${RUN_DIR}/vcomponent_configurations/hdmicec_vcomponent_configuration.yaml
 
 # Function to check if a process is running
 check_process()
@@ -54,13 +53,7 @@ prompt_string()
 
 start_vcomponent_service()
 {
-    echo "Starting ${VCOMPONENT_SERVICE_NAME} with config: ${VCOMPONENT_CONFIG_PATH}"
-    local user_config
-    user_config=$(prompt_string "Mock Service Config Path (Default: ${VCOMPONENT_CONFIG_PATH})")
-    if [ -z "$user_config" ]; then
-        user_config="$VCOMPONENT_CONFIG_PATH"
-    fi
-    ${RUN_DIR}/$VCOMPONENT_SERVICE_NAME -c "$user_config" &
+    ${RUN_DIR}/$VCOMPONENT_SERVICE_NAME &
     vcomponentservice_pid=$!
     # Wait for service to be ready
     sleep 1
@@ -72,7 +65,7 @@ if check_process $VCOMPONENT_SERVICE_NAME; then
     if prompt_yes_no "Do you want to re-start ${VCOMPONENT_SERVICE_NAME}?"; then
         echo "Killing existing ${VCOMPONENT_SERVICE_NAME} (PID: $mocservice_pid)"
         kill $mocservice_pid
-        sleep 2
+        sleep 10
         start_vcomponent_service
     else
         echo "Continuing with existing ${VCOMPONENT_SERVICE_NAME} (PID: $mocservice_pid)"
