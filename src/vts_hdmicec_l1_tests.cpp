@@ -112,7 +112,10 @@ public:
  * **Test Case ID:** 001@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL is initialized but not yet opened@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** A valid gHDMICECHandle must be available@n
  * **User Interaction:** None@n
  *
@@ -142,7 +145,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, getState_pos)
  * **Test Case ID:** 002@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized and handle available@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle and gHdmiCecDeviceInfo must be valid@n
  * **User Interaction:** None@n
  *
@@ -197,7 +203,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, getProperty_pos)
  * **Test Case ID:** 003@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized and handle available@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *
@@ -230,7 +239,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, getProperty_neg)
  * **Test Case ID:** 004@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized and handle available@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *
@@ -258,7 +270,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, getLogicalAddresses_pos)
  * **Test Case ID:** 005@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized and in CLOSED state@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *
@@ -288,7 +303,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, open_pos)
  * **Test Case ID:** 006@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized and in CLOSED state@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *
@@ -330,7 +348,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, open_neg)
  * **Test Case ID:** 007@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized and in CLOSED state@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *
@@ -360,7 +381,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, close_pos)
  * **Test Case ID:** 008@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized and in CLOSED state@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *
@@ -400,7 +424,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, close_neg)
  * **Test Case ID:** 009@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *
@@ -428,7 +455,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, registerEventListener_pos)
  * **Test Case ID:** 010@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *
@@ -462,7 +492,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, registerEventListener_neg)
  * **Test Case ID:** 011@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *
@@ -490,7 +523,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, unregisterEventListener_pos)
  * **Test Case ID:** 012@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *
@@ -523,7 +559,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, unregisterEventListener_neg)
  * **Test Case ID:** 013@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *
@@ -565,7 +604,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_pos)
  * **Test Case ID:** 014@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *
@@ -628,7 +670,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_neg)
  * **Test Case ID:** 015@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *
@@ -685,7 +730,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, removeLogicalAddresses_pos)
  * **Test Case ID:** 016@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *
@@ -747,7 +795,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, removeLogicalAddresses_neg)
  * **Test Case ID:** 017@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized and in CLOSED state@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *
@@ -785,7 +836,10 @@ UT_ADD_TEST(VTS_L1_HDMICEC, sendMessage_pos)
  * **Test Case ID:** 018@n
  * **Priority:** High@n
  *
- * **Pre-Conditions:** HDMI CEC HAL initialized@n
+ * **Pre-Conditions:**
+ * - No external HDMI devices connected to the DUT
+ * - HDMI CEC interface must be available in CLOSED state initially
+ *
  * **Dependencies:** gHDMICECHandle must be valid@n
  * **User Interaction:** None@n
  *

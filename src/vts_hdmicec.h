@@ -69,6 +69,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <queue>
 
 #include <ut.h>
 #include <ut_log.h>
@@ -457,9 +458,14 @@ public:
     virtual ~HdmiCecControllerListener() = default;
     android::binder::Status onMessageReceived(const ::std::vector<uint8_t>& message) override;
     android::binder::Status onStateChanged(::com::rdk::hal::State oldState, ::com::rdk::hal::State newState) override;
-    android::binder::Status onMessageSent(const ::std::vector<uint8_t>& message, ::com::rdk::hal::hdmicec::SendMessageStatus status) override;
+    android::binder::Status onMessageSent(const ::std::vector<uint8_t>& message, hdmicec::SendMessageStatus status) override;
+    bool getNextStateChanges(pair<State, State>& stateChanges);
+    bool getNextMessage( std::vector<uint8_t>& outMessage, hdmicec::SendMessageStatus& outStatus);
 private:
-    mutex mQueueMutex;
+    mutex mStateMutex;
+    mutex mMsgSentMutex;
+    std::queue<pair<State, State>> mStateChanges;
+    std::queue<std::pair<std::vector<uint8_t>, hdmicec::SendMessageStatus>> mMessageQueue;
 };
 
 /* Event Listener Class */
@@ -471,6 +477,11 @@ public:
 
     android::binder::Status onMessageReceived(const ::std::vector<uint8_t>& message) override;
     android::binder::Status onStateChanged(::com::rdk::hal::State oldState, ::com::rdk::hal::State newState) override;
+    bool getNextStateChanges(pair<State, State>& stateChanges);
+    bool getNextMessage( std::vector<uint8_t>& outMessage, hdmicec::SendMessageStatus& outStatus);
+private:
+    mutex mStateMutex;
+    std::queue<pair<State, State>> mStateChanges;
 };
 
 #endif // __VTS_HDMICEC_H__
