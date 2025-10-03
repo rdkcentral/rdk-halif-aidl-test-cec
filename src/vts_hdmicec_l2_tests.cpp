@@ -40,7 +40,7 @@
  * @{
  * @parblock
  *
- * ### L1 Test Cases for HDMI CEC HAL :
+ * ### L2 Test Cases for HDMI CEC HAL :
  *
  * This module includes Level 2 functional tests (success and failure scenarios).
  * This is to ensure that the API meets the operational requirements of the module across all vendors.
@@ -53,7 +53,7 @@
  */
 
 /**
- * @file vts_hdmicec_l1_tests.c
+ * @file vts_hdmicec_l2_tests.c
  *
  */
 #include "vts_hdmicec_parse_hfp.h"
@@ -352,8 +352,8 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
     sp<HdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<int32_t> logicalAddresses = {0};
-    vector<uint8_t> directMsg_1 = {0x50, 0x04};
-    vector<uint8_t> directMsg_2 = {0x50, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    vector<uint8_t> directMsg_1 = {0x05, 0x04};
+    vector<uint8_t> directMsg_2 = {0x05, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
     hdmicec::SendMessageStatus msgStatus;
     vector<uint8_t> getMessage;
