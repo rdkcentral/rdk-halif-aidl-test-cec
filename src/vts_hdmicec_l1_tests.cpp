@@ -76,23 +76,6 @@ public:
         android::ProcessState::self()->startThreadPool();
     }
 
-    bool validateMetrics()
-    {
-        std::optional<PropertyValue> directMsgSent;
-        std::optional<PropertyValue> directMsgSentAck;
-        std::optional<PropertyValue> broadcastMsgSent;
-        std::optional<PropertyValue> broadcastMsgSentAck;
-        std::optional<PropertyValue> arbitrationFailures;
-
-        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_DIRECTED_MESSAGES_SENT, directMsgSent);
-        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_DIRECTED_MESSAGES_SENT_AND_ACKED, directMsgSentAck);
-        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_BROADCAST_MESSAGES_SENT, broadcastMsgSent);
-        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_BROADCAST_MESSAGE_SENT_AND_ACKED, broadcastMsgSentAck);
-        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_ARBITRATION_FAILURES, arbitrationFailures);
-
-        //TODO: Add validation logic
-        return true;
-    }
     void TearDown() override
     {
     }

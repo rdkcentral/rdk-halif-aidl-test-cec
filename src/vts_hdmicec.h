@@ -461,11 +461,14 @@ public:
     android::binder::Status onMessageSent(const ::std::vector<uint8_t>& message, hdmicec::SendMessageStatus status) override;
     bool getNextStateChanges(pair<State, State>& stateChanges);
     bool getNextMessage( std::vector<uint8_t>& outMessage, hdmicec::SendMessageStatus& outStatus);
+    bool getNextReceiveMessage(std::vector<uint8_t>& outMessage);
 private:
     mutex mStateMutex;
     mutex mMsgSentMutex;
+    mutex mMsgReceiveMutex;
     std::queue<pair<State, State>> mStateChanges;
-    std::queue<std::pair<std::vector<uint8_t>, hdmicec::SendMessageStatus>> mMessageQueue;
+    std::queue<std::pair<std::vector<uint8_t>, hdmicec::SendMessageStatus>> mMessageSentQueue;
+    std::queue<std::vector<uint8_t>> mMessageReceiveQueue;
 };
 
 /* Event Listener Class */
@@ -479,9 +482,12 @@ public:
     android::binder::Status onStateChanged(::com::rdk::hal::State oldState, ::com::rdk::hal::State newState) override;
     bool getNextStateChanges(pair<State, State>& stateChanges);
     bool getNextMessage( std::vector<uint8_t>& outMessage, hdmicec::SendMessageStatus& outStatus);
+    bool getNextReceiveMessage(std::vector<uint8_t>& outMessage);
 private:
     mutex mStateMutex;
+    mutex mMsgReceiveMutex;
     std::queue<pair<State, State>> mStateChanges;
+    std::queue<std::vector<uint8_t>> mMessageReceiveQueue;
 };
 
 #endif // __VTS_HDMICEC_H__

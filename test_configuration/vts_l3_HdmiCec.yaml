@@ -1,0 +1,12 @@
+hdmicec:
+  L3:
+    SendMessage:
+      Parameters:
+        initiator: [0] # Logical address of the DUT
+        destination: 5 # Logical address of the target device
+        message: [0x46] # Message to be sent with payload (0x46 = "Give OSD Name")
+      Controls:
+        wait_for_response_timeout: 1000 # Time to wait for a response in milliseconds
+      Expected_Results:
+        onMessageSent: 0 # Expected result after sending the message
+        onMessageReceived: [0x50, 0x47, 0x59, 0x41, 0x4D, 0x41, 0x48, 0x41] # Expected response message (OSD name)

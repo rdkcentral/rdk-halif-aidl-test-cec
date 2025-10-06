@@ -76,23 +76,6 @@ public:
         android::ProcessState::self()->startThreadPool();
     }
 
-    bool validateMetrics()
-    {
-        std::optional<PropertyValue> directMsgSent;
-        std::optional<PropertyValue> directMsgSentAck;
-        std::optional<PropertyValue> broadcastMsgSent;
-        std::optional<PropertyValue> broadcastMsgSentAck;
-        std::optional<PropertyValue> arbitrationFailures;
-
-        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_DIRECTED_MESSAGES_SENT, directMsgSent);
-        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_DIRECTED_MESSAGES_SENT_AND_ACKED, directMsgSentAck);
-        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_BROADCAST_MESSAGES_SENT, broadcastMsgSent);
-        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_BROADCAST_MESSAGE_SENT_AND_ACKED, broadcastMsgSentAck);
-        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_ARBITRATION_FAILURES, arbitrationFailures);
-
-        //TODO: Add validation logic
-        return true;
-    }
     void TearDown() override
     {
     }
@@ -369,7 +352,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
     HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, directMsg_1, msgStatus);
 
     // Wait for message to be processed and callback to be invoked
-    this_thread::sleep_for(chrono::milliseconds(2000));
+    this_thread::sleep_for(chrono::milliseconds(100));
 
     // Verify that the onMessageSent received to controllerListener
     controllerListener->getNextMessage(getMessage, getStatus);

@@ -58,8 +58,11 @@
  */
 #include "vts_hdmicec_parse_hfp.h"
 #include "vts_hdmicec.h"
+#include "vts_hdmicec_parse_testconfig.h"
 
 extern sp<IHdmiCec> gHDMICECHandle;
+static const char *gModuleName = "hdmicec";
+static const char *gTestGroup = "L3";
 
 /* Test class registration with UT_Core */
 UT_ADD_TEST_TO_GROUP(VTS_L3_HDMICEC, UT_TESTS_L3)
@@ -130,14 +133,30 @@ void readString(char *choice)
     readAndDiscardRestOfLine(stdin);
 }
 
-UT_ADD_TEST(VTS_L3_HDMICEC, StateTransitions)
+UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
 {
+    const char *testName = "SendMessage";
+    hdmicecTestConfiguration_t testConfiguration;
+    std::vector<uint8_t> message;
+    uint8_t src;
+    uint8_t dst;
+
     sp<HdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
-    sp<IHdmiCecEventListener> eventListener = new HdmiCecEventListener();
+    sp<HdmiCecEventListener> eventListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
-    vector<int32_t> logicalAddresses = {0};
-    vector<uint8_t> directMsg = {0x05, 0x46};
     hdmicec::SendMessageStatus msgStatus;
+    UT_status_t status = UT_STATUS_OK;
+    vector<uint8_t> getMessage;
+    hdmicec::SendMessageStatus getStatus;
+
+    status = vts_hdmicec_parse_testconfig(VTS_HDMICEC_TEST_CONFIG_PATH, gModuleName, gTestGroup, testName, testConfiguration);
+
+    UT_ASSERT_EQUAL_FATAL(status, UT_STATUS_OK);
+
+    src = testConfiguration.initiator[0];
+    dst = testConfiguration.destination;
+    message.push_back(dst | (src << 4));
+    message.insert(message.end(), testConfiguration.message.begin(), testConfiguration.message.end());
 
     // Register Event Listener
     HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
@@ -146,13 +165,62 @@ UT_ADD_TEST(VTS_L3_HDMICEC, StateTransitions)
     HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
 
     // Add logical address
-    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
+    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, testConfiguration.initiator);
 
     // Send message
-    HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, directMsg, msgStatus);
+    HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, message, msgStatus);
+
+    // Wait for message to be processed and callback to be invoked
+    this_thread::sleep_for(chrono::milliseconds(100));
+
+    // Verify that the onMessageSent received to controllerListener
+    controllerListener->getNextMessage(getMessage, getStatus);
+
+    UT_ASSERT_EQUAL(getMessage.size(), message.size());
+
+    if(getMessage.size() == message.size())
+    {
+        for (size_t i = 0; i < message.size(); i++)
+        {
+            UT_ASSERT_EQUAL(getMessage[i], message[i]);
+        }
+    }
+    // Cast getStatus to int32_t to match with onMessageSentStatus for comparison
+    UT_ASSERT_EQUAL(static_cast<int32_t>(getStatus), testConfiguration.onMessageSentStatus);
+
+    // Wait for message to be processed and callback to be invoked
+    this_thread::sleep_for(chrono::milliseconds(testConfiguration.waitResponseTimeoutMsec));
+
+    getMessage.clear();
+
+    // Verify that the onMessageReceived received to controllerListener
+    controllerListener->getNextReceiveMessage(getMessage);
+    UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.responseMessage.size());
+
+    if(getMessage.size() == testConfiguration.responseMessage.size())
+    {
+        for (size_t i = 0; i < testConfiguration.responseMessage.size(); i++)
+        {
+            UT_ASSERT_EQUAL(getMessage[i], testConfiguration.responseMessage[i]);
+        }
+    }
+
+    getMessage.clear();
+
+    // Verify that the onMessageReceived received to eventListener
+    eventListener->getNextReceiveMessage(getMessage);
+    UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.responseMessage.size());
+
+    if(getMessage.size() == testConfiguration.responseMessage.size())
+    {
+        for (size_t i = 0; i < testConfiguration.responseMessage.size(); i++)
+        {
+            UT_ASSERT_EQUAL(getMessage[i], testConfiguration.responseMessage[i]);
+        }
+    }
 
     // Remove logical address
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
+    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, testConfiguration.initiator);
 
     // Close HDMI CEC interface
     HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
