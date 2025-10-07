@@ -80,7 +80,7 @@ typedef struct vts_hdmicec_metrics
     int32_t arbitrationFailures;
 }vts_hdmicec_metrics_t;
 
-typedef struct hdmicecTestConfiguration
+typedef struct hdmicecSendMsgConfiguration
 {
     int32_t destination;
     std::vector<uint8_t> message;
@@ -88,13 +88,23 @@ typedef struct hdmicecTestConfiguration
     int32_t onMessageSentStatus;
     std::vector<uint8_t> responseMessage;
     vts_hdmicec_metrics_t metrics;
-}hdmicecTestConfiguration_t;
+} hdmicecSendMsgConfiguration_t;
+
+typedef struct hdmicecReceiveMsgConfiguration
+{
+    vector<int32_t> dutLogicalAddress;
+    std::vector<uint8_t> message;
+    uint32_t waitResponseTimeoutMsec;
+} hdmicecReceiveMsgConfiguration_t;
 
 #define VTS_HDMICEC_TEST_CONFIG_PATH "./test_configuration/vts_l3_HdmiCec.yaml"
 
-UT_status_t vts_hdmicec_parse_testconfig(char *cofigurationFile, const char *module, const char *testGroup,
-                                         const char *testName, std::vector<hdmicecTestConfiguration_t>& testConfigurationList,
-                                         std::vector<int32_t>& sourceLogicalAddresses, int32_t& delayBetweenMsgsMsec);
+UT_status_t vts_hdmicec_parse_sendMessage_config(char *cofigurationFile, const char *module, const char *testGroup,
+                                                 const char *testName, std::vector<hdmicecSendMsgConfiguration_t>& testConfigurationList,
+                                                 std::vector<int32_t>& sourceLogicalAddresses, int32_t& delayBetweenMsgsMsec);
+
+UT_status_t vts_hdmicec_parse_receiveMessage_config(char *cofigurationFile, const char *module, const char *testGroup,
+                                                    const char *testName, vector<hdmicecReceiveMsgConfiguration_t> &testConfigurationList);
 
 #endif //__VTS_HDMICEC_PARSE_TESTCONFIG_H__
 

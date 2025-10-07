@@ -32,3 +32,12 @@ hdmicec:
               broadcastMessagesSent: 1
               broadcastMessagesSentAndAcked: 1
               arbitrationFailures: 0
+    ReceiveMessage:
+      - Parameters:
+        logical_address: [0]
+        message: [0x50, 0x9E, 0x05]
+        wait_for_response_timeout: 5000 #Wait for the response time
+      - Parameters:
+        logical_address: []
+        message: [0x50, 0x9E, 0x05]
+        wait_for_response_timeout: 5000

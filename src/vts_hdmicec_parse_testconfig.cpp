@@ -95,7 +95,7 @@ static void vcomponentkvp_destroy_instance(void *instance)
 }
 
 static UT_status_t vts_hdmicec_parse_testconfig_instance(void *instance, const std::string &cecMsgKey,
-                                                         hdmicecTestConfiguration_t &testConfiguration)
+                                                         hdmicecSendMsgConfiguration_t &testConfiguration)
 {
     int32_t messageSize = 0;
     ut_kvp_instance_t* kvpTestInstance = (ut_kvp_instance_t*)instance;
@@ -148,12 +148,12 @@ static UT_status_t vts_hdmicec_parse_testconfig_instance(void *instance, const s
     return UT_STATUS_OK;
 }
 
-UT_status_t vts_hdmicec_parse_testconfig(char *cofigurationFile, const char *module, const char *testGroup,
-                                         const char *testName, vector<hdmicecTestConfiguration_t>& testConfigurationList,
-                                         std::vector<int32_t>& sourceLogicalAddresses, int32_t& delayBetweenMsgsMsec)
+UT_status_t vts_hdmicec_parse_sendMessage_config(char *cofigurationFile, const char *module, const char *testGroup,
+                                                 const char *testName, vector<hdmicecSendMsgConfiguration_t>& testConfigurationList,
+                                                 std::vector<int32_t>& sourceLogicalAddresses, int32_t& delayBetweenMsgsMsec)
 {
     char resultKVP[UT_KVP_MAX_ELEMENT_SIZE] = {0};
-    hdmicecTestConfiguration_t testConfiguration;
+    hdmicecSendMsgConfiguration_t testConfiguration;
 
     void *testconfig = vcomponentkvp_create_instance(cofigurationFile);
     ut_kvp_instance_t* kvpTestInstance = (ut_kvp_instance_t*)testconfig;
@@ -182,7 +182,7 @@ UT_status_t vts_hdmicec_parse_testconfig(char *cofigurationFile, const char *mod
     for(int32_t index = 0; index < messageCount; index++)
     {
         std::string cecIndex = cecMsgKey + "." + std::to_string(index);
-        memset(&testConfiguration, 0, sizeof(hdmicecTestConfiguration_t));
+        memset(&testConfiguration, 0, sizeof(hdmicecSendMsgConfiguration_t));
         UT_status_t status = vts_hdmicec_parse_testconfig_instance(kvpTestInstance, cecIndex, testConfiguration);
         if(status != UT_STATUS_OK)
         {
@@ -192,6 +192,45 @@ UT_status_t vts_hdmicec_parse_testconfig(char *cofigurationFile, const char *mod
         }
         testConfigurationList.push_back(testConfiguration);
     }
+    vcomponentkvp_destroy_instance(kvpTestInstance);
+    return UT_STATUS_OK;
+}
+
+UT_status_t vts_hdmicec_parse_receiveMessage_config(char *cofigurationFile, const char *module, const char *testGroup,
+                                                    const char *testName, vector<hdmicecReceiveMsgConfiguration_t> &testConfigurationList)
+{
+    void *testconfig = vcomponentkvp_create_instance(cofigurationFile);
+    ut_kvp_instance_t* kvpTestInstance = (ut_kvp_instance_t*)testconfig;
+    hdmicecReceiveMsgConfiguration_t testConfiguration;
+
+    const std::string testList = string(module) + "." + string(testGroup) + "." + string(testName);
+
+    int32_t responseCount = ut_kvp_getListCount(kvpTestInstance, testList.c_str());
+
+    for(int32_t index = 0; index < responseCount; index++)
+    {
+        memset(&testConfiguration, 0, sizeof(hdmicecReceiveMsgConfiguration_t));
+        std::string logicalAddressKey = testList + "." + std::to_string(index) + ".logical_address";
+        std::string waitKey = testList + "." + std::to_string(index) + ".wait_for_response_timeout";
+        std::string messageKey = testList + "." + std::to_string(index) + ".message";
+
+        int32_t logicalAddressLen = ut_kvp_getListCount(kvpTestInstance, logicalAddressKey.c_str());
+        for (uint32_t index = 0; index < logicalAddressLen; index++)
+        {
+            testConfiguration.dutLogicalAddress.push_back(ut_kvp_getUInt32Field(kvpTestInstance, (logicalAddressKey + "." + std::to_string(index)).c_str()));
+        }
+
+        testConfiguration.waitResponseTimeoutMsec = ut_kvp_getUInt32Field(kvpTestInstance, waitKey.c_str());
+
+        int32_t messageLen = ut_kvp_getListCount(kvpTestInstance, messageKey.c_str());
+        for (uint32_t index = 0; index < messageLen; index++)
+        {
+            testConfiguration.message.push_back(ut_kvp_getUInt8Field(kvpTestInstance, (messageKey + "." + std::to_string(index)).c_str()));
+        }
+
+        testConfigurationList.push_back(testConfiguration);
+    }
+
     vcomponentkvp_destroy_instance(kvpTestInstance);
     return UT_STATUS_OK;
 }
