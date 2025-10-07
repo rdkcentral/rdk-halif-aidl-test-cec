@@ -79,7 +79,7 @@ public:
         android::ProcessState::self()->startThreadPool();
     }
 
-    bool validateMetrics()
+    void getMetrics(vts_hdmicec_metrics_t &metrics)
     {
         std::optional<PropertyValue> directMsgSent;
         std::optional<PropertyValue> directMsgSentAck;
@@ -93,8 +93,57 @@ public:
         HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_BROADCAST_MESSAGE_SENT_AND_ACKED, broadcastMsgSentAck);
         HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_ARBITRATION_FAILURES, arbitrationFailures);
 
-        //TODO: Add validation logic
-        return true;
+        metrics.directedMessagesSent = directMsgSent->value->get<PropertyValue::Value::Tag::intValue>();
+        metrics.directedMessagesSentAndAcked = directMsgSentAck->value->get<PropertyValue::Value::Tag::intValue>();
+        metrics.broadcastMessagesSent = broadcastMsgSent->value->get<PropertyValue::Value::Tag::intValue>();
+        metrics.broadcastMessagesSentAndAcked = broadcastMsgSentAck->value->get<PropertyValue::Value::Tag::intValue>();
+        metrics.arbitrationFailures = arbitrationFailures->value->get<PropertyValue::Value::Tag::intValue>();
+    }
+
+    void validateMetrics(vts_hdmicec_metrics_t &startMetrics, vts_hdmicec_metrics_t &diffMetrics)
+    {
+        std::optional<PropertyValue> directMsgSent;
+        std::optional<PropertyValue> directMsgSentAck;
+        std::optional<PropertyValue> broadcastMsgSent;
+        std::optional<PropertyValue> broadcastMsgSentAck;
+        std::optional<PropertyValue> arbitrationFailures;
+        int32_t metricValue = -1;
+
+        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_DIRECTED_MESSAGES_SENT, directMsgSent);
+        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_DIRECTED_MESSAGES_SENT_AND_ACKED, directMsgSentAck);
+        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_BROADCAST_MESSAGES_SENT, broadcastMsgSent);
+        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_BROADCAST_MESSAGE_SENT_AND_ACKED, broadcastMsgSentAck);
+        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::METRIC_ARBITRATION_FAILURES, arbitrationFailures);
+
+        metricValue = directMsgSent->value->get<PropertyValue::Value::Tag::intValue>();
+        if(metricValue >= 0)
+        {
+            UT_ASSERT_EQUAL(metricValue - startMetrics.directedMessagesSent, diffMetrics.directedMessagesSent);
+        }
+
+        metricValue = directMsgSentAck->value->get<PropertyValue::Value::Tag::intValue>();
+        if(metricValue >= 0)
+        {
+            UT_ASSERT_EQUAL(metricValue - startMetrics.directedMessagesSentAndAcked, diffMetrics.directedMessagesSentAndAcked);
+        }
+
+        metricValue = broadcastMsgSent->value->get<PropertyValue::Value::Tag::intValue>();
+        if(metricValue >= 0)
+        {
+            UT_ASSERT_EQUAL(metricValue - startMetrics.broadcastMessagesSent, diffMetrics.broadcastMessagesSent);
+        }
+
+        metricValue = broadcastMsgSentAck->value->get<PropertyValue::Value::Tag::intValue>();
+        if(metricValue >= 0)
+        {
+            UT_ASSERT_EQUAL(metricValue - startMetrics.broadcastMessagesSentAndAcked, diffMetrics.broadcastMessagesSentAndAcked);
+        }
+
+        metricValue = arbitrationFailures->value->get<PropertyValue::Value::Tag::intValue>();
+        if(metricValue >= 0)
+        {
+            UT_ASSERT_EQUAL(metricValue - startMetrics.arbitrationFailures, diffMetrics.arbitrationFailures);
+        }
     }
     void TearDown() override
     {
@@ -123,8 +172,10 @@ public:
 UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
 {
     const char *testName = "SendMessage";
-    hdmicecTestConfiguration_t testConfiguration;
+    std::vector<hdmicecTestConfiguration_t> testConfigurationList;
+    std::vector<int32_t> sourceLogicalAddresses;
     std::vector<uint8_t> message;
+    int32_t delayBetweenMsgsMsec = 0;
     uint8_t src;
     uint8_t dst;
 
@@ -136,14 +187,10 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
     vector<uint8_t> getMessage;
     hdmicec::SendMessageStatus getStatus;
 
-    status = vts_hdmicec_parse_testconfig(VTS_HDMICEC_TEST_CONFIG_PATH, gModuleName, gTestGroup, testName, testConfiguration);
+    status = vts_hdmicec_parse_testconfig(VTS_HDMICEC_TEST_CONFIG_PATH, gModuleName, gTestGroup, testName,
+                                          testConfigurationList, sourceLogicalAddresses, delayBetweenMsgsMsec);
 
     UT_ASSERT_EQUAL_FATAL(status, UT_STATUS_OK);
-
-    src = testConfiguration.initiator[0];
-    dst = testConfiguration.destination;
-    message.push_back(dst | (src << 4));
-    message.insert(message.end(), testConfiguration.message.begin(), testConfiguration.message.end());
 
     // Register Event Listener
     HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
@@ -152,62 +199,78 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
     HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
 
     // Add logical address
-    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, testConfiguration.initiator);
+    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, sourceLogicalAddresses);
 
-    // Send message
-    HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, message, msgStatus);
-
-    // Wait for message to be processed and callback to be invoked
-    this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
-
-    // Verify that the onMessageSent received to controllerListener
-    controllerListener->getNextMessage(getMessage, getStatus);
-
-    UT_ASSERT_EQUAL(getMessage.size(), message.size());
-
-    if(getMessage.size() == message.size())
+    for(auto &testConfiguration : testConfigurationList)
     {
-        for (size_t i = 0; i < message.size(); i++)
+        vts_hdmicec_metrics_t startMetrics = {0};
+        message.clear();
+        src = sourceLogicalAddresses[0];
+        dst = testConfiguration.destination;
+        message.push_back(dst | (src << 4));
+        message.insert(message.end(), testConfiguration.message.begin(), testConfiguration.message.end());
+
+        getMetrics(startMetrics);
+
+        // Send message
+        HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, message, msgStatus);
+
+        // Wait for message to be processed and callback to be invoked
+        this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
+
+        // Verify that the onMessageSent received to controllerListener
+        controllerListener->getNextMessage(getMessage, getStatus);
+
+        UT_ASSERT_EQUAL(getMessage.size(), message.size());
+
+        if(getMessage.size() == message.size())
         {
-            UT_ASSERT_EQUAL(getMessage[i], message[i]);
+            for (size_t i = 0; i < message.size(); i++)
+            {
+                UT_ASSERT_EQUAL(getMessage[i], message[i]);
+            }
         }
-    }
-    // Cast getStatus to int32_t to match with onMessageSentStatus for comparison
-    UT_ASSERT_EQUAL(static_cast<int32_t>(getStatus), testConfiguration.onMessageSentStatus);
+        // Cast getStatus to int32_t to match with onMessageSentStatus for comparison
+        UT_ASSERT_EQUAL(static_cast<int32_t>(getStatus), testConfiguration.onMessageSentStatus);
 
-    // Wait for message to be processed and callback to be invoked
-    this_thread::sleep_for(chrono::milliseconds(testConfiguration.waitResponseTimeoutMsec));
+        // Wait for message to be processed and callback to be invoked
+        this_thread::sleep_for(chrono::milliseconds(testConfiguration.waitResponseTimeoutMsec));
 
-    getMessage.clear();
+        getMessage.clear();
 
-    // Verify that the onMessageReceived received to controllerListener
-    controllerListener->getNextReceiveMessage(getMessage);
-    UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.responseMessage.size());
+        // Verify that the onMessageReceived received to controllerListener
+        controllerListener->getNextReceiveMessage(getMessage);
+        UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.responseMessage.size());
 
-    if(getMessage.size() == testConfiguration.responseMessage.size())
-    {
-        for (size_t i = 0; i < testConfiguration.responseMessage.size(); i++)
+        if(getMessage.size() == testConfiguration.responseMessage.size())
         {
-            UT_ASSERT_EQUAL(getMessage[i], testConfiguration.responseMessage[i]);
+            for (size_t i = 0; i < testConfiguration.responseMessage.size(); i++)
+            {
+                UT_ASSERT_EQUAL(getMessage[i], testConfiguration.responseMessage[i]);
+            }
         }
-    }
 
-    getMessage.clear();
+        getMessage.clear();
 
-    // Verify that the onMessageReceived received to eventListener
-    eventListener->getNextReceiveMessage(getMessage);
-    UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.responseMessage.size());
+        // Verify that the onMessageReceived received to eventListener
+        eventListener->getNextReceiveMessage(getMessage);
+        UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.responseMessage.size());
 
-    if(getMessage.size() == testConfiguration.responseMessage.size())
-    {
-        for (size_t i = 0; i < testConfiguration.responseMessage.size(); i++)
+        if(getMessage.size() == testConfiguration.responseMessage.size())
         {
-            UT_ASSERT_EQUAL(getMessage[i], testConfiguration.responseMessage[i]);
+            for (size_t i = 0; i < testConfiguration.responseMessage.size(); i++)
+            {
+                UT_ASSERT_EQUAL(getMessage[i], testConfiguration.responseMessage[i]);
+            }
         }
+
+        validateMetrics(startMetrics, testConfiguration.metrics);
+
+        this_thread::sleep_for(chrono::milliseconds(delayBetweenMsgsMsec));
     }
 
     // Remove logical address
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, testConfiguration.initiator);
+    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, sourceLogicalAddresses);
 
     // Close HDMI CEC interface
     HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);

@@ -94,34 +94,14 @@ static void vcomponentkvp_destroy_instance(void *instance)
     ut_kvp_destroyInstance((ut_kvp_instance_t*)instance);
 }
 
-UT_status_t vts_hdmicec_parse_testconfig(char *cofigurationFile, const char *module, const char *testGroup,
-                                         const char *testName, hdmicecTestConfiguration_t& testConfiguration)
+static UT_status_t vts_hdmicec_parse_testconfig_instance(void *instance, const std::string &cecMsgKey,
+                                                         hdmicecTestConfiguration_t &testConfiguration)
 {
-    char resultKVP[UT_KVP_MAX_ELEMENT_SIZE] = {0};
     int32_t messageSize = 0;
-
-    void *testconfig = vcomponentkvp_create_instance(cofigurationFile);
-    ut_kvp_instance_t* kvpTestInstance = (ut_kvp_instance_t*)testconfig;
-
-    const std::string testList = string(module) + "." + string(testGroup) + "." + string(testName);
+    ut_kvp_instance_t* kvpTestInstance = (ut_kvp_instance_t*)instance;
 
     // Parse Test Parameters
-    const std::string parmetersKey = testList + ".Parameters";
-
-    uint32_t logicalAddressLen = ut_kvp_getListCount(kvpTestInstance, (parmetersKey + ".initiator").c_str());
-    if (logicalAddressLen > 0)
-    {
-        for (uint32_t index = 0; index < logicalAddressLen; index++)
-        {
-            testConfiguration.initiator.push_back(ut_kvp_getUInt32Field(kvpTestInstance, (parmetersKey + ".initiator." + std::to_string(index)).c_str()));
-        }
-    }
-    else
-    {
-        UT_LOG_ERROR("Failed to parse initiator from test configuration");
-        vcomponentkvp_destroy_instance(kvpTestInstance);
-        return UT_STATUS_FAILURE;
-    }
+    const std::string parmetersKey = cecMsgKey + ".Parameters";
 
     testConfiguration.destination = ut_kvp_getUInt32Field(kvpTestInstance, (parmetersKey + ".destination").c_str());
 
@@ -136,16 +116,15 @@ UT_status_t vts_hdmicec_parse_testconfig(char *cofigurationFile, const char *mod
     else
     {
         UT_LOG_ERROR("Failed to parse message from test configuration");
-        vcomponentkvp_destroy_instance(kvpTestInstance);
         return UT_STATUS_FAILURE;
     }
 
     //Parse control parameters
-    const std::string controlKey = testList + ".Controls";
+    const std::string controlKey = cecMsgKey + ".Controls";
     testConfiguration.waitResponseTimeoutMsec = ut_kvp_getUInt32Field(kvpTestInstance, (controlKey + ".wait_for_response_timeout").c_str());
 
     //Parse expected results
-    const std::string expectedKey = testList + ".Expected_Results";
+    const std::string expectedKey = cecMsgKey + ".Expected_Results";
     testConfiguration.onMessageSentStatus = ut_kvp_getUInt32Field(kvpTestInstance, (expectedKey + ".onMessageSent").c_str());
 
     messageSize = ut_kvp_getListCount(kvpTestInstance, (expectedKey + ".onMessageReceived").c_str());
@@ -158,8 +137,62 @@ UT_status_t vts_hdmicec_parse_testconfig(char *cofigurationFile, const char *mod
         }
     }
 
-    vcomponentkvp_destroy_instance(kvpTestInstance);
+    //Parse expected metrics
+    const std::string metricsKey = expectedKey + ".metrics";
+    testConfiguration.metrics.directedMessagesSent = ut_kvp_getUInt32Field(kvpTestInstance, (metricsKey + ".directedMessagesSent").c_str());
+    testConfiguration.metrics.directedMessagesSentAndAcked = ut_kvp_getUInt32Field(kvpTestInstance, (metricsKey + ".directedMessagesSentAndAcked").c_str());
+    testConfiguration.metrics.broadcastMessagesSent = ut_kvp_getUInt32Field(kvpTestInstance, (metricsKey + ".broadcastMessagesSent").c_str());
+    testConfiguration.metrics.broadcastMessagesSentAndAcked = ut_kvp_getUInt32Field(kvpTestInstance, (metricsKey + ".broadcastMessagesSentAndAcked").c_str());
+    testConfiguration.metrics.arbitrationFailures = ut_kvp_getUInt32Field(kvpTestInstance, (metricsKey + ".arbitrationFailures").c_str());
 
+    return UT_STATUS_OK;
+}
+
+UT_status_t vts_hdmicec_parse_testconfig(char *cofigurationFile, const char *module, const char *testGroup,
+                                         const char *testName, vector<hdmicecTestConfiguration_t>& testConfigurationList,
+                                         std::vector<int32_t>& sourceLogicalAddresses, int32_t& delayBetweenMsgsMsec)
+{
+    char resultKVP[UT_KVP_MAX_ELEMENT_SIZE] = {0};
+    hdmicecTestConfiguration_t testConfiguration;
+
+    void *testconfig = vcomponentkvp_create_instance(cofigurationFile);
+    ut_kvp_instance_t* kvpTestInstance = (ut_kvp_instance_t*)testconfig;
+
+    const std::string testList = string(module) + "." + string(testGroup) + "." + string(testName);
+    const std::string cecMsgKey = testList + ".cec_messages";
+
+    uint32_t logicalAddressLen = ut_kvp_getListCount(kvpTestInstance, (testList + ".source_logical_address").c_str());
+    if (logicalAddressLen > 0)
+    {
+        for (uint32_t index = 0; index < logicalAddressLen; index++)
+        {
+            sourceLogicalAddresses.push_back(ut_kvp_getUInt32Field(kvpTestInstance, (testList + ".source_logical_address." + std::to_string(index)).c_str()));
+        }
+    }
+    else
+    {
+        UT_LOG_ERROR("Failed to parse initiator from test configuration");
+        return UT_STATUS_FAILURE;
+    }
+
+    delayBetweenMsgsMsec = ut_kvp_getUInt32Field(kvpTestInstance, (testList + ".delay_between_messages").c_str());
+
+    int32_t messageCount = ut_kvp_getListCount(kvpTestInstance, cecMsgKey.c_str());
+
+    for(int32_t index = 0; index < messageCount; index++)
+    {
+        std::string cecIndex = cecMsgKey + "." + std::to_string(index);
+        memset(&testConfiguration, 0, sizeof(hdmicecTestConfiguration_t));
+        UT_status_t status = vts_hdmicec_parse_testconfig_instance(kvpTestInstance, cecIndex, testConfiguration);
+        if(status != UT_STATUS_OK)
+        {
+            UT_LOG_ERROR("Failed to parse test configuration for %s", cecIndex.c_str());
+            vcomponentkvp_destroy_instance(kvpTestInstance);
+            return status;
+        }
+        testConfigurationList.push_back(testConfiguration);
+    }
+    vcomponentkvp_destroy_instance(kvpTestInstance);
     return UT_STATUS_OK;
 }
 
