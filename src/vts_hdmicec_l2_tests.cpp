@@ -352,7 +352,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
     HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, directMsg_1, msgStatus);
 
     // Wait for message to be processed and callback to be invoked
-    this_thread::sleep_for(chrono::milliseconds(100));
+    this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
 
     // Verify that the onMessageSent received to controllerListener
     controllerListener->getNextMessage(getMessage, getStatus);
@@ -366,13 +366,13 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
             UT_ASSERT_EQUAL(getMessage[i], directMsg_1[i]);
         }
     }
-    UT_ASSERT_EQUAL(getStatus, hdmicec::SendMessageStatus::BUSY);
+    UT_ASSERT_EQUAL(getStatus, hdmicec::SendMessageStatus::ACK_STATE_1);
 
     // Send another message
     HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, directMsg_2, msgStatus);
 
     // Wait for message to be processed and callback to be invoked
-    this_thread::sleep_for(chrono::milliseconds(2000));
+    this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
 
     // Verify that the onMessageSent received to controllerListener
     controllerListener->getNextMessage(getMessage, getStatus);
@@ -384,7 +384,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
             UT_ASSERT_EQUAL(getMessage[i], directMsg_2[i]);
         }
     }
-    UT_ASSERT_EQUAL(getStatus, hdmicec::SendMessageStatus::BUSY);
+    UT_ASSERT_EQUAL(getStatus, hdmicec::SendMessageStatus::ACK_STATE_1);
 
     // Remove logical address
     HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);

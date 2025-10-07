@@ -120,19 +120,6 @@ public:
  * Refer to UT specification documentation [hdmicec_High-Level_TestSpecification.md](../docs/pages/hdmicec_High-Level_TestSpecification.md)
  *
  */
-
-void readAndDiscardRestOfLine(FILE *in)
-{
-    int c;
-    while ((c = fgetc(in)) != EOF && c != '\n');
-}
-
-void readString(char *choice)
-{
-    scanf("%s", choice);
-    readAndDiscardRestOfLine(stdin);
-}
-
 UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
 {
     const char *testName = "SendMessage";
@@ -171,7 +158,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
     HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, message, msgStatus);
 
     // Wait for message to be processed and callback to be invoked
-    this_thread::sleep_for(chrono::milliseconds(100));
+    this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
 
     // Verify that the onMessageSent received to controllerListener
     controllerListener->getNextMessage(getMessage, getStatus);

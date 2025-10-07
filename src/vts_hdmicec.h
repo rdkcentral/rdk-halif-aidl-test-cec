@@ -105,6 +105,7 @@ using namespace com::rdk::hal::hdmicec;
 
 #define MAX_TRANSITORY_STATE_WAIT_MS  5
 #define MAX_FINAL_STATE_WAIT_MS  500
+#define MAX_MESSAGE_SENT_WAIT_MS  50
 
 #define HDMICEC_GET_STATE(hdmicecHandle, state) \
     do { \
