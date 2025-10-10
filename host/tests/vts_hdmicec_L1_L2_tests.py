@@ -77,7 +77,7 @@ class  VTS_HDMICEC_L1_L2_Tests(utHelperClass):
                 target_tarfile = os.path.join(self.targetWorkspace, os.path.basename(artifact))
                 self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
 
-        testSetupPath = os.path.join(dir_path, "vts_hdmi_setup.yml")
+        testSetupPath = os.path.join(dir_path, "vts_hdmicec_setup.yml")
         self.testSetup = ConfigRead(testSetupPath, self.moduleName)
 
         profileOnTarget = os.path.join(self.targetWorkspace, "profiles")

@@ -20,7 +20,7 @@
 #* ******************************************************************************
 
 RUN_DIR=$(realpath "$(dirname "$0")")
-VCOMPONENT_SERVICE_NAME=Vendor-HdmiCec
+SERVICE_NAME=Vendor-HdmiCec
 
 # Function to check if a process is running
 check_process()
@@ -30,50 +30,18 @@ check_process()
     return $?
 }
 
-prompt_yes_no()
-{
-    local prompt=$1
-    while true; do
-        read -p "$prompt (y/n): " response
-        case $response in
-            [Yy]* ) return 0;;
-            [Nn]* ) return 1;;
-            * ) echo "Please answer y or n";;
-        esac
-    done
-}
-
-prompt_string()
-{
-    local prompt=$1
-    local response
-    read -p "$prompt : " response
-    echo "$response"
-}
-
 start_vcomponent_service()
 {
-    ${RUN_DIR}/$VCOMPONENT_SERVICE_NAME &
+    ${RUN_DIR}/$SERVICE_NAME &
     vcomponentservice_pid=$!
     # Wait for service to be ready
     sleep 1
+
+    echo "Started vComponent ${SERVICE_NAME} (PID: $vcomponentservice_pid)"
 }
 
-if check_process $VCOMPONENT_SERVICE_NAME; then
-    echo "${VCOMPONENT_SERVICE_NAME} is already running"
-    mocservice_pid=$(pgrep -f $VCOMPONENT_SERVICE_NAME)
-    if prompt_yes_no "Do you want to re-start ${VCOMPONENT_SERVICE_NAME}?"; then
-        echo "Killing existing ${VCOMPONENT_SERVICE_NAME} (PID: $mocservice_pid)"
-        kill $mocservice_pid
-        # Wait until the process is no longer running
-        echo "Waiting for ${VCOMPONENT_SERVICE_NAME} (PID: $mocservice_pid) to terminate......"
-        while ps -p $mocservice_pid > /dev/null 2>&1; do
-            sleep 1
-        done
-        start_vcomponent_service
-    else
-        echo "Continuing with existing ${VCOMPONENT_SERVICE_NAME} (PID: $mocservice_pid)"
-    fi
+if check_process $SERVICE_NAME; then
+    echo "Continuing with existing ${SERVICE_NAME} (PID: $(pgrep -f $SERVICE_NAME))"
 else
     start_vcomponent_service
 fi

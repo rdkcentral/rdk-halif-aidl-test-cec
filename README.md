@@ -2,7 +2,7 @@
 
 ## Build Steps
 
-### 1. Build linux binder
+### Build linux binder
 
 The test suite depends on the Linux binder with `AIDL` support. Follow these steps to build it:
 
@@ -18,7 +18,7 @@ cd linux_binder_idl
 ./build-linux-binder-aidl.sh 64
 ```
 
-### 2. Build this test
+### Build VTS test
 
 Clone and build the test suite:
 
@@ -99,40 +99,40 @@ build/bin/
 
 ## Run test
 
-- Package the Binaries:
+### Package the Binaries:
 
 ```bash
-cd build
-tar -zcf hdmicec_vts.tar.gz bin
+cd build/bin
+tar -zcf hdmicec_vts.tar.gz *
 ```
 
-- Transfer to Target Device:
+### Transfer to Target Device:
 
 Copy the tar-ball to the target device (e.g., using scp):
 
 ```bash
-scp hdmicec_vts.tar.gz root@target-device:/home/root/
+scp hdmicec_vts.tar.gz root@target-device:/tmp/
 
 ```
 
-- Extract on Target Device:
+### Extract on Target Device:
 
 Log into the target device and extract the tar-ball:
 
 ```bash
 ssh root@target-device
-cd /home/root
-tar -zxf hdmicec_vts.tar.gz
-cd bin
+mkdir /tmp/HdmiCec
+tar -zxf hdmicec_vts.tar.gz -C /tmp/HdmiCec
+cd /tmp/HdmiCec
 ```
 
-- Run the VTS Test on Target Device
+### Run the VTS Test on Target Device
 
 If the target is vDevice, then run and configure the vComponent
 
 ```bash
 #Run the vComponent service
-./VComponentHdmiCecService &
+./Vendor-HdmiCec &
 
 #Configure the vComponent
 ./hdmicec_post_command.sh vcomponent_configurations/commands/hdmicec_device_map_init.yaml 8080
@@ -141,5 +141,11 @@ If the target is vDevice, then run and configure the vComponent
 Run below command to execute the VTS Test:
 
 ```bash
-./run.sh -p profiles/hfp-hdmicec_mock.yaml
+./run.sh -p profiles/hfp-hdmicec_vcomponent.yaml
 ```
+
+## Setting Python environment for running the L1, L2 and L3 automation test cases
+
+- For running the L1 L2 and L3 test suite, a host PC with a Python environment is required.
+- Install Python Environment and Activation Scripts as detailed in [Python Installation](https://github.com/rdkcentral/ut-raft/wiki/Guide-for-Setting-up-the-Python-RAFT-Testing-Suite)
+- To run the `L1`, `L2` and `L3` test cases of AV Modules follow the `L1` `L2` and `L3` Test Procedure document - [vts_hdmicec_L1_L2_L3_TestProcedure.md](docs/pages/vts_hdmicec_L1_L2_L3_TestProcedure.md)
