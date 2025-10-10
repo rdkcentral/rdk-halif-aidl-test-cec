@@ -61,7 +61,7 @@
 #include "vts_hdmicec_parse_testconfig.h"
 
 extern sp<IHdmiCec> gHDMICECHandle;
-static const char *gModuleName = "hdmicec";
+static const char *gModuleName = "HdmiCec";
 static const char *gTestGroup = "L3";
 
 /* Test class registration with UT_Core */

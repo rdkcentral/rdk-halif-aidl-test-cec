@@ -208,7 +208,7 @@ build_ut_core()
 build_vcomponent_services()
 {
     if [ ! -d ${VCOMPONENT_DIR} ]; then
-        git clone -b $VCOMPONENT_HDMI_CEC_VERSTION 'http://github.com/rdkcentral/rdk-aidl-vcomponent-cec.git' $VCOMPONENT_DIR
+        git clone -b $VCOMPONENT_HDMI_CEC_VERSTION 'git@github.com:rdkcentral/rdk-aidl-vcomponent-cec.git' $VCOMPONENT_DIR
         if [ $? -ne 0 ]; then
             echo -e "${BOLD}╔══════════════════════════════════════════════╗${RESET}"
             echo -e "${BOLD}* ${RED}Failed to clone hdmi cec vcomponent.${RESET}"

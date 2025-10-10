@@ -20,7 +20,7 @@
 #* ******************************************************************************
 
 RUN_DIR=$(realpath "$(dirname "$0")")
-VCOMPONENT_SERVICE_NAME=VComponentHdmiCecService
+VCOMPONENT_SERVICE_NAME=Vendor-HdmiCec
 
 # Function to check if a process is running
 check_process()

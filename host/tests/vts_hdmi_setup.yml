@@ -1,0 +1,41 @@
+# This is a sample test configuration file. Users can customize the YAML entries as needed
+# This test configuration file includes sample YAML entries for executing various combinations
+HdmiCec:
+  description: "HDMICEC L1 and L2 test setup"
+  restart_required: False
+  test_suites: # List of L1 and L2 test suites
+    ######################################
+    # Entry to run all test case
+    ######################################
+    #  - name: "VTS_L1_HDMICEC"
+    #    test_cases:
+    #      - all
+    #######################################
+    # Entries to run individual test cases
+    #######################################
+    - name: "VTS_L1_HDMICEC"
+      test_cases:
+        - "getState_pos"
+        - "getProperty_pos"
+        - "getProperty_neg"
+        - "getLogicalAddresses_pos"
+        - "open_pos"
+        - "open_neg"
+        - "close_pos"
+        - "close_neg"
+        - "registerEventListener_pos"
+        - "registerEventListener_neg"
+        - "unregisterEventListener_pos"
+        - "unregisterEventListener_neg"
+        - "addLogicalAddresses_pos"
+        - "addLogicalAddresses_neg"
+        - "removeLogicalAddresses_pos"
+        - "removeLogicalAddresses_neg"
+        - "sendMessage_pos"
+        - "sendMessage_neg"
+    - name: "VTS_L2_HDMICEC"
+      test_cases:
+        - "StateTransitions"
+        - "metricValidation"
+        - "logicalAddressesValidation"
+        - "sendMessageValidation"

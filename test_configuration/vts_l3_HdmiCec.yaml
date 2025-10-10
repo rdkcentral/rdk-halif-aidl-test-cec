@@ -1,4 +1,4 @@
-hdmicec:
+HdmiCec:
   L3:
     SendMessage:
       source_logical_address: [0] # Logical address of the DUT
