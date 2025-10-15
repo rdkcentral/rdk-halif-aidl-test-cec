@@ -39,13 +39,13 @@ passwd root
 
 ```
 
-Then, update the same password in the vts_rack_configuration.yml file.
+Then, update the same password in the vts_rack_configuration.yaml file.
 
 Note: Currently, the Python paramiko library does not support empty passwords on vDevice, so setting a password is necessary
 
 ### Update Configuration Files
 
-Example Rack Configuration File: [vts_rack_configuration.yml](../../host/tests/configs/vts_rack_configuration.yml)
+Example Rack Configuration File: [vts_rack_configuration.yaml](../../host/tests/configs/vts_rack_configuration.yaml)
 
 For more details on rack configuration file refer [RAFT](https://github.com/rdkcentral/python_raft/blob/1.0.0/README.md) and [example_rack_config.yml](https://github.com/rdkcentral/python_raft/blob/1.0.0/examples/configs/example_rack_config.yml)
 
@@ -91,7 +91,7 @@ Update below fields in the device configuration file:
 
 - Set the path for `target_directory` where `HAL` binaries will be copied onto the device.
 - Specify the device profile path in `profiles/<device profile>.yaml`
-- Ensure the `platform` should match with the `DUT` `platform` in vts_rack_configuration.yml
+- Ensure the `platform` should match with the `DUT` `platform` in vts_rack_configuration.yaml
 
 ```yaml
 deviceConfig:
@@ -110,7 +110,7 @@ deviceConfig:
 
 #### Test Setup Configuration File
 
-Example Test Setup configuration File: [vts_hdmicec_setup.yaml](../../host/tests/TestCases/vts_hdmicec_setup.yml)
+Example Test Setup configuration File: [vts_hdmicec_setup.yaml](../../host/tests/TestCases/vts_hdmicec_setup.yaml)
 
 This `yaml` contains the list of test_suites and test_cases to run
 
@@ -162,7 +162,7 @@ Note : by default, all HdmiCec test cases are added in the setup file
 
 #### Test Configuration
 
-Example Test Setup configuration File: [vts_hdmicec_testConfig.yml](../../host/tests/TestCases/vts_hdmicec_testConfig.yml)
+Example Test Setup configuration File: [vts_hdmicec_testConfig.yaml](../../host/tests/TestCases/vts_hdmicec_testConfig.yaml)
 
 Execute command to run the HAL binary was provided in this file. The created binary tar file should be placed in the artifacts section so that it can be fetched by the `RAFT` automation.
 
@@ -208,5 +208,5 @@ To run the HdmiCec L1, L2 tests in a Windows environment, follow these additiona
 Once the environment is set up, execute the test cases with the following command
 
 ```bash
-python vts_hdmicec_L1_L2_tests.py --config </PATH>/host/tests/configs/vts_rack_configuration.yml --deviceConfig </PATH>/host/tests/configs/vts_device_configuration.yml
+python vts_hdmicec_L1_L2_tests.py --config </PATH>/host/tests/configs/vts_rack_configuration.yaml --deviceConfig </PATH>/host/tests/configs/vts_device_configuration.yaml
 ```

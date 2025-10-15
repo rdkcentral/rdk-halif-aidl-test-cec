@@ -72,46 +72,16 @@ The build.sh script:
 
 - Generates binaries in the `build/bin` directory.
 
-Example directory structure :
-
-```bash
-build/bin/
-├── lib
-├── libaidl_client.so
-├── libbase.so
-├── libbinder.so
-├── libcutils.so
-├── libcutils_sockets.so
-├── liblog.so
-├── libut_control.so
-├── libutils.so
-├── profiles
-│   └── hfp-hdmicec_mock.yaml
-├── run.sh
-├── servicemanager
-├── vcomponent_configurations
-│   ├── hdmicec_vcomponent_cec_responses.yaml
-│   └── hdmicec_vcomponent_configuration.yaml
-├── VComponentHdmiCecService
-└── vts_hdmicec_hal_test
-
-```
+- Generates tar file of the bin folder `rdk-halif-binder-test-cec.tar.gz` in the `build/bin` directory.
 
 ## Run test
 
-### Package the Binaries:
+### Transfer tar file to Target Device:
+
+Copy the tar-ball to the target device (e.g., using `scp`):
 
 ```bash
-cd build/bin
-tar -zcf hdmicec_vts.tar.gz *
-```
-
-### Transfer to Target Device:
-
-Copy the tar-ball to the target device (e.g., using scp):
-
-```bash
-scp hdmicec_vts.tar.gz root@target-device:/tmp/
+scp -P <port> rdk-halif-binder-test-cec.tar.gz root@target-device:/tmp/
 
 ```
 
@@ -122,13 +92,13 @@ Log into the target device and extract the tar-ball:
 ```bash
 ssh root@target-device
 mkdir /tmp/HdmiCec
-tar -zxf hdmicec_vts.tar.gz -C /tmp/HdmiCec
+tar -zxf rdk-halif-binder-test-cec.tar.gz -C /tmp/HdmiCec
 cd /tmp/HdmiCec
 ```
 
 ### Run the VTS Test on Target Device
 
-If the target is vDevice, then run and configure the vComponent
+If the target is vDevice and if `HdmiCec` service is not running, then run and configure the vComponent
 
 ```bash
 #Run the vComponent service

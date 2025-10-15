@@ -27,6 +27,7 @@ deviceConfig:
         platform:   "vDevice"
         model:      "UK"
         soc_vendor: "intel"
+        device_type: "TV" # TV, PlaybackDevice, AudioSystem, RecordingDevice, Tuner, Reserved
         target_directory: "/tmp/"
         hdmicec_process_name: "Vdevice-HdmiCec"
         prompt: "~#" # Prompt string on console

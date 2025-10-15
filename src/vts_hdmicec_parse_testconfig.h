@@ -84,7 +84,6 @@ typedef struct hdmicecSendMsgConfiguration
 {
     int32_t destination;
     std::vector<uint8_t> message;
-    uint32_t waitResponseTimeoutMsec;
     int32_t onMessageSentStatus;
     std::vector<uint8_t> responseMessage;
     vts_hdmicec_metrics_t metrics;

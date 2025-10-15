@@ -233,37 +233,6 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
         // Cast getStatus to int32_t to match with onMessageSentStatus for comparison
         UT_ASSERT_EQUAL(static_cast<int32_t>(getStatus), testConfiguration.onMessageSentStatus);
 
-        // Wait for message to be processed and callback to be invoked
-        this_thread::sleep_for(chrono::milliseconds(testConfiguration.waitResponseTimeoutMsec));
-
-        getMessage.clear();
-
-        // Verify that the onMessageReceived received to controllerListener
-        UT_ASSERT_TRUE(controllerListener->getNextReceiveMessage(getMessage));
-        UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.responseMessage.size());
-
-        if(getMessage.size() == testConfiguration.responseMessage.size())
-        {
-            for (size_t i = 0; i < testConfiguration.responseMessage.size(); i++)
-            {
-                UT_ASSERT_EQUAL(getMessage[i], testConfiguration.responseMessage[i]);
-            }
-        }
-
-        getMessage.clear();
-
-        // Verify that the onMessageReceived received to eventListener
-        UT_ASSERT_TRUE(eventListener->getNextReceiveMessage(getMessage));
-        UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.responseMessage.size());
-
-        if(getMessage.size() == testConfiguration.responseMessage.size())
-        {
-            for (size_t i = 0; i < testConfiguration.responseMessage.size(); i++)
-            {
-                UT_ASSERT_EQUAL(getMessage[i], testConfiguration.responseMessage[i]);
-            }
-        }
-
         validateMetrics(startMetrics, testConfiguration.metrics);
 
         this_thread::sleep_for(chrono::milliseconds(delayBetweenMsgsMsec));

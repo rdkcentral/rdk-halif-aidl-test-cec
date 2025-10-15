@@ -34,8 +34,12 @@ from raft.framework.core.logModule import logModule
 from raft.framework.plugins.ut_raft import utHelperClass
 from raft.framework.plugins.ut_raft.utSuiteNavigator import UTSuiteNavigatorClass
 from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
+from vts_hdmicec_helper import hdmiCecHelperClass
 
-class  VTS_HDMICEC_L1_L2_Tests(utHelperClass):
+HDMICEC_L1_TEST_SUITE_NAME = "VTS_L1_HDMICEC"
+HDMICEC_L2_TEST_SUITE_NAME = "VTS_L2_HDMICEC"
+
+class  VTS_HDMICEC_L1_L2_Tests(hdmiCecHelperClass):
     """
     Runs automated L1, L2 HDMICEC tests on the target device.
     Handles setup, service restarts, asset management.
@@ -45,45 +49,9 @@ class  VTS_HDMICEC_L1_L2_Tests(utHelperClass):
         """
         Initializes the test class
         """
-        self.moduleName = "HdmiCec"
         qcId = "1"
-        super().__init__(self.moduleName, qcId, log)
-
-        self.log = log
-        if log is None:
-            self.log = logModule(self.__class__.__name__)
-            self.log.setLevel(self.log.INFO)
-
-        deviceTestSetup = self.cpe.get("test")
-        self.targetWorkspace = os.path.join(self.cpe.get("target_directory"), self.moduleName)
-
-        self.moduleHFPFile = os.path.join(dir_path, deviceTestSetup.get("profile"))
-        self.testConfigFile = os.path.join(dir_path, "vts_hdmicec_testConfig.yml")
-
-        self.testConfig    = ConfigRead(self.testConfigFile, self.moduleName)
-
-        self.hal_session = self.dut.getConsoleSession("ssh_hal_test")
-
-        self.utMenu = UTSuiteNavigatorClass(self.testConfig, None, self.hal_session)
-        self.utilities = utBaseUtils()
-
-        self.utilities.change_directory(self.hal_session, self.targetWorkspace)
-
-        for artifact in self.testConfig.test.artifacts:
-            filesPath = os.path.join(dir_path, artifact)
-            self.utilities.sftpCopy(self.hal_session, filesPath, self.targetWorkspace)
-
-            if tarfile.is_tarfile(filesPath):
-                target_tarfile = os.path.join(self.targetWorkspace, os.path.basename(artifact))
-                self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
-
-        testSetupPath = os.path.join(dir_path, "vts_hdmicec_setup.yml")
-        self.testSetup = ConfigRead(testSetupPath, self.moduleName)
-
-        profileOnTarget = os.path.join(self.targetWorkspace, "profiles")
-        profileOnTarget = os.path.join(profileOnTarget, os.path.basename(self.moduleHFPFile))
-        self.testConfig.test.execute = self.testConfig.test.execute + f" -p {profileOnTarget}"
-        self.waitTime = self.cpe.get("wait_time")
+        self.testName = "HdmiCec_L1_L2"
+        super().__init__(self.testName, qcId, log)
 
     def runTest(self, testSuite, test_case:str=None):
         """
@@ -108,13 +76,18 @@ class  VTS_HDMICEC_L1_L2_Tests(utHelperClass):
         Returns:
             bool: Final result of the test.
         """
+        self.utilities.change_directory(self.hal_session, self.targetWorkspace)
+
         self.utMenu.start()
 
-        testsuites = self.testSetup.fields.get('test_suites')
+        testsuites = self.testCaseConfiguraiton.fields.get('test_suites')
         finalresult = True
 
         for testsuite in testsuites:
             testsuite_name = testsuite.get("name")
+            if( testsuite_name != HDMICEC_L1_TEST_SUITE_NAME and testsuite_name != HDMICEC_L2_TEST_SUITE_NAME):
+                continue
+
             test_cases = testsuite.get("test_cases")
 
             if len(test_cases) == 1 and test_cases[0] == "all":

@@ -50,6 +50,8 @@ declare -r RDK_HAL_DIR=${TOP}/rdk-halif-aidl
 declare -r PROFILES_DIR=${TOP}/profiles
 declare -r VCOMPONENT_DIR=${TOP}/vcomponent
 
+OUT_TAR_FILE=vts-HdmiCec.tar.gz
+
 DEF_LINUX_BINDER="`realpath ${TOP}/../`/linux_binder_idl"
 # AIDL_BIN: path of aidl compiler
 AIDL_BIN=${AIDL_BIN:-${DEF_LINUX_BINDER}/out/aidl}
@@ -256,6 +258,10 @@ install_test()
     cp -r "${VCOMPONENT_DIR}/vcomponent_configurations" ${INSTALL_PATH}
     cp -r "${VCOMPONENT_DIR}/hdmicec_post_command.sh" ${INSTALL_PATH}
     cp -r "${TOP}/test_configuration" ${INSTALL_PATH}
+
+    cd ${INSTALL_PATH}
+    tar -czf ${OUT_TAR_FILE} *
+    cd -
 }
 
 ###############################################################################
@@ -268,6 +274,8 @@ clean_test()
     make clean
     make -C ${VCOMPONENT_DIR} clean
     make -C ${AIDL_LIB_DIR} clean
+
+    rm -rf ${TOP_BUILD_DIR}/bin/${OUT_TAR_FILE}
 }
 
 ###############################################################################

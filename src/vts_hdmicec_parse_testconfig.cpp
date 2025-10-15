@@ -119,10 +119,6 @@ static UT_status_t vts_hdmicec_parse_testconfig_instance(void *instance, const s
         return UT_STATUS_FAILURE;
     }
 
-    //Parse control parameters
-    const std::string controlKey = cecMsgKey + ".Controls";
-    testConfiguration.waitResponseTimeoutMsec = ut_kvp_getUInt32Field(kvpTestInstance, (controlKey + ".wait_for_response_timeout").c_str());
-
     //Parse expected results
     const std::string expectedKey = cecMsgKey + ".Expected_Results";
     testConfiguration.onMessageSentStatus = ut_kvp_getUInt32Field(kvpTestInstance, (expectedKey + ".onMessageSent").c_str());

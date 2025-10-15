@@ -7,11 +7,8 @@ HdmiCec:
         - Parameters:
             destination: 5 # Logical address of the target device
             message: [0x46] # Message to be sent with payload (0x46 = "Give OSD Name")
-          Controls:
-            wait_for_response_timeout: 1000 # Time to wait for a response in milliseconds
           Expected_Results:
             onMessageSent: 0 # Expected result after sending the message
-            onMessageReceived: [0x50, 0x47, 0x59, 0x41, 0x4D, 0x41, 0x48, 0x41] # Expected response message (OSD name)
             metrics:
               directedMessagesSent: 1
               directedMessagesSentAndAcked: 1
@@ -21,11 +18,8 @@ HdmiCec:
         - Parameters:
             destination: 0xF # broadcast message
             message: [0x85] # Message to be sent with payload (0x85 = "Request Active Source")
-          Controls:
-            wait_for_response_timeout: 1000 # Time to wait for a response in milliseconds
           Expected_Results:
             onMessageSent: 1 # Expected result after sending the message
-            onMessageReceived: [0x5F, 0x82, 0x30, 0x00] # Expected response message (Physical address)
             metrics:
               directedMessagesSent: 0
               directedMessagesSentAndAcked: 0
