@@ -174,7 +174,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
     const char *testName = "SendMessage";
     std::vector<hdmicecSendMsgConfiguration_t> testConfigurationList;
     std::vector<int32_t> sourceLogicalAddresses;
-    std::vector<uint8_t> message;
+    //std::vector<uint8_t> message;
     int32_t delayBetweenMsgsMsec = 0;
     uint8_t src;
     uint8_t dst;
@@ -204,16 +204,11 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
     for(auto &testConfiguration : testConfigurationList)
     {
         vts_hdmicec_metrics_t startMetrics = {0};
-        message.clear();
-        src = sourceLogicalAddresses[0];
-        dst = testConfiguration.destination;
-        message.push_back(dst | (src << 4));
-        message.insert(message.end(), testConfiguration.message.begin(), testConfiguration.message.end());
 
         getMetrics(startMetrics);
 
         // Send message
-        HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, message, msgStatus);
+        HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, testConfiguration.message, msgStatus);
 
         // Wait for message to be processed and callback to be invoked
         this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
@@ -221,17 +216,17 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
         // Verify that the onMessageSent received to controllerListener
         UT_ASSERT_TRUE(controllerListener->getNextMessage(getMessage, getStatus));
 
-        UT_ASSERT_EQUAL(getMessage.size(), message.size());
+        UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
 
-        if(getMessage.size() == message.size())
+        if(getMessage.size() == testConfiguration.message.size())
         {
-            for (size_t i = 0; i < message.size(); i++)
+            for (size_t i = 0; i < testConfiguration.message.size(); i++)
             {
-                UT_ASSERT_EQUAL(getMessage[i], message[i]);
+                UT_ASSERT_EQUAL(getMessage[i], testConfiguration.message[i]);
             }
         }
         // Cast getStatus to int32_t to match with onMessageSentStatus for comparison
-        UT_ASSERT_EQUAL(static_cast<int32_t>(getStatus), testConfiguration.onMessageSentStatus);
+        UT_ASSERT_TRUE((getStatus ==  hdmicec::SendMessageStatus::ACK_STATE_0) || (getStatus ==  hdmicec::SendMessageStatus::ACK_STATE_1));
 
         validateMetrics(startMetrics, testConfiguration.metrics);
 

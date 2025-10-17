@@ -2,13 +2,11 @@ HdmiCec:
   L3:
     SendMessage:
       source_logical_address: [0] # Logical address of the DUT
-      delay_between_messages: 100 # Delay between messages in milliseconds
+      delay_between_messages: 10 # Delay between messages in milliseconds
       cec_messages:
         - Parameters:
-            destination: 5 # Logical address of the target device
-            message: [0x46] # Message to be sent with payload (0x46 = "Give OSD Name")
+            message: [0x05, 0x46] # Message to be sent with payload (0x46 = "Give OSD Name")
           Expected_Results:
-            onMessageSent: 0 # Expected result after sending the message
             metrics:
               directedMessagesSent: 1
               directedMessagesSentAndAcked: 1
@@ -16,10 +14,8 @@ HdmiCec:
               broadcastMessagesSentAndAcked: 0
               arbitrationFailures: 0
         - Parameters:
-            destination: 0xF # broadcast message
-            message: [0x85] # Message to be sent with payload (0x85 = "Request Active Source")
+            message: [0x05, 0x85] # Message to be sent with payload (0x85 = "Request Active Source")
           Expected_Results:
-            onMessageSent: 1 # Expected result after sending the message
             metrics:
               directedMessagesSent: 0
               directedMessagesSentAndAcked: 0

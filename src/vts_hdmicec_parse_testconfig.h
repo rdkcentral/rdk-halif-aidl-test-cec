@@ -82,9 +82,7 @@ typedef struct vts_hdmicec_metrics
 
 typedef struct hdmicecSendMsgConfiguration
 {
-    int32_t destination;
     std::vector<uint8_t> message;
-    int32_t onMessageSentStatus;
     std::vector<uint8_t> responseMessage;
     vts_hdmicec_metrics_t metrics;
 } hdmicecSendMsgConfiguration_t;

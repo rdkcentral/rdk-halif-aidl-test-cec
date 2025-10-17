@@ -25,12 +25,13 @@
 deviceConfig:
     cpe1:
         platform:   "vDevice"
-        model:      "UK"
+        model:      "VTV"
         soc_vendor: "intel"
-        device_type: "TV" # TV, PlaybackDevice, AudioSystem, RecordingDevice, Tuner, Reserved
         target_directory: "/tmp/"
-        hdmicec_process_name: "Vdevice-HdmiCec"
+        hdmicec_process_name: "Vendor-HdmiCec"
+        device_type: ["TV"] # Possible values: ["TV", "RecordingDevice", "Tuner", "PlaybackDevice", "AudioSystem", "VideoProcessor", "PureCecSwitch", "Reserved"]
         prompt: "~#" # Prompt string on console
         wait_time: 240 #Configurable timeout value to limit the total duration of individual tests
         test:
             profile: "../../profiles/hfp-hdmicec_vcomponent.yaml" #HFP profile used to meet platform requirements
+            controller_port: 8080 #Port where the ut-controller is listening

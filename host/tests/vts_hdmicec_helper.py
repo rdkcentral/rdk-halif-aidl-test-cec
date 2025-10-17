@@ -24,13 +24,12 @@
 import os
 import sys
 import tarfile
+import yaml
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-sys.path.append(os.path.join(dir_path, "../../"))
+sys.path.append(os.path.join(dir_path, "../"))
 
 from raft.framework.plugins.ut_raft.configRead import ConfigRead
-from raft.framework.plugins.ut_raft.utPlayer import utPlayer
-from raft.framework.plugins.ut_raft.utPlayer import MixerInputTypes
 from raft.framework.plugins.ut_raft.utUserResponse import utUserResponse
 from raft.framework.plugins.ut_raft import utHelperClass
 from raft.framework.core.logModule import logModule
@@ -39,6 +38,7 @@ from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
 
 HDMICEC_TEST_MENU_CONFIGURATION_FILE = os.path.join(dir_path, "vts_hdmicec_testMenuConfiguration.yaml")
 HDMICEC_TESTCASES_CONFIGURATION_FILE = os.path.join(os.path.join(dir_path, "../configs"), "vts_hdmicec_testcase_configuration.yaml")
+HDMICEC_L3_TEST_CONFIG_FILE = os.path.join(os.path.join(dir_path, "../../test_configuration"), "vts_l3_HdmiCec.yaml")
 
 class hdmiCecHelperClass(utHelperClass):
 
@@ -54,20 +54,30 @@ class hdmiCecHelperClass(utHelperClass):
             self.log = logModule(self.__class__.__name__)
             self.log.setLevel(self.log.INFO)
 
-        deviceTestSetup = self.cpe.get("test")
+        # Parse device configuration
+        self.deviceTestSetup = self.cpe.get("test")
         self.targetWorkspace = os.path.join(self.cpe.get("target_directory"), self.moduleName)
+        self.moduleHFPFile = os.path.join(dir_path, self.deviceTestSetup.get("profile"))
+        profileOnTarget = os.path.join(self.targetWorkspace, "profiles")
+        profileOnTarget = os.path.join(profileOnTarget, os.path.basename(self.moduleHFPFile))
+        self.waitTime = self.cpe.get("wait_time")
+        self.device_type = self.cpe.get("device_type")
 
-        self.moduleHFPFile = os.path.join(dir_path, deviceTestSetup.get("profile"))
+        # Load test menu and test case configuration files
+        self.l3TestConfigFile = HDMICEC_L3_TEST_CONFIG_FILE
+        self.testMenuConfiguration = ConfigRead(HDMICEC_TEST_MENU_CONFIGURATION_FILE, self.moduleName)
+        self.testCaseConfiguration = ConfigRead(HDMICEC_TESTCASES_CONFIGURATION_FILE, self.moduleName)
+        self.testMenuConfiguration.test.execute = self.testMenuConfiguration.test.execute + f" -p {profileOnTarget}"
 
-        self.testMenuConfiguration    = ConfigRead(HDMICEC_TEST_MENU_CONFIGURATION_FILE, self.moduleName)
-
+        # Establish HAL session
         self.hal_session = self.dut.getConsoleSession("ssh_hal_test")
 
+        # Initialize UT menu navigator and utilities
         self.utMenu = UTSuiteNavigatorClass(self.testMenuConfiguration, None, self.hal_session)
         self.utilities = utBaseUtils()
 
+        # Copy required artifacts to target device
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
-
         for artifact in self.testMenuConfiguration.test.artifacts:
             filesPath = os.path.join(dir_path, artifact)
             self.utilities.sftpCopy(self.hal_session, filesPath, self.targetWorkspace)
@@ -76,14 +86,91 @@ class hdmiCecHelperClass(utHelperClass):
                 target_tarfile = os.path.join(self.targetWorkspace, os.path.basename(artifact))
                 self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
 
-        self.testCaseConfiguraiton = ConfigRead(HDMICEC_TESTCASES_CONFIGURATION_FILE, self.moduleName)
+    def getPossibleLogicalAddresses(self, device_type:list):
+        """
+        Returns the possible logical addresses based on the device type
+        Args:
+            device_type (list): device type
+        Returns:
+            list: list of possible logical addresses
+        """
+        logical_addresses = []
+        for dtype in device_type:
+            if dtype == "TV":
+                logical_addresses.append("0")
+            elif dtype == "RecordingDevice":
+                logical_addresses.extend(["1", "2", "9"])
+            elif dtype == "Tuner":
+                logical_addresses.extend(["3", "6", "7", "10"])
+            elif dtype == "PlaybackDevice":
+                logical_addresses.extend(["4", "8", "11"])
+            elif dtype == "AudioSystem":
+                logical_addresses.append("5")
+            elif dtype == "VideoProcessor":
+                logical_addresses.append("14")
+            elif dtype == "PureCecSwitch":
+                logical_addresses.append("13")
+            else:
+                logical_addresses.extend(["11", "12"])
+        return logical_addresses
 
-        profileOnTarget = os.path.join(self.targetWorkspace, "profiles")
-        profileOnTarget = os.path.join(profileOnTarget, os.path.basename(self.moduleHFPFile))
-        self.testMenuConfiguration.test.execute = self.testMenuConfiguration.test.execute + f" -p {profileOnTarget}"
-        self.waitTime = self.cpe.get("wait_time")
-        self.device_type = self.cpe.get("device_type")
+    def opCodeToHex(self, opcode:str):
+        """
+        Converts the opcode to hex value
+        Args:
+            opcode (str): opcode string
+        Returns:
+            str: hex value of the opcode
+        """
+        #TODO: Expand this dictionary as needed
+        opcode_dict = {
+            "SetOsdName": "0x47",
+            "CecVersion": "0x9F",
+            "SetMenuLanguage": "0x32",
+            "ReportPhysicalAddress": "0x84",
+            "DeviceVendorId": "0x87"
+        }
+        return opcode_dict.get(opcode, None)
+
+    def hdmiCecReadYaml(self, yaml_path: str) -> dict:
+        """
+        Reads a YAML file and returns its content as a dictionary.
+        Args:
+            yaml_path (str): Path to the YAML file
+        Returns:
+            dict: Content of the YAML file as a dictionary
+        """
+        with open(yaml_path, "r") as f:
+            return yaml.safe_load(f)
+
+
+    def hdmiCecWriteYaml(self, yaml_path: str, data: dict):
+        """
+        Writes a dictionary to a YAML file.
+        Args:
+            yaml_path (str): Path to the YAML file
+            data (dict): Content to write to the YAML file
+        """
+        with open(yaml_path, "w") as f:
+            yaml.dump(data, f, sort_keys=False, default_flow_style=None)
+
+    def updateNestedDictionaries(self, original: dict, updates: dict):
+        """
+        Recursively updates nested dictionaries.
+        Args:
+            original (dict): Original dictionary to be updated
+            updates (dict): Dictionary with updates
+        """
+        for key, value in updates.items():
+            if isinstance(value, dict) and key in original:
+                self.updateNestedDictionaries(original[key], value)
+            else:
+                original[key] = value
 
     def testEndFunction(self, powerOff=True):
-
+        """
+        Ends the test case.
+        Args:
+            powerOff (bool): Whether to power off the device
+        """
         super().testEndFunction(powerOff)

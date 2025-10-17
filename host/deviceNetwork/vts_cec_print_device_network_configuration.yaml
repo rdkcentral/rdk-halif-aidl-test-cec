@@ -1,0 +1,3 @@
+HdmiCec:
+  commond: print
+  description: Print the current HDMI CEC device map

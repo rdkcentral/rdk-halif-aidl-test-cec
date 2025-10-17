@@ -57,3 +57,8 @@ HdmiCec:
                     - "metricValidation"
                     - "logicalAddressesValidation"
                     - "sendMessageValidation"
+            2:
+                name: "VTS_L3_HDMICEC"
+                tests:
+                    - "SendMessage"
+                    - "ReceiveMessage"

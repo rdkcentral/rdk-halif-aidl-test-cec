@@ -103,8 +103,6 @@ static UT_status_t vts_hdmicec_parse_testconfig_instance(void *instance, const s
     // Parse Test Parameters
     const std::string parmetersKey = cecMsgKey + ".Parameters";
 
-    testConfiguration.destination = ut_kvp_getUInt32Field(kvpTestInstance, (parmetersKey + ".destination").c_str());
-
     messageSize = ut_kvp_getListCount(kvpTestInstance, (parmetersKey + ".message").c_str());
     if(messageSize > 0)
     {
@@ -121,17 +119,6 @@ static UT_status_t vts_hdmicec_parse_testconfig_instance(void *instance, const s
 
     //Parse expected results
     const std::string expectedKey = cecMsgKey + ".Expected_Results";
-    testConfiguration.onMessageSentStatus = ut_kvp_getUInt32Field(kvpTestInstance, (expectedKey + ".onMessageSent").c_str());
-
-    messageSize = ut_kvp_getListCount(kvpTestInstance, (expectedKey + ".onMessageReceived").c_str());
-
-    if(messageSize > 0)
-    {
-        for (uint32_t index = 0; index < messageSize; index++)
-        {
-            testConfiguration.responseMessage.push_back(ut_kvp_getUInt8Field(kvpTestInstance, (expectedKey + ".onMessageReceived." + std::to_string(index)).c_str()));
-        }
-    }
 
     //Parse expected metrics
     const std::string metricsKey = expectedKey + ".metrics";

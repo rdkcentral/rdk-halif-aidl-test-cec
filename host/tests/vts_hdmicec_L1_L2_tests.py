@@ -80,7 +80,7 @@ class  VTS_HDMICEC_L1_L2_Tests(hdmiCecHelperClass):
 
         self.utMenu.start()
 
-        testsuites = self.testCaseConfiguraiton.fields.get('test_suites')
+        testsuites = self.testCaseConfiguration.fields.get('test_suites')
         finalresult = True
 
         for testsuite in testsuites:

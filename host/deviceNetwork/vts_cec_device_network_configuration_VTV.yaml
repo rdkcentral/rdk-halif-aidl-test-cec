@@ -1,0 +1,92 @@
+HdmiCec:
+  commond: configure
+  description: Initialize HDMI CEC device map
+  config:
+    emulated_device:
+      name: "VTV"
+      language: "eng"
+      cec_version: "1.4"
+      device_type: "TV"
+      power_status: "on"
+      port_id: 0
+      fault: no
+      number_of_ports: 4
+      active_source: false
+    device_map:
+      - device:
+        name: "VTV"
+        language: "eng"
+        cec_version: "1.4"
+        device_type: "TV"
+        power_status: "on"
+        fault: no
+        port_id: 0
+        number_of_ports: 4
+        active_source: false
+        children:
+          - device:
+            name: "YAMAHA"
+            language: "eng"
+            cec_version: "1.4"
+            device_type: "AudioSystem"
+            power_status: "on"
+            fault: no
+            port_id: 3
+            number_of_ports: 2
+            active_source: true
+            children:
+              - device:
+                name: "PIONEER"
+                language: "eng"
+                cec_version: "1.4"
+                device_type: "PlaybackDevice"
+                power_status: "on"
+                fault: no
+                port_id: 1
+                number_of_ports: 0
+                active_source: false
+                children: []
+              - device:
+                name: "GOOGLE"
+                language: "eng"
+                cec_version: "1.4"
+                device_type: "PlaybackDevice"
+                power_status: "standby"
+                fault: no
+                port_id: 2
+                number_of_ports: 0
+                active_source: false
+                children: []
+          - device:
+            name: "IPSTB"
+            language: "eng"
+            cec_version: "1.4"
+            device_type: "PlaybackDevice"
+            power_status: "standby"
+            fault: no
+            port_id: 2
+            number_of_ports: 0
+            active_source: false
+            children: []
+          - device:
+            name: "CECAdapter"
+            language: "eng"
+            cec_version: "1.4"
+            device_type: "RecordingDevice"
+            power_status: "on"
+            fault: no
+            port_id: 0
+            number_of_ports: 2
+            active_source: false
+            children:
+              - device:
+                name: "GameConsole"
+                language: "eng"
+                cec_version: "1.4"
+                device_type: "PlaybackDevice"
+                power_status: "on"
+                fault: no
+                port_id: 1
+                number_of_ports: 0
+                active_source: false
+                children: []
