@@ -169,9 +169,6 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         self.dutLogicalAddress = self.pickLogicalAddressForDut(possibleLogicalAddresses)
         self.destinationLogicalAddress = self.pickValidLogicalAddressForController()
 
-        # Remove this
-        self.utilities.sftpCopy(self.hal_session, "/home/sky/Bhanu/hdmicec_python/test_configuration/vts_l3_HdmiCec.yaml", "/tmp/HdmiCec/test_configuration/")
-
         self.updateTestconfigurationFile()
 
         self.utMenu.start()

@@ -128,35 +128,39 @@ UT_ADD_TEST(VTS_L2_HDMICEC, StateTransitions)
     UT_ASSERT_FALSE(controllerListener->getNextStateChanges(stateChanges));
     UT_ASSERT_FALSE(eventListener->getNextStateChanges(stateChanges));
 
-    // Open the HDMI CEC interface
-    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+    /* multiple open and close test */
+    for (int32_t i = 0; i < 2; i++)
+    {
+        // Open the HDMI CEC interface
+        HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
 
-    // Verify that the onStateChanged for STARTED received to controllerListener
-    UT_ASSERT_TRUE(controllerListener->getNextStateChanges(stateChanges));
-    UT_ASSERT_EQUAL(stateChanges.first, State::CLOSED);
-    UT_ASSERT_EQUAL(stateChanges.second, State::STARTED);
+        // Verify that the onStateChanged for STARTED received to controllerListener
+        UT_ASSERT_TRUE(controllerListener->getNextStateChanges(stateChanges));
+        UT_ASSERT_EQUAL(stateChanges.first, State::CLOSED);
+        UT_ASSERT_EQUAL(stateChanges.second, State::STARTED);
 
-    // Verify that the onStateChanged for STARTED received to eventListener
-    UT_ASSERT_TRUE(eventListener->getNextStateChanges(stateChanges));
-    UT_ASSERT_EQUAL(stateChanges.first, State::CLOSED);
-    UT_ASSERT_EQUAL(stateChanges.second, State::STARTED);
+        // Verify that the onStateChanged for STARTED received to eventListener
+        UT_ASSERT_TRUE(eventListener->getNextStateChanges(stateChanges));
+        UT_ASSERT_EQUAL(stateChanges.first, State::CLOSED);
+        UT_ASSERT_EQUAL(stateChanges.second, State::STARTED);
 
-    // close the HDMI CEC interface
-    HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
+        // close the HDMI CEC interface
+        HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
 
-    // Verify that the onStateChanged for CLOSED received to controllerListener
-    UT_ASSERT_TRUE(controllerListener->getNextStateChanges(stateChanges));
-    UT_ASSERT_EQUAL(stateChanges.first, State::STARTED);
-    UT_ASSERT_EQUAL(stateChanges.second, State::CLOSED);
+        // Verify that the onStateChanged for CLOSED received to controllerListener
+        UT_ASSERT_TRUE(controllerListener->getNextStateChanges(stateChanges));
+        UT_ASSERT_EQUAL(stateChanges.first, State::STARTED);
+        UT_ASSERT_EQUAL(stateChanges.second, State::CLOSED);
 
-    // Verify that the onStateChanged for CLOSED received to eventListener
-    UT_ASSERT_TRUE(eventListener->getNextStateChanges(stateChanges));
-    UT_ASSERT_EQUAL(stateChanges.first, State::STARTED);
-    UT_ASSERT_EQUAL(stateChanges.second, State::CLOSED);
+        // Verify that the onStateChanged for CLOSED received to eventListener
+        UT_ASSERT_TRUE(eventListener->getNextStateChanges(stateChanges));
+        UT_ASSERT_EQUAL(stateChanges.first, State::STARTED);
+        UT_ASSERT_EQUAL(stateChanges.second, State::CLOSED);
 
-    // Ensure no spurious state changes after close()
-    UT_ASSERT_FALSE(controllerListener->getNextStateChanges(stateChanges));
-    UT_ASSERT_FALSE(eventListener->getNextStateChanges(stateChanges));
+        // Ensure no spurious state changes after close()
+        UT_ASSERT_FALSE(controllerListener->getNextStateChanges(stateChanges));
+        UT_ASSERT_FALSE(eventListener->getNextStateChanges(stateChanges));
+    }
 
     // Unregister event listener
     HDMICEC_UNREGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
@@ -187,6 +191,8 @@ UT_ADD_TEST(VTS_L2_HDMICEC, StateTransitions)
 UT_ADD_TEST(VTS_L2_HDMICEC, metricValidation)
 {
     std::optional<PropertyValue> cecVersion;
+    sp<IHdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
+    sp<IHdmiCecController> hdmiCecController = nullptr;
 
     // List of metric properties to validate
     std::vector<Property> testProperties = {
@@ -204,6 +210,28 @@ UT_ADD_TEST(VTS_L2_HDMICEC, metricValidation)
         gHdmiCecDeviceInfo.hal_cec_version);
 
     // Validate metric properties
+    for (auto property : testProperties)
+    {
+        std::optional<PropertyValue> propertyValue;
+        int32_t value = 0;
+
+        HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, property, propertyValue);
+        UT_ASSERT_TRUE(propertyValue.has_value());
+
+        value = propertyValue->value->get<PropertyValue::Value::Tag::intValue>();
+        if (value != -1) // -1 indicates not implemented
+        {
+            UT_ASSERT_EQUAL(value, 0); // Initial counters must be zero
+        }
+    }
+
+    // Open controller
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+
+    // Close controller
+    HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
+
+    // Validate metric properties again to ensure no changes after open/close
     for (auto property : testProperties)
     {
         std::optional<PropertyValue> propertyValue;
@@ -256,7 +284,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, logicalAddressesValidation)
     vector<int32_t> removeLogicalAddresses_3 = {2, 3};
     vector<int32_t> getLogicalAddresses;
 
-    // Validate initial state (should be empty before opening)
+    // Validate initial logical addresses (should be empty before opening)
     HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(gHDMICECHandle, getLogicalAddresses);
     UT_ASSERT_TRUE(getLogicalAddresses.empty());
 
@@ -300,8 +328,22 @@ UT_ADD_TEST(VTS_L2_HDMICEC, logicalAddressesValidation)
     HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(gHDMICECHandle, getLogicalAddresses);
     UT_ASSERT_TRUE(getLogicalAddresses.empty());
 
+    // Add addresses {0,1} and to verify close is removing all addresses
+    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses_1);
+    HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(gHDMICECHandle, getLogicalAddresses);
+    UT_ASSERT_EQUAL(getLogicalAddresses.size(), logicalAddresses_1.size());
+    for (auto addr : logicalAddresses_1)
+    {
+        UT_ASSERT_TRUE(std::find(getLogicalAddresses.begin(), getLogicalAddresses.end(), addr) != getLogicalAddresses.end());
+    }
+
     // Close controller
     HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
+
+    // validate the logical addresses (should be empty after closing)
+    HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(gHDMICECHandle, getLogicalAddresses);
+    UT_ASSERT_TRUE(getLogicalAddresses.empty());
+
 }
 
 /**
@@ -338,6 +380,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
     vector<uint8_t> directMsg_1 = {0x05, 0x04};
     vector<uint8_t> directMsg_2 = {0x05, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    vector<uint8_t> broadcastMsg = {0x0F, 0x85};
     hdmicec::SendMessageStatus msgStatus;
     vector<uint8_t> getMessage;
     hdmicec::SendMessageStatus getStatus;
@@ -385,6 +428,24 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
         }
     }
     UT_ASSERT_EQUAL(getStatus, hdmicec::SendMessageStatus::ACK_STATE_1);
+
+    // Send broadcast message
+    HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, broadcastMsg, msgStatus);
+
+    // Wait for message to be processed and callback to be invoked
+    this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
+
+    // Verify that the onMessageSent received to controllerListener
+    controllerListener->getNextMessage(getMessage, getStatus);
+    UT_ASSERT_EQUAL(getMessage.size(), broadcastMsg.size());
+    if(getMessage.size() == broadcastMsg.size())
+    {
+        for (size_t i = 0; i < broadcastMsg.size(); i++)
+        {
+            UT_ASSERT_EQUAL(getMessage[i], broadcastMsg[i]);
+        }
+    }
+    UT_ASSERT_EQUAL(getStatus, hdmicec::SendMessageStatus::ACK_STATE_0);
 
     // Remove logical address
     HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
