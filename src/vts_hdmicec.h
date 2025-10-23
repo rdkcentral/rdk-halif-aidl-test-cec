@@ -463,6 +463,7 @@ public:
     bool getNextStateChanges(pair<State, State>& stateChanges);
     bool getNextMessage( std::vector<uint8_t>& outMessage, hdmicec::SendMessageStatus& outStatus);
     bool getNextReceiveMessage(std::vector<uint8_t>& outMessage);
+    bool getReceiveMessageStatus();
 private:
     mutex mStateMutex;
     mutex mMsgSentMutex;
@@ -484,6 +485,7 @@ public:
     bool getNextStateChanges(pair<State, State>& stateChanges);
     bool getNextMessage( std::vector<uint8_t>& outMessage, hdmicec::SendMessageStatus& outStatus);
     bool getNextReceiveMessage(std::vector<uint8_t>& outMessage);
+    bool getReceiveMessageStatus();
 private:
     mutex mStateMutex;
     mutex mMsgReceiveMutex;

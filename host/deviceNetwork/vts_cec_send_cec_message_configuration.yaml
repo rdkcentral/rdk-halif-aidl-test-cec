@@ -1,0 +1,6 @@
+HdmiCec:
+  commond: cec_message
+  description: Send a CEC message
+  message:
+    user_defined: true
+    payload: ['0x50', '0x9F', '0x05']

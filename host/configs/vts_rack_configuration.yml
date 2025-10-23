@@ -65,14 +65,21 @@ rackConfig:
                             port: 5522
                             username: "root"
                             ip: "127.0.0.1" #IP address
-                            password: "bhanu"
+                            password: ""
                             prompt: "~#" # Prompt string on console
                         - ssh_hal_test:
                             type: "ssh"
                             port: 5522
-                            username: "root"
-                            ip: "127.0.0.1" #IP address
-                            password: "bhanu"
+                            username: ""
+                            ip: "" #IP address
+                            password: ""
+                            prompt: "~#" # Prompt string on console
+                        - ssh_hal_test_1:
+                            type: "ssh"
+                            port: 5522
+                            username: ""
+                            ip: "" #IP address
+                            password: ""
                             prompt: "~#" # Prompt string on console
                     outbound:
                         download_url: "tftp://tftp-server.com/rack1/slot1/"    # download location for the CPE device

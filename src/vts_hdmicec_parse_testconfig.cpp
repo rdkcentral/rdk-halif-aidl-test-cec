@@ -193,9 +193,9 @@ UT_status_t vts_hdmicec_parse_receiveMessage_config(char *cofigurationFile, cons
     for(int32_t index = 0; index < responseCount; index++)
     {
         memset(&testConfiguration, 0, sizeof(hdmicecReceiveMsgConfiguration_t));
-        std::string logicalAddressKey = testList + "." + std::to_string(index) + ".logical_address";
-        std::string waitKey = testList + "." + std::to_string(index) + ".wait_for_response_timeout";
-        std::string messageKey = testList + "." + std::to_string(index) + ".message";
+        std::string logicalAddressKey = testList + "." + std::to_string(index) + ".Parameters.logical_address";
+        std::string waitKey = testList + "." + std::to_string(index) + ".Parameters.wait_for_response_timeout";
+        std::string messageKey = testList + "." + std::to_string(index) + ".Parameters.message";
 
         int32_t logicalAddressLen = ut_kvp_getListCount(kvpTestInstance, logicalAddressKey.c_str());
         for (uint32_t index = 0; index < logicalAddressLen; index++)

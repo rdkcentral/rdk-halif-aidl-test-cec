@@ -33,6 +33,7 @@ sys.path.append(os.path.join(dir_path, "../"))
 HDMICEC_TV_VCOMPONENT_FILE = os.path.join(dir_path, "vts_cec_device_network_configuration_VTV.yaml")
 HDMICEC_STB_VCOMPONENT_FILE = os.path.join(dir_path, "vts_cec_device_network_configuration_VSTB.yaml")
 HDMICEC_PRINT_CEC_NETWORK_CONFIG_FILE = os.path.join(dir_path, "vts_cec_print_device_network_configuration.yaml")
+HDMICEC_SEND_CEC_MSG = os.path.join(dir_path, "vts_cec_send_cec_message_configuration.yaml")
 
 from raft.framework.plugins.ut_raft.configRead import ConfigRead
 from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
@@ -62,33 +63,52 @@ class vHdmiCec(HdmiCecDeviceInterface):
 
         self.cecDeviceNetworkConfig = ConfigRead(self.cecDeviceNetworkConfigFile, "HdmiCec")
 
-        stdin, stdout, stderr = self.session.console.exec_command(f"pidof {self.processName}")
-        out = stdout.read().decode().strip()
-        rc = stdout.channel.recv_exit_status()
+        #stdin, stdout, stderr = self.session.console.exec_command(f"pidof {self.processName}")
+        #out = stdout.read().decode().strip()
+        #rc = stdout.channel.recv_exit_status()
 
-        if rc != 0 and not out:
-            self.utilities.change_directory(self.session, self.target_directory)
-            self.session.write(f"./{self.processName} &")
-            time.sleep(2)
+        #if rc != 0 and not out:
+
+        #TODO: remove once the service start handled by vDevice framework
+        self.utilities.change_directory(self.session, self.target_directory)
+        self.session.write(f"./{self.processName} &")
+        time.sleep(2)
 
         self.target_configuration_file = os.path.join(self.target_directory, os.path.basename(self.cecDeviceNetworkConfigFile))
         self.target_print_configuration_file = os.path.join(self.target_directory, os.path.basename(HDMICEC_PRINT_CEC_NETWORK_CONFIG_FILE))
+        self.target_send_configuration_file = os.path.join(self.target_directory, os.path.basename(HDMICEC_SEND_CEC_MSG))
 
         self.utilities.sftpCopy(self.session, self.cecDeviceNetworkConfigFile, self.target_directory)
         self.utilities.sftpCopy(self.session, HDMICEC_PRINT_CEC_NETWORK_CONFIG_FILE, self.target_directory)
 
         self.loadCecDeviceNetworkConfiguration()
 
+    def sendCommandToUtController(self, yamlFilePath: str, port: int = 8080) -> None:
+        """
+        Sends a command to the ut-controller via curl.
+
+        Args:
+            yamlFilePath (str): Path to the YAML file containing the command.
+            port (int, optional): Port number for the controller. Defaults to 8080.
+
+        Returns:
+            None.
+        """
+
+        # Prepare the curl command
+        cmd = f'curl -X POST -H "Content-Type: application/x-yaml" --data-binary "@{yamlFilePath}" "http://localhost:{port}/api/postKVP"'
+
+        self.session.write(cmd)
+
+        return None
+
+
     def loadCecDeviceNetworkConfiguration(self):
         """
         Loads the HDMI CEC device network configuration file on to the vComponent.
         """
 
-        # Prepare the curl command
-        cmd = f'curl -X POST -H "Content-Type: application/x-yaml" --data-binary "@{self.target_configuration_file}" "http://localhost:{self.port}/api/postKVP"'
-
-        self.session.write(cmd)
-
+        self.sendCommandToUtController(self.target_configuration_file, self.port)
 
     def listDevices(self) -> list:
         """
@@ -103,10 +123,8 @@ class vHdmiCec(HdmiCecDeviceInterface):
                 "active source": 0,
             }
         """
-        # Prepare the curl command
-        cmd = f'curl -X POST -H "Content-Type: application/x-yaml" --data-binary "@{self.target_print_configuration_file}" "http://localhost:{self.port}/api/postKVP"'
-
-        self.session.write(cmd)
+        # send command to CEC network to print device configuration
+        self.sendCommandToUtController(self.target_print_configuration_file, self.port)
 
         result = self.session.read_until(self.commandPrompt)
 
@@ -152,4 +170,42 @@ class vHdmiCec(HdmiCecDeviceInterface):
           bool: True if the message was received, False otherwise.
         """
         # Note: for vComponent, this function always returns True as we cannot verify message receipt
+        return True
+
+    def sendMessage(self, sourceAddress: int, destAddress: int, opCode: str, payload: list = None) -> bool:
+        """
+        This function sends a specified opCode.
+
+        Args:
+          sourceAddress (int): The logical address of the source device (0-15).
+          destAddress (int): The logical address of the destination device (0-15).
+          opCode (str): Operation code to send as an hexadecimal string e.g 0x81.
+          payload (list): List of hexadecimal strings to be sent with the opCode. Optional.
+
+        Returns:
+          bool: True if the message was sent successfully, False otherwise.
+        """
+        # Format the payload: source, destination, opCode, and payload
+        msg_payload = [f"0x{sourceAddress}{destAddress}", opCode]
+        if payload:
+            msg_payload.extend(payload)
+
+        yaml_content = (
+            "HdmiCec:\n"
+            "  commond: cec_message\n"
+            "  description: Send a CEC message\n"
+            "  message:\n"
+            "    user_defined: true\n"
+            f"    payload: {msg_payload}\n"
+        )
+
+        # Save YAML to HDMICEC_SEND_CEC_MSG file
+        with open(HDMICEC_SEND_CEC_MSG, "w") as f:
+            f.write(yaml_content)
+
+        self.utilities.sftpCopy(self.session, HDMICEC_SEND_CEC_MSG, self.target_directory)
+
+        # Send the command to ut-controller
+        self.sendCommandToUtController(self.target_send_configuration_file, self.port)
+
         return True

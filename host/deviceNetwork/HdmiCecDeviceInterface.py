@@ -51,3 +51,8 @@ class HdmiCecDeviceInterface(metaclass=ABCMeta):
     def checkMessageReceived(self, sourceAddress: str, destAddress: str, opCode: str, timeout: int = 10, payload: list = None) -> bool:
         """Check if a specific CEC message is received."""
         pass
+
+    @abstractmethod
+    def sendMessage(self, sourceAddress: str, destAddress: str, opCode: str, payload: list = None) -> bool:
+        """Send a specific CEC message."""
+        pass

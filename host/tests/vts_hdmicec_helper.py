@@ -60,6 +60,7 @@ class hdmiCecHelperClass(utHelperClass):
         self.moduleHFPFile = os.path.join(dir_path, self.deviceTestSetup.get("profile"))
         profileOnTarget = os.path.join(self.targetWorkspace, "profiles")
         profileOnTarget = os.path.join(profileOnTarget, os.path.basename(self.moduleHFPFile))
+        profileOnTarget = profileOnTarget.replace("\\", "/")
         self.waitTime = self.cpe.get("wait_time")
         self.device_type = self.cpe.get("device_type")
 
@@ -71,6 +72,7 @@ class hdmiCecHelperClass(utHelperClass):
 
         # Establish HAL session
         self.hal_session = self.dut.getConsoleSession("ssh_hal_test")
+        self.hal_session_1 = self.dut.getConsoleSession("ssh_hal_test_1")
 
         # Initialize UT menu navigator and utilities
         self.utMenu = UTSuiteNavigatorClass(self.testMenuConfiguration, None, self.hal_session)
@@ -97,22 +99,38 @@ class hdmiCecHelperClass(utHelperClass):
         logical_addresses = []
         for dtype in device_type:
             if dtype == "TV":
-                logical_addresses.append("0")
+                logical_addresses.append(0)
             elif dtype == "RecordingDevice":
-                logical_addresses.extend(["1", "2", "9"])
+                logical_addresses.extend([1, 2, 9])
             elif dtype == "Tuner":
-                logical_addresses.extend(["3", "6", "7", "10"])
+                logical_addresses.extend([3, 6, 7, 10])
             elif dtype == "PlaybackDevice":
-                logical_addresses.extend(["4", "8", "11"])
+                logical_addresses.extend([4, 8, 11])
             elif dtype == "AudioSystem":
-                logical_addresses.append("5")
+                logical_addresses.append(5)
             elif dtype == "VideoProcessor":
-                logical_addresses.append("14")
+                logical_addresses.append(14)
             elif dtype == "PureCecSwitch":
-                logical_addresses.append("13")
+                logical_addresses.append(13)
             else:
-                logical_addresses.extend(["11", "12"])
+                logical_addresses.extend([11, 12])
         return logical_addresses
+
+    def hexToOpCode(self, hex_value:str):
+        """
+        Converts hex value to opcode
+        Args:
+            hex_value (str): hex value of the opcode
+        Returns:
+            str: opcode string
+        """
+        return {
+            "0x47": "SetOsdName",
+            "0x9F": "CecVersion",
+            "0x32": "SetMenuLanguage",
+            "0x84": "ReportPhysicalAddress",
+            "0x87": "DeviceVendorId"
+        }.get(hex_value, None)
 
     def opCodeToHex(self, opcode:str):
         """
@@ -131,6 +149,37 @@ class hdmiCecHelperClass(utHelperClass):
             "DeviceVendorId": "0x87"
         }
         return opcode_dict.get(opcode, None)
+
+    def _compose_message(self, opcode: str, src_addr: int, dst_addr: int, payload_map: dict, metrics: dict = None) -> dict:
+        """Helper to build one CEC message entry."""
+        opcode_hex = self.opCodeToHex(opcode)
+        if not opcode_hex:
+            return None
+
+        # Compose header byte (initiator << 4 | destination)
+        header_str = f"0x{(src_addr << 4 | dst_addr):02X}" if src_addr is not None and dst_addr is not None else None
+
+        # Construct message payload
+        message = [header_str, opcode_hex] + payload_map.get(opcode, [])
+
+        if metrics is None:
+            return {
+                "Parameters": {"message": message}
+            }
+        else:
+            return {
+                "Parameters": {"message": message},
+                "Expected_Results": {"metrics": metrics},
+            }
+
+    def _generate_messages(self, src_addr: int, opcode_list: list, dst_addr: int, payload_map: dict, metrics: dict) -> list:
+        """Generates a list of CEC messages for a given opcode list."""
+        messages = []
+        for opcode in opcode_list:
+            msg = self._compose_message(opcode, src_addr, dst_addr, payload_map, metrics)
+            if msg:
+                messages.append(msg)
+        return messages
 
     def hdmiCecReadYaml(self, yaml_path: str) -> dict:
         """

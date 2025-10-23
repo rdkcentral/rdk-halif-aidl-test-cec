@@ -285,11 +285,22 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
     {
         if(testConfiguration.dutLogicalAddress.size() > 0)
         {
+            uint32_t counter = 0;
+
             // Add logical address
             HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, testConfiguration.dutLogicalAddress);
             getMessage.clear();
 
-            this_thread::sleep_for(chrono::milliseconds(testConfiguration.waitResponseTimeoutMsec));
+            //TODO: replace with conditional variable or semaphore
+            while(!controllerListener->getReceiveMessageStatus())
+            {
+                this_thread::sleep_for(chrono::milliseconds(1000));
+                counter += 1000;
+                if(counter >= testConfiguration.waitResponseTimeoutMsec)
+                {
+                    break;
+                }
+            }
 
             // Verify that the onMessageReceived received to controllerListener
             UT_ASSERT_TRUE(controllerListener->getNextReceiveMessage(getMessage));

@@ -93,68 +93,49 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
 
     def updateTestconfigurationFile(self):
         """
-        Updates the test configuration file
+        Updates the HDMI CEC L3 SendMessage YAML configuration file.
         """
         data = self.hdmiCecReadYaml(self.l3TestConfigFile)
-
         send_msg = data["HdmiCec"]["L3"]["SendMessage"]
-
         send_msg["source_logical_address"] = [self.dutLogicalAddress]
 
-        # Build CEC messages based on opcode list
-        new_cec_messages = []
-        for opcode in self.listDirectOpcodesToTest:
-            opcode_hex = self.opCodeToHex(opcode)
-            if not opcode_hex:
-                continue
+        # Common opcode → payload map
+        payload_map = {
+            "CecVersion": self.cecVersionPayload,
+            "SetOsdName": self.setOSDPayload,
+            "SetMenuLanguage": self.setMenuLanguagePayload,
+            "DeviceVendorId": self.deviceVendorIdPayload,
+        }
 
-            if self.destinationLogicalAddress != 0xF:
-                directedMessagesSent = 1
-                directedMessagesSentAndAcked = 1
-                broadcastMessagesSent = 0
-                broadcastMessagesSentAndAcked = 0
-            else:
-                directedMessagesSent = 0
-                directedMessagesSentAndAcked = 0
-                broadcastMessagesSent = 1
-                broadcastMessagesSentAndAcked = 1
-            # Compose initiator (source) and destination logical address into a single byte
-            if self.dutLogicalAddress is not None and self.destinationLogicalAddress is not None:
-                src = int(self.dutLogicalAddress)
-                dst = int(self.destinationLogicalAddress)
-                header_byte = (src << 4) | dst
-                header_byte_str = f"0x{header_byte:02X}"
-            else:
-                header_byte_str = None  # or handle error as needed
+        # Metrics templates
+        direct_metrics = {
+            "directedMessagesSent": 1,
+            "directedMessagesSentAndAcked": 1,
+            "broadcastMessagesSent": 0,
+            "broadcastMessagesSentAndAcked": 0,
+            "arbitrationFailures": 0,
+        }
+        broadcast_metrics = {
+            "directedMessagesSent": 0,
+            "directedMessagesSentAndAcked": 0,
+            "broadcastMessagesSent": 1,
+            "broadcastMessagesSentAndAcked": 1,
+            "arbitrationFailures": 0,
+        }
 
-            message = [header_byte_str, self.opCodeToHex(opcode)]
-            if opcode == "CecVersion":
-                message += self.cecVersionPayload
-            elif opcode == "SetOsdName":
-                message += self.setOSDPayload
-            elif opcode == "SetMenuLanguage":
-                message += self.setMenuLanguagePayload
-            elif opcode == "DeviceVendorId":
-                message += self.deviceVendorIdPayload
+        # Build all messages using helper functions
+        directed_msgs = self._generate_messages(
+            self.dutLogicalAddress, self.listDirectOpcodesToTest, self.destinationLogicalAddress,
+            payload_map, direct_metrics
+        )
 
-            new_cec_messages.append({
-                "Parameters": {
-                    "message": message
-                },
-                "Expected_Results": {
-                    "metrics": {
-                        "directedMessagesSent": directedMessagesSent,
-                        "directedMessagesSentAndAcked": directedMessagesSentAndAcked,
-                        "broadcastMessagesSent": broadcastMessagesSent,
-                        "broadcastMessagesSentAndAcked": broadcastMessagesSentAndAcked,
-                        "arbitrationFailures": 0
-                    }
-                }
-            })
+        broadcast_msgs = self._generate_messages(
+            self.dutLogicalAddress, self.listBroadcastOpcodesToTest, 0xF,
+            payload_map, broadcast_metrics
+        )
 
-        # Replace or extend the list
-        send_msg["cec_messages"] = new_cec_messages
-
+        # Merge and write to YAML
+        send_msg["cec_messages"] = directed_msgs + broadcast_msgs
         self.hdmiCecWriteYaml(self.l3TestConfigFile, data)
 
     def testFunction(self):
@@ -170,6 +151,8 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         self.destinationLogicalAddress = self.pickValidLogicalAddressForController()
 
         self.updateTestconfigurationFile()
+
+        self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, os.path.join(self.targetWorkspace, "test_configuration/"))
 
         self.utMenu.start()
 

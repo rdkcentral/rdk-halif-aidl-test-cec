@@ -130,6 +130,13 @@ bool HdmiCecControllerListener::getNextMessage(std::vector<uint8_t>& outMessage,
     return true;
 }
 
+bool HdmiCecControllerListener::getReceiveMessageStatus()
+{
+    std::lock_guard<std::mutex> lock(mMsgReceiveMutex);
+
+    return !mMessageReceiveQueue.empty();
+}
+
 bool HdmiCecControllerListener::getNextReceiveMessage(std::vector<uint8_t>& outMessage)
 {
     std::lock_guard<std::mutex> lock(mMsgReceiveMutex);
@@ -177,6 +184,13 @@ bool HdmiCecEventListener::getNextStateChanges(pair<State, State>& stateChanges)
     stateChanges = mStateChanges.front();
     mStateChanges.pop();
     return true;
+}
+
+bool HdmiCecEventListener::getReceiveMessageStatus()
+{
+    std::lock_guard<std::mutex> lock(mMsgReceiveMutex);
+
+    return !mMessageReceiveQueue.empty();
 }
 
 bool HdmiCecEventListener::getNextReceiveMessage(std::vector<uint8_t>& outMessage)
