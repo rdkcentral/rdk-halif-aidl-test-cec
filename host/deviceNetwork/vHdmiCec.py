@@ -192,7 +192,7 @@ class vHdmiCec(HdmiCecDeviceInterface):
 
         yaml_content = (
             "HdmiCec:\n"
-            "  commond: cec_message\n"
+            "  command: cec_message\n"
             "  description: Send a CEC message\n"
             "  message:\n"
             "    user_defined: true\n"
