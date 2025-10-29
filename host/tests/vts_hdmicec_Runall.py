@@ -23,21 +23,15 @@
 
 import os
 import sys
-import importlib
-from pathlib import Path
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_path))
 sys.path.append(os.path.join(dir_path, "../../"))
 sys.path.append(os.path.join(dir_path, "../../raft"))
 
-from raft.framework.core.logModule import logModule
 
 def Runall():
-    skipTests = ["test02", "test15", "test16", "test18", "test19", "test25", "test26"]
-
-    # Summery log for all the tests
-    dsAudioSummerLog = logModule("dsAudioSummerLog_Source", level=logModule.INFO)
+    print("TODO: Implement HDMICEC Runall test suite to run L1, L2, L3 tests sequentially.")
 
 if __name__ == '__main__':
     Runall()

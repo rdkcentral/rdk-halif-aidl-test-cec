@@ -57,7 +57,7 @@
  */
 
 /**
- * @file main.c
+ * @file main.cpp
  *
  */
 

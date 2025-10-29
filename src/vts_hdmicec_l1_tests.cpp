@@ -53,7 +53,7 @@
  */
 
 /**
- * @file vts_hdmicec_l1_tests.c
+ * @file vts_hdmicec_l1_tests.cpp
  *
  */
 #include "vts_hdmicec_parse_hfp.h"

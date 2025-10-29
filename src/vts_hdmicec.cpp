@@ -178,9 +178,11 @@ android::binder::Status HdmiCecEventListener::onStateChanged(::com::rdk::hal::St
 
 bool HdmiCecEventListener::getNextStateChanges(pair<State, State>& stateChanges)
 {
+    lock_guard<mutex> lock(mStateMutex);
+
     if (mStateChanges.empty())
         return false;
-    lock_guard<mutex> lock(mStateMutex);
+
     stateChanges = mStateChanges.front();
     mStateChanges.pop();
     return true;

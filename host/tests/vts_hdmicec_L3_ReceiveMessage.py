@@ -24,17 +24,12 @@
 import os
 import sys
 import time
-import tarfile
 import threading
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_path, "../"))
 
-from raft.framework.plugins.ut_raft.configRead import ConfigRead
 from raft.framework.core.logModule import logModule
-from raft.framework.plugins.ut_raft import utHelperClass
-from raft.framework.plugins.ut_raft.utSuiteNavigator import UTSuiteNavigatorClass
-from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
 from vts_hdmicec_helper import hdmiCecHelperClass
 from deviceNetwork.HdmiCecNetwork import HdmiCecNetwork
 
@@ -156,7 +151,7 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         output = self.utMenu.select(HDMICEC_L3_TEST_SUITE_NAME, self.testcase, None, self.waitTime, False)
 
         results = self.utMenu.collect_results(output, True)
-        if results == None:
+        if results is None:
             results = False
 
         self.sendMessageThreadObj.join()
