@@ -101,14 +101,14 @@ static UT_status_t vts_hdmicec_parse_testconfig_instance(void *instance, const s
     ut_kvp_instance_t* kvpTestInstance = (ut_kvp_instance_t*)instance;
 
     // Parse Test Parameters
-    const std::string parmetersKey = cecMsgKey + ".Parameters";
+    const std::string parametersKey = cecMsgKey + ".Parameters";
 
-    messageSize = ut_kvp_getListCount(kvpTestInstance, (parmetersKey + ".message").c_str());
+    messageSize = ut_kvp_getListCount(kvpTestInstance, (parametersKey + ".message").c_str());
     if(messageSize > 0)
     {
         for (uint32_t index = 0; index < messageSize; index++)
         {
-            testConfiguration.message.push_back(ut_kvp_getUInt8Field(kvpTestInstance, (parmetersKey + ".message." + std::to_string(index)).c_str()));
+            testConfiguration.message.push_back(ut_kvp_getUInt8Field(kvpTestInstance, (parametersKey + ".message." + std::to_string(index)).c_str()));
         }
     }
     else
@@ -131,14 +131,14 @@ static UT_status_t vts_hdmicec_parse_testconfig_instance(void *instance, const s
     return UT_STATUS_OK;
 }
 
-UT_status_t vts_hdmicec_parse_sendMessage_config(char *cofigurationFile, const char *module, const char *testGroup,
+UT_status_t vts_hdmicec_parse_sendMessage_config(char *configurationFile, const char *module, const char *testGroup,
                                                  const char *testName, vector<hdmicecSendMsgConfiguration_t>& testConfigurationList,
                                                  std::vector<int32_t>& sourceLogicalAddresses, int32_t& delayBetweenMsgsMsec)
 {
     char resultKVP[UT_KVP_MAX_ELEMENT_SIZE] = {0};
     hdmicecSendMsgConfiguration_t testConfiguration;
 
-    void *testconfig = vcomponentkvp_create_instance(cofigurationFile);
+    void *testconfig = vcomponentkvp_create_instance(configurationFile);
     ut_kvp_instance_t* kvpTestInstance = (ut_kvp_instance_t*)testconfig;
 
     const std::string testList = string(module) + "." + string(testGroup) + "." + string(testName);
@@ -179,10 +179,10 @@ UT_status_t vts_hdmicec_parse_sendMessage_config(char *cofigurationFile, const c
     return UT_STATUS_OK;
 }
 
-UT_status_t vts_hdmicec_parse_receiveMessage_config(char *cofigurationFile, const char *module, const char *testGroup,
+UT_status_t vts_hdmicec_parse_receiveMessage_config(char *configurationFile, const char *module, const char *testGroup,
                                                     const char *testName, vector<hdmicecReceiveMsgConfiguration_t> &testConfigurationList)
 {
-    void *testconfig = vcomponentkvp_create_instance(cofigurationFile);
+    void *testconfig = vcomponentkvp_create_instance(configurationFile);
     ut_kvp_instance_t* kvpTestInstance = (ut_kvp_instance_t*)testconfig;
     hdmicecReceiveMsgConfiguration_t testConfiguration;
 
