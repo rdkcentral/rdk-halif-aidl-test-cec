@@ -103,7 +103,7 @@ class  VTS_HDMICEC_L1_L2_Tests(hdmiCecHelperClass):
         return finalresult
 
 if __name__ == '__main__':
-    summerLogName = os.path.splitext(os.path.basename(__file__))[0] + "_summery"
-    summeryLog = logModule(summerLogName, level=logModule.INFO)
-    test = VTS_HDMICEC_L1_L2_Tests(summeryLog)
+    summaryLogName = os.path.splitext(os.path.basename(__file__))[0] + "_summery"
+    summaryLog = logModule(summaryLogName, level=logModule.INFO)
+    test = VTS_HDMICEC_L1_L2_Tests(summaryLog)
     test.run(False)

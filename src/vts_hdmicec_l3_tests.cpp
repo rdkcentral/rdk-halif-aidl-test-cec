@@ -174,7 +174,6 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
     const char *testName = "SendMessage";
     std::vector<hdmicecSendMsgConfiguration_t> testConfigurationList;
     std::vector<int32_t> sourceLogicalAddresses;
-    //std::vector<uint8_t> message;
     int32_t delayBetweenMsgsMsec = 0;
     uint8_t src;
     uint8_t dst;

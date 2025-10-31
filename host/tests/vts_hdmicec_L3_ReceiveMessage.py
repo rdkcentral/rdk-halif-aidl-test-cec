@@ -165,7 +165,7 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         return results
 
 if __name__ == '__main__':
-    summerLogName = os.path.splitext(os.path.basename(__file__))[0] + "_summery"
-    summeryLog = logModule(summerLogName, level=logModule.INFO)
-    test = VTS_HDMICEC_L3_ReceiveMessage(summeryLog)
+    summaryLogName = os.path.splitext(os.path.basename(__file__))[0] + "_summery"
+    summaryLog  = logModule(summaryLogName, level=logModule.INFO)
+    test = VTS_HDMICEC_L3_ReceiveMessage(summaryLog )
     test.run(False)
