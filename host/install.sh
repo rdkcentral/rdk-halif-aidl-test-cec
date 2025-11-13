@@ -23,7 +23,7 @@
 MY_PATH="$(realpath ${BASH_SOURCE[0]})"
 MY_DIR="$(dirname ${MY_PATH})"
 TESTS_DIR="${MY_DIR}/tests"
-RAFT_DIR="${TESTS_DIR}/raft"
+RAFT_DIR="${MY_DIR}/raft"
 PLUGINS_FRAMEWORK_DIR="${RAFT_DIR}/framework/plugins"
 VENV_NAME="python_venv"
 VENV_DIR="${MY_DIR}/${VENV_NAME}"  # Default virtual environment directory name

@@ -171,15 +171,6 @@ class hdmiCecHelperClass(utHelperClass):
                 "Expected_Results": {"metrics": metrics},
             }
 
-    def _generate_messages(self, src_addr: int, opcode_list: list, dst_addr: int, payload_map: dict, metrics: dict) -> list:
-        """Generates a list of CEC messages for a given opcode list."""
-        messages = []
-        for opcode in opcode_list:
-            msg = self._compose_message(opcode, src_addr, dst_addr, payload_map, metrics)
-            if msg:
-                messages.append(msg)
-        return messages
-
     def hdmiCecReadYaml(self, yaml_path: str) -> dict:
         """
         Reads a YAML file and returns its content as a dictionary.

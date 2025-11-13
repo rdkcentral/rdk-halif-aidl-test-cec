@@ -37,6 +37,7 @@ HDMICEC_SEND_CEC_MSG = os.path.join(dir_path, "vts_cec_send_cec_message_configur
 
 from raft.framework.plugins.ut_raft.configRead import ConfigRead
 from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
+from raft.framework.plugins.ut_raft.utPlaneController import utPlaneController
 from HdmiCecDeviceInterface import HdmiCecDeviceInterface
 
 class vHdmiCec(HdmiCecDeviceInterface):
@@ -45,7 +46,15 @@ class vHdmiCec(HdmiCecDeviceInterface):
     """
     def __init__(self, device_type:list, session, process_name:str="", bin_path:str="", prompt: str="~#", port:int=8080):
         """
-        Initializes the class
+        Initializes the vHdmiCec class for HDMI CEC device communication.
+
+        Args:
+            device_type (list): Type of device(s) (e.g., ["TV"], ["Tuner"], ["PlaybackDevice"]).
+            session: The session object for device communication.
+            process_name (str, optional): Name of the process to run. Defaults to "". #TODO: remove once handled by vDevice framework
+            bin_path (str, optional): Path to the binary executable. Defaults to "".
+            prompt (str, optional): Command prompt string. Defaults to "~#".
+            port (int, optional): Port number for ut-controller communication. Defaults to 8080.
         """
         self.device_type = device_type
         self.port = port
@@ -63,12 +72,6 @@ class vHdmiCec(HdmiCecDeviceInterface):
 
         self.cecDeviceNetworkConfig = ConfigRead(self.cecDeviceNetworkConfigFile, "HdmiCec")
 
-        #stdin, stdout, stderr = self.session.console.exec_command(f"pidof {self.processName}")
-        #out = stdout.read().decode().strip()
-        #rc = stdout.channel.recv_exit_status()
-
-        #if rc != 0 and not out:
-
         #TODO: remove once the service start handled by vDevice framework
         self.utilities.change_directory(self.session, self.target_directory)
         self.session.write(f"./{self.processName} &")
@@ -81,34 +84,16 @@ class vHdmiCec(HdmiCecDeviceInterface):
         self.utilities.sftpCopy(self.session, self.cecDeviceNetworkConfigFile, self.target_directory)
         self.utilities.sftpCopy(self.session, HDMICEC_PRINT_CEC_NETWORK_CONFIG_FILE, self.target_directory)
 
+        self.utPlaneController = utPlaneController(self.session, port=self.port)
+
         self.loadCecDeviceNetworkConfiguration()
-
-    def sendCommandToUtController(self, yamlFilePath: str, port: int = 8080) -> None:
-        """
-        Sends a command to the ut-controller via curl.
-
-        Args:
-            yamlFilePath (str): Path to the YAML file containing the command.
-            port (int, optional): Port number for the controller. Defaults to 8080.
-
-        Returns:
-            None.
-        """
-
-        # Prepare the curl command
-        cmd = f'curl -X POST -H "Content-Type: application/x-yaml" --data-binary "@{yamlFilePath}" "http://localhost:{port}/api/postKVP"'
-
-        self.session.write(cmd)
-
-        return None
-
 
     def loadCecDeviceNetworkConfiguration(self):
         """
         Loads the HDMI CEC device network configuration file on to the vComponent.
         """
 
-        self.sendCommandToUtController(self.target_configuration_file, self.port)
+        self.utPlaneController.sendMessage(self.target_configuration_file)
 
     def listDevices(self) -> list:
         """
@@ -124,7 +109,7 @@ class vHdmiCec(HdmiCecDeviceInterface):
             }
         """
         # send command to CEC network to print device configuration
-        self.sendCommandToUtController(self.target_print_configuration_file, self.port)
+        self.utPlaneController.sendMessage(self.target_print_configuration_file)
 
         result = self.session.read_until(self.commandPrompt)
 
@@ -154,18 +139,18 @@ class vHdmiCec(HdmiCecDeviceInterface):
 
         return devices
 
-    def checkMessageReceived(self, sourceAddress: str, destAddress: str, opCode: str, timeout: int = 10, payload: list = None) -> bool:
+    def checkMessageReceived(self, cecMessage:dict, timeout: int = 10) -> bool:
         """
         This function checks to see if a specified opCode has been received.
 
         Args:
-          sourceAddress (str): The logical address of the source device (0-9 or A-F).
-          destAddress (str): The logical address of the destination device (0-9 or A-F).
-          opCode (str): Operation code to send as an hexidecimal string e.g 0x81.
-          timeout (int): The maximum amount of time, in seconds, that the method will
+            cecMessage (dict): A dictionary containing the following keys:
+                sourceAddress (int): The logical address of the source device (0-15).
+                destAddress (int): The logical address of the destination device (0-15).
+                opCode (str): Operation code to check as an hexadecimal string e.g 0x81.
+                payload (list): List of hexadecimal strings to be checked with the opCode.
+            timeout (int): The maximum amount of time, in seconds, that the method will
                            wait for the message to be received. Defaults to 10.
-            payload (list): List of hexidecimal strings to be sent with the opCode. Optional.
-
         Returns:
           bool: True if the message was received, False otherwise.
         """
@@ -206,6 +191,6 @@ class vHdmiCec(HdmiCecDeviceInterface):
         self.utilities.sftpCopy(self.session, HDMICEC_SEND_CEC_MSG, self.target_directory)
 
         # Send the command to ut-controller
-        self.sendCommandToUtController(self.target_send_configuration_file, self.port)
+        self.utPlaneController.sendMessage(self.target_send_configuration_file)
 
         return True

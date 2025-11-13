@@ -30,6 +30,17 @@ class HdmiCecDeviceInterface(metaclass=ABCMeta):
     """
 
     def __init__(self, device_type: list, session, process_name: str="", bin_path: str="", prompt: str = "~#", port: int = 8080):
+        """
+        Initializes the vHdmiCec class for HDMI CEC device communication.
+
+        Args:
+            device_type (list): Type of device(s) (e.g., ["TV"], ["Tuner"], ["PlaybackDevice"]).
+            session: The session object for device communication.
+            process_name (str, optional): Name of the process to run. Defaults to "". #TODO: remove once handled by vDevice framework
+            bin_path (str, optional): Path to the binary executable. Defaults to "".
+            prompt (str, optional): Command prompt string. Defaults to "~#".
+            port (int, optional): Port number for ut-controller communication. Defaults to 8080.
+        """
         self.device_type = device_type
         self.session = session
         self.bin_path = bin_path
@@ -39,20 +50,57 @@ class HdmiCecDeviceInterface(metaclass=ABCMeta):
 
     @abstractmethod
     def loadCecDeviceNetworkConfiguration(self):
-        """Load HDMI CEC network configuration onto target."""
+        """
+        Loads the HDMI CEC device network configuration file on to the vComponent.
+        """
         pass
 
     @abstractmethod
     def listDevices(self) -> list:
-        """List discovered CEC devices on the network."""
+        """
+        Lists the devices currently available on the HDMI CEC network.
+
+        Returns:
+            list: A list of dictionaries representing discovered devices with details.
+            {
+                "name": "name",
+                "physical address": "0.0.0.0",
+                "logical address": 0,
+                "active source": 0,
+            }
+        """
         pass
 
     @abstractmethod
-    def checkMessageReceived(self, sourceAddress: str, destAddress: str, opCode: str, timeout: int = 10, payload: list = None) -> bool:
-        """Check if a specific CEC message is received."""
+    def checkMessageReceived(self, cecMessage:dict, timeout: int = 10) -> bool:
+        """
+        This function checks to see if a specified opCode has been received.
+
+        Args:
+            cecMessage (dict): A dictionary containing the following keys:
+                sourceAddress (int): The logical address of the source device (0-15).
+                destAddress (int): The logical address of the destination device (0-15).
+                opCode (str): Operation code to check as an hexadecimal string e.g 0x81.
+                payload (list): List of hexadecimal strings to be checked with the opCode.
+            timeout (int): The maximum amount of time, in seconds, that the method will
+                           wait for the message to be received. Defaults to 10.
+        Returns:
+          bool: True if the message was received, False otherwise.
+        """
         pass
 
     @abstractmethod
     def sendMessage(self, sourceAddress: str, destAddress: str, opCode: str, payload: list = None) -> bool:
-        """Send a specific CEC message."""
+        """
+        This function sends a specified opCode.
+
+        Args:
+          sourceAddress (int): The logical address of the source device (0-15).
+          destAddress (int): The logical address of the destination device (0-15).
+          opCode (str): Operation code to send as an hexadecimal string e.g 0x81.
+          payload (list): List of hexadecimal strings to be sent with the opCode. Optional.
+
+        Returns:
+          bool: True if the message was sent successfully, False otherwise.
+        """
         pass

@@ -47,15 +47,6 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         """
         self.testName = "HdmiCec_L3_SendMessage"
         qcId = "1"
-        self.listDirectOpcodesToTest = ["SetOsdName", "CecVersion", "SetOsdName", "CecVersion",
-                                        "SetOsdName", "CecVersion", "SetOsdName", "CecVersion"]
-        self.listBroadcastOpcodesToTest = ["SetMenuLanguage", "DeviceVendorId", "SetMenuLanguage", "DeviceVendorId",
-                                           "SetMenuLanguage", "DeviceVendorId", "SetMenuLanguage", "DeviceVendorId"]
-
-        self.setOSDPayload = ["0x52", "0x44", "0x4B", "0x20", "0x76", "0x44", "0x65", "0x76", "0x69", "0x63", "0x65", "0x20", "0x54", "0x56"]  # "RDK vDevice TV" in ASCII
-        self.cecVersionPayload = ["0x05"]  # CEC Version 1.4a
-        self.setMenuLanguagePayload = ["0x65", "0x6E", "0x67"]  # "eng" in ASCII
-        self.deviceVendorIdPayload = ["0x00", "0x19", "0xA2"]  # RDK Vendor ID
 
         super().__init__(self.testName, qcId, log)
 
@@ -97,44 +88,23 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         send_msg = data["HdmiCec"]["L3"]["SendMessage"]
         send_msg["source_logical_address"] = [self.dutLogicalAddress]
 
-        # Common opcode → payload map
-        payload_map = {
-            "CecVersion": self.cecVersionPayload,
-            "SetOsdName": self.setOSDPayload,
-            "SetMenuLanguage": self.setMenuLanguagePayload,
-            "DeviceVendorId": self.deviceVendorIdPayload,
-        }
+        for cecmessage in send_msg.get("cec_messages", []):
+            current_dest = cecmessage["Parameters"]["message"][0]
+            # Extract destination address from the first byte (lower 4 bits)
+            dest_addr = int(current_dest, 16) & 0x0F if isinstance(current_dest, str) else current_dest & 0x0F
+            # Use existing destination if it's 0xF, otherwise use self.destinationLogicalAddress
+            final_dest = dest_addr if dest_addr == 0x0F else self.destinationLogicalAddress
+            cecmessage["Parameters"]["message"][0] = f"0x{(self.dutLogicalAddress << 4 | final_dest):02X}"
+            self.cecMessageList = {
+                "sourceAddress": self.dutLogicalAddress,
+                "destAddress": self.destinationLogicalAddress,
+                "opcode": cecmessage["Parameters"]["message"][1],
+                "payload": cecmessage["Parameters"]["message"][2:]
+            }
 
-        # Metrics templates
-        direct_metrics = {
-            "directedMessagesSent": 1,
-            "directedMessagesSentAndAcked": 1,
-            "broadcastMessagesSent": 0,
-            "broadcastMessagesSentAndAcked": 0,
-            "arbitrationFailures": 0,
-        }
-        broadcast_metrics = {
-            "directedMessagesSent": 0,
-            "directedMessagesSentAndAcked": 0,
-            "broadcastMessagesSent": 1,
-            "broadcastMessagesSentAndAcked": 1,
-            "arbitrationFailures": 0,
-        }
-
-        # Build all messages using helper functions
-        directed_msgs = self._generate_messages(
-            self.dutLogicalAddress, self.listDirectOpcodesToTest, self.destinationLogicalAddress,
-            payload_map, direct_metrics
-        )
-
-        broadcast_msgs = self._generate_messages(
-            self.dutLogicalAddress, self.listBroadcastOpcodesToTest, 0xF,
-            payload_map, broadcast_metrics
-        )
-
-        # Merge and write to YAML
-        send_msg["cec_messages"] = directed_msgs + broadcast_msgs
         self.hdmiCecWriteYaml(self.l3TestConfigFile, data)
+
+        self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, os.path.join(self.targetWorkspace, "test_configuration/"))
 
     def testFunction(self):
         """
@@ -150,8 +120,6 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
 
         self.updateTestconfigurationFile()
 
-        self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, os.path.join(self.targetWorkspace, "test_configuration/"))
-
         self.utMenu.start()
 
         self.log.stepStart(f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase}')
@@ -162,6 +130,13 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
             results = False
 
         self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase}')
+
+        # Check if the message is sent to the CEC BUS
+        self.log.stepStart(f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Check data for message receipt')
+
+        results = self.cecDevice.checkMessageReceived(self.cecMessageList)
+
+        self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase}  Check data for message receipt')
 
         return results
 

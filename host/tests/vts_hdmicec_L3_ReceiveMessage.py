@@ -48,7 +48,7 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         Initializes the test class
         """
         self.testName = "HdmiCec_L3_ReceiveMessage"
-        qcId = "1"
+        qcId = "2"
         self.listDirectOpcodesToTest = ["SetOsdName", "CecVersion", "SetOsdName", "CecVersion",
                                         "SetOsdName", "CecVersion", "SetOsdName", "CecVersion"]
         self.listBroadcastOpcodesToTest = ["SetMenuLanguage", "DeviceVendorId", "SetMenuLanguage", "DeviceVendorId",
