@@ -25,6 +25,7 @@ import os
 import sys
 import tarfile
 import yaml
+import time
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_path, "../"))
@@ -34,6 +35,7 @@ from raft.framework.plugins.ut_raft import utHelperClass
 from raft.framework.core.logModule import logModule
 from raft.framework.plugins.ut_raft.utSuiteNavigator import UTSuiteNavigatorClass
 from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
+from deviceNetwork.HdmiCecNetwork import HdmiCecNetwork
 
 HDMICEC_TEST_MENU_CONFIGURATION_FILE = os.path.join(dir_path, "vts_hdmicec_testMenuConfiguration.yaml")
 HDMICEC_TESTCASES_CONFIGURATION_FILE = os.path.join(os.path.join(dir_path, "../configs"), "vts_hdmicec_testcase_configuration.yaml")
@@ -62,6 +64,7 @@ class hdmiCecHelperClass(utHelperClass):
         profileOnTarget = profileOnTarget.replace("\\", "/")
         self.waitTime = self.cpe.get("wait_time")
         self.device_type = self.cpe.get("device_type")
+        self.platform = self.cpe.get("platform")
 
         # Load test menu and test case configuration files
         self.l3TestConfigFile = HDMICEC_L3_TEST_CONFIG_FILE
@@ -86,6 +89,40 @@ class hdmiCecHelperClass(utHelperClass):
             if tarfile.is_tarfile(filesPath):
                 target_tarfile = os.path.join(self.targetWorkspace, os.path.basename(artifact))
                 self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
+
+        #TODO: remove once the vendor layer start handled by vDevice service
+        self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
+        self.hal_session_1.write(f"./{self.cpe.get('hdmicec_process_name')} &")
+        time.sleep(2)
+
+        self.cecDevice = HdmiCecNetwork(self.platform, self.device_type, self.hal_session_1,
+                                        self.cpe.get("prompt"), self.deviceTestSetup.get("controller_port"))
+
+        self.connectedDevices = self.cecDevice.listDevices()
+
+    def pickLogicalAddressForDut(self, possibleLogicalAddresses:list):
+        """
+        Picks a logical address from the possible logical addresses
+        Args:
+            possibleLogicalAddresses (list): list of possible logical addresses
+        """
+        if not possibleLogicalAddresses:
+            return None
+        # Find a logical address from possibleLogicalAddresses that is not already used by connectedDevices
+        used_logical_addresses = {device.get("logical address") for device in self.connectedDevices}
+        for addr in possibleLogicalAddresses:
+            if addr not in used_logical_addresses:
+                return addr
+        return None
+
+    def pickValidLogicalAddressForController(self):
+        """
+        Picks a valid logical address for the controller device
+        """
+        for device in self.connectedDevices:
+            if device.get("logical address") != -1:
+                return device.get("logical address")
+        return None
 
     def getPossibleLogicalAddresses(self, device_type:list):
         """

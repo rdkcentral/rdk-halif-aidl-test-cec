@@ -26,23 +26,21 @@ class HdmiCecNetwork:
     Wrapper class to instantiate the correct HDMI CEC implementation.
     """
 
-    def __init__(self, mode: str, device_type: list, session, process_name: str="",bin_path: str="", prompt="~#", port=8080):
+    def __init__(self, mode: str, device_type: list, session, prompt="~#", port=8080):
         """
         Initializes the class
         Args:
             mode (str): "vDevice" for virtual HDMI CEC, "aDevice" for actual HDMI CEC
             device_type (list): device type
             session: console session
-            process_name (str, optional): Process name of HDMI CEC binary. Defaults to "".
-            bin_path (str, optional): Path to HDMI CEC binary. Defaults to "".
             prompt (str, optional): Command prompt string. Defaults to "~#".
             port (int, optional): Port number for HDMI CEC communication. Defaults to 8080.
         """
         if mode == "vDevice":
             from .vHdmiCec import vHdmiCec
-            self.cec = vHdmiCec(device_type, session, process_name, bin_path, prompt, port)
+            self.cec = vHdmiCec(device_type, session, prompt, port)
         else:
-            #TODO: Add actual HDMI CEC implementation here
+            #TODO: Add actual hardware HDMI CEC communication
             raise NotImplementedError(f"HDMI CEC mode '{mode}' is not implemented yet.")
 
     def __getattr__(self, name):

@@ -33,7 +33,6 @@ from raft.framework.plugins.ut_raft import utHelperClass
 from raft.framework.plugins.ut_raft.utSuiteNavigator import UTSuiteNavigatorClass
 from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
 from vts_hdmicec_helper import hdmiCecHelperClass
-from deviceNetwork.HdmiCecNetwork import HdmiCecNetwork
 
 HDMICEC_L3_TEST_SUITE_NAME = "VTS_L3_HDMICEC"
 
@@ -49,36 +48,6 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         qcId = "1"
 
         super().__init__(self.testName, qcId, log)
-
-        self.vComponent_bin_path = os.path.join(self.cpe.get("target_directory"), self.moduleName, self.cpe.get("hdmicec_process_name"))
-        self.cecDevice = HdmiCecNetwork("vDevice", self.device_type, self.hal_session, self.cpe.get("hdmicec_process_name"), self.vComponent_bin_path,
-                                   self.cpe.get("prompt"), self.deviceTestSetup.get("controller_port"))
-
-        self.connectedDevices = self.cecDevice.listDevices()
-
-    def pickLogicalAddressForDut(self, possibleLogicalAddresses:list):
-        """
-        Picks a logical address from the possible logical addresses
-        Args:
-            possibleLogicalAddresses (list): list of possible logical addresses
-        """
-        if not possibleLogicalAddresses:
-            return None
-        # Find a logical address from possibleLogicalAddresses that is not already used by connectedDevices
-        used_logical_addresses = {device.get("logical address") for device in self.connectedDevices}
-        for addr in possibleLogicalAddresses:
-            if addr not in used_logical_addresses:
-                return addr
-        return None
-
-    def pickValidLogicalAddressForController(self):
-        """
-        Picks a valid logical address for the controller device
-        """
-        for device in self.connectedDevices:
-            if device.get("logical address") != -1:
-                return device.get("logical address")
-        return None
 
     def updateTestconfigurationFile(self):
         """

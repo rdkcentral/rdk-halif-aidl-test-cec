@@ -29,22 +29,18 @@ class HdmiCecDeviceInterface(metaclass=ABCMeta):
     Both virtual and actual HDMI CEC implementations must inherit this.
     """
 
-    def __init__(self, device_type: list, session, process_name: str="", bin_path: str="", prompt: str = "~#", port: int = 8080):
+    def __init__(self, device_type: list, session, prompt: str = "~#", port: int = 8080):
         """
         Initializes the vHdmiCec class for HDMI CEC device communication.
 
         Args:
             device_type (list): Type of device(s) (e.g., ["TV"], ["Tuner"], ["PlaybackDevice"]).
             session: The session object for device communication.
-            process_name (str, optional): Name of the process to run. Defaults to "". #TODO: remove once handled by vDevice framework
-            bin_path (str, optional): Path to the binary executable. Defaults to "".
             prompt (str, optional): Command prompt string. Defaults to "~#".
             port (int, optional): Port number for ut-controller communication. Defaults to 8080.
         """
         self.device_type = device_type
         self.session = session
-        self.bin_path = bin_path
-        self.process_name = process_name
         self.prompt = prompt
         self.port = port
 

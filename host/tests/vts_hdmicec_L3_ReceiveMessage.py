@@ -49,57 +49,10 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         """
         self.testName = "HdmiCec_L3_ReceiveMessage"
         qcId = "2"
-        self.listDirectOpcodesToTest = ["SetOsdName", "CecVersion", "SetOsdName", "CecVersion",
-                                        "SetOsdName", "CecVersion", "SetOsdName", "CecVersion"]
-        self.listBroadcastOpcodesToTest = ["SetMenuLanguage", "DeviceVendorId", "SetMenuLanguage", "DeviceVendorId",
-                                           "SetMenuLanguage", "DeviceVendorId", "SetMenuLanguage", "DeviceVendorId"]
-
-        self.setOSDPayload = ["0x52", "0x44", "0x4B", "0x20", "0x76", "0x44", "0x65", "0x76", "0x69", "0x63", "0x65", "0x20", "0x54", "0x56"]  # "RDK vDevice TV" in ASCII
-        self.cecVersionPayload = ["0x05"]  # CEC Version 1.4a
-        self.setMenuLanguagePayload = ["0x65", "0x6E", "0x67"]  # "eng" in ASCII
-        self.deviceVendorIdPayload = ["0x00", "0x19", "0xA2"]  # RDK Vendor ID
-
-        # Common opcode → payload map
-        self.payload_map = {
-            "CecVersion": self.cecVersionPayload,
-            "SetOsdName": self.setOSDPayload,
-            "SetMenuLanguage": self.setMenuLanguagePayload,
-            "DeviceVendorId": self.deviceVendorIdPayload,
-        }
 
         super().__init__(self.testName, qcId, log)
 
-        self.vComponent_bin_path = os.path.join(self.cpe.get("target_directory"), self.moduleName, self.cpe.get("hdmicec_process_name"))
-        self.cecDevice = HdmiCecNetwork("vDevice", self.device_type, self.hal_session_1, self.cpe.get("hdmicec_process_name"), self.vComponent_bin_path,
-                                   self.cpe.get("prompt"), self.deviceTestSetup.get("controller_port"))
-
-        self.connectedDevices = self.cecDevice.listDevices()
-
         self.sendMessageThreadObj = threading.Thread(target=self.sendMessageThread)
-
-    def pickLogicalAddressForDut(self, possibleLogicalAddresses:list):
-        """
-        Picks a logical address from the possible logical addresses
-        Args:
-            possibleLogicalAddresses (list): list of possible logical addresses
-        """
-        if not possibleLogicalAddresses:
-            return None
-        # Find a logical address from possibleLogicalAddresses that is not already used by connectedDevices
-        used_logical_addresses = {device.get("logical address") for device in self.connectedDevices}
-        for addr in possibleLogicalAddresses:
-            if addr not in used_logical_addresses:
-                return addr
-        return None
-
-    def pickValidLogicalAddressForController(self):
-        """
-        Picks a valid logical address for the controller device
-        """
-        for device in self.connectedDevices:
-            if device.get("logical address") != -1:
-                return device.get("logical address")
-        return None
 
     def updateTestconfigurationFile(self):
         """
@@ -108,15 +61,22 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         data = self.hdmiCecReadYaml(self.l3TestConfigFile)
         receive_msg = data["HdmiCec"]["L3"]
 
-        receive_msg["ReceiveMessage"] = []
-        for opcode in self.listDirectOpcodesToTest:
-            src_addr = self.destinationLogicalAddress
-            dst_addr = self.dutLogicalAddress
-            msg = self._compose_message(opcode, src_addr, dst_addr,  self.payload_map)
-            msg["Parameters"]["logical_address"] = [self.dutLogicalAddress]
-            msg["Parameters"]["wait_for_response_timeout"] = 5000
-            receive_msg["ReceiveMessage"].append(msg)
+        self.sendMessageList = []
+        for parameters in receive_msg.get("ReceiveMessage", []):
+            parameters["Parameters"]["logical_address"] = [self.dutLogicalAddress]
 
+            current_dest = parameters["Parameters"]["message"][0]
+
+            dest_addr = int(current_dest, 16) & 0x0F if isinstance(current_dest, str) else current_dest & 0x0F
+            # Use existing destination if it's 0xF, otherwise use self.dutLogicalAddress
+            final_dest = dest_addr if dest_addr == 0x0F else self.dutLogicalAddress
+            parameters["Parameters"]["message"][0] = f"0x{(self.controllerLogicalAddress << 4 | final_dest):02X}"
+            self.sendMessageList.append({
+                                        "sourceAddress": f"{self.controllerLogicalAddress:X}",
+                                        "destAddress": f"{final_dest:X}",
+                                        "opcode": parameters["Parameters"]["message"][1],
+                                        "payload": parameters["Parameters"]["message"][2:]
+                                    })
         # write to YAML
         self.hdmiCecWriteYaml(self.l3TestConfigFile, data)
 
@@ -125,8 +85,8 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         Thread function to send messages to DUT
         """
         time.sleep(1)  # Wait for DUT to be ready to receive messages
-        for opcode in self.listDirectOpcodesToTest:
-            self.cecDevice.sendMessage(self.destinationLogicalAddress, self.dutLogicalAddress, self.opCodeToHex(opcode), self.payload_map.get(opcode))
+        for message in self.sendMessageList:
+            self.cecDevice.sendMessage(message["sourceAddress"], message["destAddress"], message["opcode"], message["payload"])
             time.sleep(1)  # Small delay between messages
 
     def testFunction(self):
@@ -141,7 +101,7 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         self.testcase = "ReceiveMessage"
         possibleLogicalAddresses = self.getPossibleLogicalAddresses(self.device_type)
         self.dutLogicalAddress = self.pickLogicalAddressForDut(possibleLogicalAddresses)
-        self.destinationLogicalAddress = self.pickValidLogicalAddressForController()
+        self.controllerLogicalAddress = self.pickValidLogicalAddressForController()
 
         self.updateTestconfigurationFile()
 

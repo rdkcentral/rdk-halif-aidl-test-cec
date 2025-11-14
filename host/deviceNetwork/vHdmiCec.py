@@ -25,6 +25,7 @@ import os
 import sys
 import time
 import re
+import yaml
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(dir_path)
@@ -35,7 +36,7 @@ HDMICEC_STB_VCOMPONENT_FILE = os.path.join(dir_path, "vts_cec_device_network_con
 HDMICEC_PRINT_CEC_NETWORK_CONFIG_FILE = os.path.join(dir_path, "vts_cec_print_device_network_configuration.yaml")
 HDMICEC_SEND_CEC_MSG = os.path.join(dir_path, "vts_cec_send_cec_message_configuration.yaml")
 
-from raft.framework.plugins.ut_raft.configRead import ConfigRead
+#from raft.framework.plugins.ut_raft.configRead import ConfigRead
 from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
 from raft.framework.plugins.ut_raft.utPlaneController import utPlaneController
 from HdmiCecDeviceInterface import HdmiCecDeviceInterface
@@ -44,56 +45,52 @@ class vHdmiCec(HdmiCecDeviceInterface):
     """
     HDMI CEC related utility functions
     """
-    def __init__(self, device_type:list, session, process_name:str="", bin_path:str="", prompt: str="~#", port:int=8080):
+    def __init__(self, device_type:str, session, prompt: str="~#", port:int=8080):
         """
         Initializes the vHdmiCec class for HDMI CEC device communication.
 
         Args:
-            device_type (list): Type of device(s) (e.g., ["TV"], ["Tuner"], ["PlaybackDevice"]).
+            device_type (str): Type of device (e.g., "TV", "Tuner", "PlaybackDevice").
             session: The session object for device communication.
-            process_name (str, optional): Name of the process to run. Defaults to "". #TODO: remove once handled by vDevice framework
-            bin_path (str, optional): Path to the binary executable. Defaults to "".
             prompt (str, optional): Command prompt string. Defaults to "~#".
             port (int, optional): Port number for ut-controller communication. Defaults to 8080.
         """
-        self.device_type = device_type
         self.port = port
         self.session = session
         self.commandPrompt = prompt
-        self.processName = process_name
         self.utilities = utBaseUtils()
-        self.target_directory = os.path.dirname(bin_path)
 
-        self.cecDeviceNetworkConfigFile = HDMICEC_TV_VCOMPONENT_FILE
-        if "TV" in self.device_type:
-            self.cecDeviceNetworkConfigFile = HDMICEC_TV_VCOMPONENT_FILE
-        elif "Tuner" in self.device_type or "PlaybackDevice" in self.device_type:
-            self.cecDeviceNetworkConfigFile = HDMICEC_STB_VCOMPONENT_FILE
+        cecDeviceNetworkConfigurationFile = HDMICEC_TV_VCOMPONENT_FILE
+        if "TV" in device_type:
+            cecDeviceNetworkConfigurationFile = HDMICEC_TV_VCOMPONENT_FILE
+        elif "Tuner" in device_type or "PlaybackDevice" in device_type:
+            cecDeviceNetworkConfigurationFile = HDMICEC_STB_VCOMPONENT_FILE
 
-        self.cecDeviceNetworkConfig = ConfigRead(self.cecDeviceNetworkConfigFile, "HdmiCec")
+        # Load the HDMI CEC device network configuration file
+        with open(cecDeviceNetworkConfigurationFile, "r") as f:
+            config_dict = yaml.safe_load(f)
 
-        #TODO: remove once the service start handled by vDevice framework
-        self.utilities.change_directory(self.session, self.target_directory)
-        self.session.write(f"./{self.processName} &")
-        time.sleep(2)
+        cecDeviceNetworkConfigString = yaml.dump(config_dict)
 
-        self.target_configuration_file = os.path.join(self.target_directory, os.path.basename(self.cecDeviceNetworkConfigFile))
-        self.target_print_configuration_file = os.path.join(self.target_directory, os.path.basename(HDMICEC_PRINT_CEC_NETWORK_CONFIG_FILE))
-        self.target_send_configuration_file = os.path.join(self.target_directory, os.path.basename(HDMICEC_SEND_CEC_MSG))
+        cecDeviceNetworkConfigString = cecDeviceNetworkConfigString.replace('"', '\\"')
 
-        self.utilities.sftpCopy(self.session, self.cecDeviceNetworkConfigFile, self.target_directory)
-        self.utilities.sftpCopy(self.session, HDMICEC_PRINT_CEC_NETWORK_CONFIG_FILE, self.target_directory)
+        # Load the print configuration file
+        with open(HDMICEC_PRINT_CEC_NETWORK_CONFIG_FILE, "r") as f:
+            print_dict = yaml.safe_load(f)
+
+        self.printConfigString = yaml.dump(print_dict)
+        self.printConfigString = self.printConfigString.replace('"', '\\"')
 
         self.utPlaneController = utPlaneController(self.session, port=self.port)
 
-        self.loadCecDeviceNetworkConfiguration()
+        self.loadCecDeviceNetworkConfiguration(cecDeviceNetworkConfigString)
 
-    def loadCecDeviceNetworkConfiguration(self):
+    def loadCecDeviceNetworkConfiguration(self, configString: str):
         """
         Loads the HDMI CEC device network configuration file on to the vComponent.
         """
 
-        self.utPlaneController.sendMessage(self.target_configuration_file)
+        self.utPlaneController.sendMessage(configString)
 
     def listDevices(self) -> list:
         """
@@ -109,7 +106,7 @@ class vHdmiCec(HdmiCecDeviceInterface):
             }
         """
         # send command to CEC network to print device configuration
-        self.utPlaneController.sendMessage(self.target_print_configuration_file)
+        self.utPlaneController.sendMessage(self.printConfigString)
 
         result = self.session.read_until(self.commandPrompt)
 
@@ -184,13 +181,7 @@ class vHdmiCec(HdmiCecDeviceInterface):
             f"    payload: {msg_payload}\n"
         )
 
-        # Save YAML to HDMICEC_SEND_CEC_MSG file
-        with open(HDMICEC_SEND_CEC_MSG, "w") as f:
-            f.write(yaml_content)
-
-        self.utilities.sftpCopy(self.session, HDMICEC_SEND_CEC_MSG, self.target_directory)
-
         # Send the command to ut-controller
-        self.utPlaneController.sendMessage(self.target_send_configuration_file)
+        self.utPlaneController.sendMessage(yaml_content)
 
         return True
