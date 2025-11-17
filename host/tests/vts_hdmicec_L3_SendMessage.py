@@ -49,24 +49,24 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
 
         super().__init__(self.testName, qcId, log)
 
-    def updateTestconfigurationFile(self):
+    def updateTestconfigurationFile(self, dutLogicalAddress:int, destinationLogicalAddress:int):
         """
         Updates the HDMI CEC L3 SendMessage YAML configuration file.
         """
         data = self.hdmiCecReadYaml(self.l3TestConfigFile)
         send_msg = data["HdmiCec"]["L3"]["SendMessage"]
-        send_msg["source_logical_address"] = [self.dutLogicalAddress]
+        send_msg["source_logical_address"] = [dutLogicalAddress]
 
         for cecmessage in send_msg.get("cec_messages", []):
             current_dest = cecmessage["Parameters"]["message"][0]
             # Extract destination address from the first byte (lower 4 bits)
             dest_addr = int(current_dest, 16) & 0x0F if isinstance(current_dest, str) else current_dest & 0x0F
-            # Use existing destination if it's 0xF, otherwise use self.destinationLogicalAddress
-            final_dest = dest_addr if dest_addr == 0x0F else self.destinationLogicalAddress
-            cecmessage["Parameters"]["message"][0] = f"0x{(self.dutLogicalAddress << 4 | final_dest):02X}"
+            # Use existing destination if it's 0xF, otherwise use destinationLogicalAddress
+            final_dest = dest_addr if dest_addr == 0x0F else destinationLogicalAddress
+            cecmessage["Parameters"]["message"][0] = f"0x{(dutLogicalAddress << 4 | final_dest):02X}"
             self.cecMessageList = {
-                "sourceAddress": self.dutLogicalAddress,
-                "destAddress": self.destinationLogicalAddress,
+                "sourceAddress": dutLogicalAddress,
+                "destAddress": destinationLogicalAddress,
                 "opcode": cecmessage["Parameters"]["message"][1],
                 "payload": cecmessage["Parameters"]["message"][2:]
             }
@@ -83,11 +83,12 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
             bool: Final result of the test.
         """
         self.testcase = "SendMessage"
+        self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         possibleLogicalAddresses = self.getPossibleLogicalAddresses(self.device_type)
         self.dutLogicalAddress = self.pickLogicalAddressForDut(possibleLogicalAddresses)
         self.destinationLogicalAddress = self.pickValidLogicalAddressForController()
 
-        self.updateTestconfigurationFile()
+        self.updateTestconfigurationFile(self.dutLogicalAddress[0], self.destinationLogicalAddress)
 
         self.utMenu.start()
 
@@ -106,6 +107,8 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         results = self.cecDevice.checkMessageReceived(self.cecMessageList)
 
         self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase}  Check data for message receipt')
+
+        self.utMenu.stop()
 
         return results
 

@@ -100,7 +100,7 @@ class hdmiCecHelperClass(utHelperClass):
 
         self.connectedDevices = self.cecDevice.listDevices()
 
-    def pickLogicalAddressForDut(self, possibleLogicalAddresses:list):
+    def pickLogicalAddressForDut(self, possibleLogicalAddresses:list) -> list:
         """
         Picks a logical address from the possible logical addresses
         Args:
@@ -110,10 +110,9 @@ class hdmiCecHelperClass(utHelperClass):
             return None
         # Find a logical address from possibleLogicalAddresses that is not already used by connectedDevices
         used_logical_addresses = {device.get("logical address") for device in self.connectedDevices}
-        for addr in possibleLogicalAddresses:
-            if addr not in used_logical_addresses:
-                return addr
-        return None
+
+        available_addresses = [addr for addr in possibleLogicalAddresses if addr not in used_logical_addresses]
+        return available_addresses
 
     def pickValidLogicalAddressForController(self):
         """

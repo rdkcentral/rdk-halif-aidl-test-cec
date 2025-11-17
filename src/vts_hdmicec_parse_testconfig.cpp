@@ -104,6 +104,7 @@ static UT_status_t vts_hdmicec_parse_testconfig_instance(void *instance, const s
     const std::string parametersKey = cecMsgKey + ".Parameters";
 
     messageSize = ut_kvp_getListCount(kvpTestInstance, (parametersKey + ".message").c_str());
+    testConfiguration.repeat = ut_kvp_getUInt32Field(kvpTestInstance, (parametersKey + ".repeat").c_str());
     if(messageSize > 0)
     {
         for (uint32_t index = 0; index < messageSize; index++)
@@ -196,6 +197,7 @@ UT_status_t vts_hdmicec_parse_receiveMessage_config(char *configurationFile, con
         std::string logicalAddressKey = testList + "." + std::to_string(index) + ".Parameters.logical_address";
         std::string waitKey = testList + "." + std::to_string(index) + ".Parameters.wait_for_response_timeout";
         std::string messageKey = testList + "." + std::to_string(index) + ".Parameters.message";
+        std::string repeatKey = testList + "." + std::to_string(index) + ".Parameters.repeat";
 
         int32_t logicalAddressLen = ut_kvp_getListCount(kvpTestInstance, logicalAddressKey.c_str());
         for (uint32_t index = 0; index < logicalAddressLen; index++)
@@ -210,6 +212,8 @@ UT_status_t vts_hdmicec_parse_receiveMessage_config(char *configurationFile, con
         {
             testConfiguration.message.push_back(ut_kvp_getUInt8Field(kvpTestInstance, (messageKey + "." + std::to_string(index)).c_str()));
         }
+
+        testConfiguration.repeat = ut_kvp_getUInt32Field(kvpTestInstance, repeatKey.c_str());
 
         testConfigurationList.push_back(testConfiguration);
     }

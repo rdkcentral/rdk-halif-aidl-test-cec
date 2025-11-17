@@ -107,6 +107,17 @@ using namespace com::rdk::hal::hdmicec;
 #define MAX_FINAL_STATE_WAIT_MS  500
 #define MAX_MESSAGE_SENT_WAIT_MS  50
 
+#ifndef ENABLE_UT_INFO_LOGGING
+#ifdef UT_LOG_DEBUG
+#undef UT_LOG_DEBUG
+#define UT_LOG_DEBUG(...)
+#endif
+#ifdef UT_LOG_INFO
+#undef UT_LOG_INFO
+#define UT_LOG_INFO(...)
+#endif
+#endif
+
 #define HDMICEC_GET_STATE(hdmicecHandle, state) \
     do { \
         ::android::binder::Status status; \
@@ -464,6 +475,9 @@ public:
     bool getNextMessage( std::vector<uint8_t>& outMessage, hdmicec::SendMessageStatus& outStatus);
     bool getNextReceiveMessage(std::vector<uint8_t>& outMessage);
     bool getReceiveMessageStatus();
+    void resetStateQueue();
+    void resetSendMessageQueue();
+    void resetReceiveMessageQueue();
 private:
     mutex mStateMutex;
     mutex mMsgSentMutex;
@@ -486,6 +500,8 @@ public:
     bool getNextMessage( std::vector<uint8_t>& outMessage, hdmicec::SendMessageStatus& outStatus);
     bool getNextReceiveMessage(std::vector<uint8_t>& outMessage);
     bool getReceiveMessageStatus();
+    void resetStateQueue();
+    void resetReceiveMessageQueue();
 private:
     mutex mStateMutex;
     mutex mMsgReceiveMutex;

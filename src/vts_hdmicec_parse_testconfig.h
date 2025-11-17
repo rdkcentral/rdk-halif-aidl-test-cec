@@ -85,12 +85,14 @@ typedef struct hdmicecSendMsgConfiguration
     std::vector<uint8_t> message;
     std::vector<uint8_t> responseMessage;
     vts_hdmicec_metrics_t metrics;
+    uint32_t repeat;
 } hdmicecSendMsgConfiguration_t;
 
 typedef struct hdmicecReceiveMsgConfiguration
 {
     vector<int32_t> dutLogicalAddress;
     std::vector<uint8_t> message;
+    uint32_t repeat;
     uint32_t waitResponseTimeoutMsec;
 } hdmicecReceiveMsgConfiguration_t;
 

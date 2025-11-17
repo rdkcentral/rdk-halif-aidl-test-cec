@@ -29,107 +29,47 @@ HdmiCec:
       - Parameters:
           message: ['0x05', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
             '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
+          repeat: 5
         Expected_Results:
-          metrics: &id001 {directedMessagesSent: 1, directedMessagesSentAndAcked: 1,
-            broadcastMessagesSent: 0, broadcastMessagesSentAndAcked: 0, arbitrationFailures: 0}
+          metrics: {directedMessagesSent: 1, directedMessagesSentAndAcked: 1, broadcastMessagesSent: 0,
+            broadcastMessagesSentAndAcked: 0, arbitrationFailures: 0}
       - Parameters:
           message: ['0x05', '0x9F', '0x05']
+          repeat: 5
         Expected_Results:
-          metrics: *id001
-      - Parameters:
-          message: ['0x05', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
-            '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
-        Expected_Results:
-          metrics: *id001
-      - Parameters:
-          message: ['0x05', '0x9F', '0x05']
-        Expected_Results:
-          metrics: *id001
-      - Parameters:
-          message: ['0x05', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
-            '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
-        Expected_Results:
-          metrics: *id001
-      - Parameters:
-          message: ['0x05', '0x9F', '0x05']
-        Expected_Results:
-          metrics: *id001
-      - Parameters:
-          message: ['0x05', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
-            '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
-        Expected_Results:
-          metrics: *id001
-      - Parameters:
-          message: ['0x05', '0x9F', '0x05']
-        Expected_Results:
-          metrics: *id001
+          metrics: {directedMessagesSent: 1, directedMessagesSentAndAcked: 1, broadcastMessagesSent: 0,
+            broadcastMessagesSentAndAcked: 0, arbitrationFailures: 0}
       - Parameters:
           message: ['0x0F', '0x32', '0x65', '0x6E', '0x67']
+          repeat: 5
         Expected_Results:
-          metrics: &id002 {directedMessagesSent: 0, directedMessagesSentAndAcked: 0,
-            broadcastMessagesSent: 1, broadcastMessagesSentAndAcked: 1, arbitrationFailures: 0}
+          metrics: {directedMessagesSent: 0, directedMessagesSentAndAcked: 0, broadcastMessagesSent: 1,
+            broadcastMessagesSentAndAcked: 1, arbitrationFailures: 0}
       - Parameters:
           message: ['0x0F', '0x87', '0x00', '0x19', '0xA2']
+          repeat: 5
         Expected_Results:
-          metrics: *id002
-      - Parameters:
-          message: ['0x0F', '0x32', '0x65', '0x6E', '0x67']
-        Expected_Results:
-          metrics: *id002
-      - Parameters:
-          message: ['0x0F', '0x87', '0x00', '0x19', '0xA2']
-        Expected_Results:
-          metrics: *id002
-      - Parameters:
-          message: ['0x0F', '0x32', '0x65', '0x6E', '0x67']
-        Expected_Results:
-          metrics: *id002
-      - Parameters:
-          message: ['0x0F', '0x87', '0x00', '0x19', '0xA2']
-        Expected_Results:
-          metrics: *id002
-      - Parameters:
-          message: ['0x0F', '0x32', '0x65', '0x6E', '0x67']
-        Expected_Results:
-          metrics: *id002
-      - Parameters:
-          message: ['0x0F', '0x87', '0x00', '0x19', '0xA2']
-        Expected_Results:
-          metrics: *id002
+          metrics: {directedMessagesSent: 0, directedMessagesSentAndAcked: 0, broadcastMessagesSent: 1,
+            broadcastMessagesSentAndAcked: 1, arbitrationFailures: 0}
     ReceiveMessage:
     - Parameters:
-        message: ['0x50', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
+        message: ['0x41', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
           '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
-        logical_address: [0]
+        repeat: 5
+        logical_address: &id001 [0, 3, 10]
         wait_for_response_timeout: 5000
     - Parameters:
-        message: ['0x50', '0x9F', '0x05']
-        logical_address: [0]
+        message: ['0x41', '0x9F', '0x05']
+        repeat: 5
+        logical_address: *id001
         wait_for_response_timeout: 5000
     - Parameters:
-        message: ['0x50', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
-          '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
-        logical_address: [0]
+        message: ['0x4F', '0x32', '0x65', '0x6E', '0x67']
+        repeat: 0
+        logical_address: *id001
         wait_for_response_timeout: 5000
     - Parameters:
-        message: ['0x50', '0x9F', '0x05']
-        logical_address: [0]
-        wait_for_response_timeout: 5000
-    - Parameters:
-        message: ['0x50', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
-          '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
-        logical_address: [0]
-        wait_for_response_timeout: 5000
-    - Parameters:
-        message: ['0x50', '0x9F', '0x05']
-        logical_address: [0]
-        wait_for_response_timeout: 5000
-    - Parameters:
-        message: ['0x50', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
-          '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
-        logical_address: [0]
-        wait_for_response_timeout: 5000
-    - Parameters:
-        message: ['0x50', '0x9F', '0x05']
-        logical_address: [0]
+        message: ['0x4F', '0x87', '0x00', '0x19', '0xA2']
+        repeat: 0
+        logical_address: *id001
         wait_for_response_timeout: 5000
