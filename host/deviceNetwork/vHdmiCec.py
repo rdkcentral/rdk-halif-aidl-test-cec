@@ -36,7 +36,6 @@ HDMICEC_STB_VCOMPONENT_FILE = os.path.join(dir_path, "vts_cec_device_network_con
 HDMICEC_PRINT_CEC_NETWORK_CONFIG_FILE = os.path.join(dir_path, "vts_cec_print_device_network_configuration.yaml")
 HDMICEC_SEND_CEC_MSG = os.path.join(dir_path, "vts_cec_send_cec_message_configuration.yaml")
 
-#from raft.framework.plugins.ut_raft.configRead import ConfigRead
 from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
 from raft.framework.plugins.ut_raft.utPlaneController import utPlaneController
 from HdmiCecDeviceInterface import HdmiCecDeviceInterface
@@ -45,12 +44,12 @@ class vHdmiCec(HdmiCecDeviceInterface):
     """
     HDMI CEC related utility functions
     """
-    def __init__(self, device_type:str, session, prompt: str="~#", port:int=8080):
+    def __init__(self, device_type:list, session, prompt: str="~#", port:int=8080):
         """
         Initializes the vHdmiCec class for HDMI CEC device communication.
 
         Args:
-            device_type (str): Type of device (e.g., "TV", "Tuner", "PlaybackDevice").
+            device_type (list): List of device types (e.g., ["TV"], ["Tuner"], ["PlaybackDevice"]).
             session: The session object for device communication.
             prompt (str, optional): Command prompt string. Defaults to "~#".
             port (int, optional): Port number for ut-controller communication. Defaults to 8080.

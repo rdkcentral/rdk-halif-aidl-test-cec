@@ -66,7 +66,7 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
             cecmessage["Parameters"]["message"][0] = f"0x{(dutLogicalAddress << 4 | final_dest):02X}"
             self.cecMessageList = {
                 "sourceAddress": dutLogicalAddress,
-                "destAddress": destinationLogicalAddress,
+                "destAddress": final_dest,
                 "opcode": cecmessage["Parameters"]["message"][1],
                 "payload": cecmessage["Parameters"]["message"][2:]
             }
@@ -88,6 +88,10 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         self.dutLogicalAddress = self.pickLogicalAddressForDut(possibleLogicalAddresses)
         self.destinationLogicalAddress = self.pickValidLogicalAddressForController()
 
+        if self.dutLogicalAddress is None or self.destinationLogicalAddress is None:
+            self.log.error("Failed to assign logical addresses to DUT or destination")
+            return False
+
         self.updateTestconfigurationFile(self.dutLogicalAddress[0], self.destinationLogicalAddress)
 
         self.utMenu.start()
@@ -106,7 +110,7 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
 
         results = self.cecDevice.checkMessageReceived(self.cecMessageList)
 
-        self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase}  Check data for message receipt')
+        self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Check data for message receipt')
 
         self.utMenu.stop()
 

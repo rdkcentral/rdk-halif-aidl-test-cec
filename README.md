@@ -38,7 +38,7 @@ Set below environment variable:
 
 - UT_CORE_VERSION: Specific version of the UT-Core framework (e.g., 4.7.0). Defaults to the latest tagged version.
 
-- VCOMPONENT_HDMI_CEC_VERSTION: Specific version of the HDMI CEC Virtual Component (e.g 1.0.0). Defaults to the latest HEAD.
+- VCOMPONENT_HDMI_CEC_VERSION: Specific version of the HDMI CEC Virtual Component (e.g 1.0.0). Defaults to the latest HEAD.
 
 - RDK_HALIF_AIDL_VERSION: Specific version of the AIDL HAL Specification (e.g, 0.7.1). Defaults to the latest HEAD.
 

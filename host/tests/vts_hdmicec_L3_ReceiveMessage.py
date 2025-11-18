@@ -94,7 +94,7 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
                 self.cecDevice.sendMessage(message["sourceAddress"], message["destAddress"], message["opcode"], message["payload"])
                 time.sleep(1)  # Small delay between messages
 
-    def receiveMesage(self, description:str="") -> bool:
+    def receiveMessage(self, description:str="") -> bool:
 
         """
         The main test function to send messages to dut from controller.
@@ -140,13 +140,17 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         self.dutLogicalAddress = self.pickLogicalAddressForDut(possibleLogicalAddresses)
         self.controllerLogicalAddress = self.pickValidLogicalAddressForController()
 
+        if self.dutLogicalAddress is None or self.controllerLogicalAddress is None:
+            self.log.error("Failed to assign logical addresses to DUT or Controller")
+            return False
+
         # Scenario 1: Messages sent to DUT and broadcast from controller
         for addr in self.dutLogicalAddress:
             self.updateTestconfigurationFile(self.dutLogicalAddress, addr, 5)
 
             self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, os.path.join(self.targetWorkspace, "test_configuration/"))
 
-            results &= self.receiveMesage(f"DUT:{self.dutLogicalAddress}, Destination:{addr}")
+            results &= self.receiveMessage(f"DUT:{self.dutLogicalAddress}, Destination:{addr}")
 
         # Scenario 2: Messages sent to DUT wihout assigning logical address to DUT
         for addr in self.dutLogicalAddress:
@@ -154,7 +158,7 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
 
             self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, os.path.join(self.targetWorkspace, "test_configuration/"))
 
-            results &= self.receiveMesage(f"DUT:[], Destination:{addr}")
+            results &= self.receiveMessage(f"DUT:[], Destination:{addr}")
 
         # Scenario 3: Messages sent different logical address than DUT
         # pick logical address not assigned to DUT
@@ -165,7 +169,7 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
 
         self.updateTestconfigurationFile(self.dutLogicalAddress, otherAddr, 0)
         self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, os.path.join(self.targetWorkspace, "test_configuration/"))
-        results &= self.receiveMesage(f"DUT:{self.dutLogicalAddress}, Destination:{otherAddr}")
+        results &= self.receiveMessage(f"DUT:{self.dutLogicalAddress}, Destination:{otherAddr}")
 
         return results
 

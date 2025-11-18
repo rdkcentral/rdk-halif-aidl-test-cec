@@ -45,13 +45,6 @@ class HdmiCecDeviceInterface(metaclass=ABCMeta):
         self.port = port
 
     @abstractmethod
-    def loadCecDeviceNetworkConfiguration(self):
-        """
-        Loads the HDMI CEC device network configuration file on to the vComponent.
-        """
-        pass
-
-    @abstractmethod
     def listDevices(self) -> list:
         """
         Lists the devices currently available on the HDMI CEC network.
@@ -86,7 +79,7 @@ class HdmiCecDeviceInterface(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def sendMessage(self, sourceAddress: str, destAddress: str, opCode: str, payload: list = None) -> bool:
+    def sendMessage(self, sourceAddress: int, destAddress: int, opCode: str, payload: list = None) -> bool:
         """
         This function sends a specified opCode.
 
