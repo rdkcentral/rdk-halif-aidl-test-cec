@@ -11,11 +11,16 @@
 ## Acronyms, Terms and Abbreviations
 
 - `HAL`    - Hardware Abstraction Layer
-- `API`    - Application Programming Interface
-- `AIDL`   - Android Interface Definition Language
+- `VTS`    - Vendor Test Suite
+- `HDMI`   - High Definition Multimedia Interface
+- `CEC`    - Consumer Electronics Control
+- `L1`     - Level 1 Testing
 - `L2`     - Level 2 Testing
 - `L3`     - Level 3 Testing
-- `NA`     - Not Applicable
+- `DUT`    - Device Under Test
+- `RAFT`   - Rapid Automation Framework for Testing
+- `YAML`   - YAML Ain't Markup Language
+- `AIDL`   - Android Interface Definition Language
 
 ## Introduction
 

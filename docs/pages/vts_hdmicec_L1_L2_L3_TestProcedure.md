@@ -14,12 +14,15 @@
 
 - `HAL`    - Hardware Abstraction Layer
 - `VTS`    - Vendor Test Suite
+- `HDMI`   - High Definition Multimedia Interface
+- `CEC`    - Consumer Electronics Control
 - `L1`     - Level 1 Testing
 - `L2`     - Level 2 Testing
 - `L3`     - Level 3 Testing
 - `DUT`    - Device Under Test
 - `RAFT`   - Rapid Automation Framework for Testing
 - `YAML`   - YAML Ain't Markup Language
+- `AIDL`   - Android Interface Definition Language
 
 ## Build the VTS
 
@@ -61,19 +64,19 @@ Set the following environment variables:
 
 - VCOMPONENT_HDMI_CEC_VERSION: Specific version of the HDMI CEC Virtual Component (e.g., 1.0.0). Defaults to the latest HEAD.
 
-- RDK_HALIF_AIDL_VERSION: Specific version of the AIDL HAL Specification (e.g., 0.7.1). Defaults to the latest HEAD.
+- RDK_HALIF_AIDL_VERSION: Specific version of the AIDL HAL Specification (e.g., 0.12.0). Defaults to the latest HEAD.
 
 Example:
 
 ```bash
 export UT_CORE_VERSION=4.7.3
-export RDK_HALIF_AIDL_VERSION=0.7.1
+export RDK_HALIF_AIDL_VERSION=0.12.0
 export VCOMPONENT_HDMI_CEC_VERSION=0.1.0
 export AIDL_BIN=/path/to/linux_binder_idl/out/aidl
 export LINUX_BINDER_OUT_DIR=/path/to/linux_binder_idl/local/
 ```
 
-By default, UT logs are disabled. To enable them, set the following environment variable:
+By default, `UT` logs are disabled. To enable them, set the following environment variable:
 
 ```bash
 export ENABLE_UT_INFO_LOGGING=1
@@ -328,13 +331,13 @@ passwd root
 
 Then, update the same password in the `vts_rack_configuration.yaml` file.
 
-**Note:** Currently, the Python paramiko library does not support empty passwords on vDevice, so setting a password is necessary.
+Currently, the Python `paramiko` library does not support empty passwords on vDevice, so setting a password is necessary.
 
 ### Run on Windows Environment
 
 To run the Python environment tests in a Windows environment, follow these additional steps after checking out the repository and compiling the code:
 
-1. Install the `host` folder and update the rack configuration files as in the Linux environment.
+1. Install the python environment and update the rack configuration files as in the Linux environment.
 
 2. Move the entire project folder (including `host`) to the Windows machine.
 
