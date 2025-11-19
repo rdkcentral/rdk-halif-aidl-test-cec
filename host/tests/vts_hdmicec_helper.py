@@ -41,9 +41,12 @@ HDMICEC_TEST_MENU_CONFIGURATION_FILE = os.path.join(dir_path, "vts_hdmicec_testM
 HDMICEC_TESTCASES_CONFIGURATION_FILE = os.path.join(os.path.join(dir_path, "../configs"), "vts_hdmicec_testcase_configuration.yaml")
 HDMICEC_L3_TEST_CONFIG_FILE = os.path.join(os.path.join(dir_path, "../../test_configuration"), "vts_l3_HdmiCec.yaml")
 
+#TODO: remove once the vendor layer start handled by vDevice service
+HDMICEC_BINDER_SERVICE_NAME = "Vendor-HdmiCec"
+
 class hdmiCecHelperClass(utHelperClass):
 
-    def __init__(self, testName:str, qcId:str, log:logModule=None ):
+    def __init__(self, testName:str, configureNetwork:bool, qcId:str, log:logModule=None ):
         """
         Initializes the test class
         """
@@ -88,17 +91,19 @@ class hdmiCecHelperClass(utHelperClass):
 
             if tarfile.is_tarfile(filesPath):
                 target_tarfile = os.path.join(self.targetWorkspace, os.path.basename(artifact))
+                target_tarfile = target_tarfile.replace('\\', '/')
                 self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
 
         #TODO: remove once the vendor layer start handled by vDevice service
         self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
-        self.hal_session_1.write(f"./{self.cpe.get('hdmicec_process_name')} &")
+        self.hal_session_1.write(f"./{HDMICEC_BINDER_SERVICE_NAME} &")
         time.sleep(2)
 
-        self.cecDevice = HdmiCecNetwork(self.platform, self.device_type, self.hal_session_1,
-                                        self.cpe.get("prompt"), self.deviceTestSetup.get("controller_port"))
+        if configureNetwork:
+            self.cecDevice = HdmiCecNetwork(self.platform, self.device_type, self.hal_session_1,
+                                            self.cpe.get("prompt"), self.deviceTestSetup.get("controller_port"))
 
-        self.connectedDevices = self.cecDevice.listDevices()
+            self.connectedDevices = self.cecDevice.listDevices()
 
     def pickLogicalAddressForDut(self, possibleLogicalAddresses:list) -> list:
         """

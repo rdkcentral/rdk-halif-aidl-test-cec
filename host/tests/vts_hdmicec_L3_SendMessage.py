@@ -46,8 +46,8 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         """
         self.testName = "HdmiCec_L3_SendMessage"
         qcId = "1"
-
-        super().__init__(self.testName, qcId, log)
+        configureNetwork = True
+        super().__init__(self.testName, configureNetwork, qcId, log)
 
     def updateTestconfigurationFile(self, dutLogicalAddress:int, destinationLogicalAddress:int):
         """
@@ -73,7 +73,9 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
 
         self.hdmiCecWriteYaml(self.l3TestConfigFile, data)
 
-        self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, os.path.join(self.targetWorkspace, "test_configuration/"))
+        target_config_path = self.targetWorkspace + "/test_configuration/"
+
+        self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, target_config_path)
 
     def testFunction(self):
         """
@@ -89,7 +91,7 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         self.destinationLogicalAddress = self.pickValidLogicalAddressForController()
 
         if self.dutLogicalAddress is None or self.destinationLogicalAddress is None:
-            self.log.error("Failed to assign logical addresses to DUT or destination")
+            self.log.stepResult(False, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Description: Failed to assign DUT address')
             return False
 
         self.updateTestconfigurationFile(self.dutLogicalAddress[0], self.destinationLogicalAddress)
