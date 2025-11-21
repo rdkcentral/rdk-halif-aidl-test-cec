@@ -118,31 +118,31 @@ public:
         metricValue = directMsgSent->value->get<PropertyValue::Value::Tag::intValue>();
         if(metricValue >= 0)
         {
-            UT_ASSERT_EQUAL(metricValue - startMetrics.directedMessagesSent, diffMetrics.directedMessagesSent*repeatCount);
+            UT_ASSERT_EQUAL(metricValue - startMetrics.directedMessagesSent, diffMetrics.directedMessagesSent * repeatCount);
         }
 
         metricValue = directMsgSentAck->value->get<PropertyValue::Value::Tag::intValue>();
         if(metricValue >= 0)
         {
-            UT_ASSERT_EQUAL(metricValue - startMetrics.directedMessagesSentAndAcked, diffMetrics.directedMessagesSentAndAcked*repeatCount);
+            UT_ASSERT_EQUAL(metricValue - startMetrics.directedMessagesSentAndAcked, diffMetrics.directedMessagesSentAndAcked * repeatCount);
         }
 
         metricValue = broadcastMsgSent->value->get<PropertyValue::Value::Tag::intValue>();
         if(metricValue >= 0)
         {
-            UT_ASSERT_EQUAL(metricValue - startMetrics.broadcastMessagesSent, diffMetrics.broadcastMessagesSent*repeatCount);
+            UT_ASSERT_EQUAL(metricValue - startMetrics.broadcastMessagesSent, diffMetrics.broadcastMessagesSent * repeatCount);
         }
 
         metricValue = broadcastMsgSentAck->value->get<PropertyValue::Value::Tag::intValue>();
         if(metricValue >= 0)
         {
-            UT_ASSERT_EQUAL(metricValue - startMetrics.broadcastMessagesSentAndAcked, diffMetrics.broadcastMessagesSentAndAcked*repeatCount);
+            UT_ASSERT_EQUAL(metricValue - startMetrics.broadcastMessagesSentAndAcked, diffMetrics.broadcastMessagesSentAndAcked * repeatCount);
         }
 
         metricValue = arbitrationFailures->value->get<PropertyValue::Value::Tag::intValue>();
         if(metricValue >= 0)
         {
-            UT_ASSERT_EQUAL(metricValue - startMetrics.arbitrationFailures, diffMetrics.arbitrationFailures*repeatCount);
+            UT_ASSERT_EQUAL(metricValue - startMetrics.arbitrationFailures, diffMetrics.arbitrationFailures * repeatCount);
         }
     }
     void TearDown() override
