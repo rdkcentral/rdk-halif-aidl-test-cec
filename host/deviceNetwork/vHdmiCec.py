@@ -143,7 +143,7 @@ class vHdmiCec(HdmiCecDeviceInterface):
             cecMessage (dict): A dictionary containing the following keys:
                 sourceAddress (int): The logical address of the source device (0-15).
                 destAddress (int): The logical address of the destination device (0-15).
-                opCode (str): Operation code to check as an hexadecimal string e.g 0x81.
+                opCode (str): Operation code to check as a hexadecimal string e.g 0x81.
                 payload (list): List of hexadecimal strings to be checked with the opCode.
             timeout (int): The maximum amount of time, in seconds, that the method will
                            wait for the message to be received. Defaults to 10.
@@ -160,7 +160,7 @@ class vHdmiCec(HdmiCecDeviceInterface):
         Args:
           sourceAddress (int): The logical address of the source device (0-15).
           destAddress (int): The logical address of the destination device (0-15).
-          opCode (str): Operation code to send as an hexadecimal string e.g 0x81.
+          opCode (str): Operation code to send as a hexadecimal string e.g 0x81.
           payload (list): List of hexadecimal strings to be sent with the opCode. Optional.
 
         Returns:

@@ -32,7 +32,7 @@ The goal is to ensure that:
 - `RAFT`   - Rapid Automation Framework for Testing
 - `YAML`   - YAML Ain't Markup Language
 - `AIDL`   - Android Interface Definition Language
-- `controller` - CEC message peer (vDevice/vCompopnent or hardware adaptor such as Pulse-Eight)
+- `controller` - CEC message peer (vDevice/vComponent or hardware adaptor such as Pulse-Eight)
 
 ### References
 

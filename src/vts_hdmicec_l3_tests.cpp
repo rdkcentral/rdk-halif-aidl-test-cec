@@ -316,8 +316,6 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
 
         if(testConfiguration.dutLogicalAddress.size() > 0)
         {
-            uint32_t counter = 0;
-
             // Add logical address
             HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, testConfiguration.dutLogicalAddress);
 
@@ -328,6 +326,8 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
                 // check callback for received message only if DUT logical address is assigned to destination address
                 if(isDutAddressed)
                 {
+                    uint32_t counter = 0;
+
                     //TODO: replace with conditional variable or semaphore
                     while(!controllerListener->getReceiveMessageStatus())
                     {

@@ -167,6 +167,11 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         allPossibleAddresses = set(range(0, 15))
         dutAddresses = set(self.dutLogicalAddress)
         availableAddresses = list(allPossibleAddresses - dutAddresses)
+
+        if not availableAddresses:
+            self.log.stepResult(False, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Description: No available logical addresses for Scenario 3')
+            return False
+
         otherAddr = availableAddresses[0]
 
         self.updateTestconfigurationFile(self.dutLogicalAddress, otherAddr, 0)
