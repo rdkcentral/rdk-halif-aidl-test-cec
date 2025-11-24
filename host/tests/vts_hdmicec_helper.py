@@ -95,9 +95,9 @@ class hdmiCecHelperClass(utHelperClass):
                 self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
 
         #TODO: remove once the vendor layer start handled by vDevice service
-        #self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
-        #self.hal_session_1.write(f"./{HDMICEC_BINDER_SERVICE_NAME} &")
-        #time.sleep(2)
+        self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
+        self.hal_session_1.write(f"./{HDMICEC_BINDER_SERVICE_NAME} &")
+        time.sleep(2)
 
         if configureNetwork:
             self.cecDevice = HdmiCecNetwork(self.platform, self.device_type, self.hal_session_1,
