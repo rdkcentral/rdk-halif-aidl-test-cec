@@ -35,6 +35,7 @@ HDMICEC_TV_VCOMPONENT_FILE = os.path.join(dir_path, "vts_cec_device_network_conf
 HDMICEC_STB_VCOMPONENT_FILE = os.path.join(dir_path, "vts_cec_device_network_configuration_VSTB.yaml")
 HDMICEC_PRINT_CEC_NETWORK_CONFIG_FILE = os.path.join(dir_path, "vts_cec_print_device_network_configuration.yaml")
 HDMICEC_SEND_CEC_MSG = os.path.join(dir_path, "vts_cec_send_cec_message_configuration.yaml")
+HDMICEC_DEVICE_LIST_FILE = "/tmp/hdmi_cec_device_list_info.txt"
 
 from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
 from raft.framework.plugins.ut_raft.utPlaneController import utPlaneController
@@ -91,22 +92,13 @@ class vHdmiCec(HdmiCecDeviceInterface):
 
         self.utPlaneController.sendMessage(configString)
 
-    def listDevices(self) -> list:
+    def readDeviceNetworkList(self) -> list:
         """
-        Lists the devices currently available on the HDMI CEC network.
+        Reads the device network list from the HDMI CEC device.
 
         Returns:
             list: A list of dictionaries representing discovered devices with details.
-            {
-                "name": "name",
-                "physical address": "0.0.0.0",
-                "logical address": 0,
-                "active source": 0,
-            }
         """
-        # send command to CEC network to print device configuration
-        self.utPlaneController.sendMessage(self.printConfigString)
-
         result = self.session.read_until(self.commandPrompt)
 
         result = re.sub(r'\x1b\[[0-9;]*m', '', result)         # remove ANSI color codes
@@ -132,6 +124,31 @@ class vHdmiCec(HdmiCecDeviceInterface):
                 "logical address": int(match.group("logical1")),
                 "active source": int(match.group("active")),
             })
+
+        return devices
+
+    def listDevices(self) -> list:
+        """
+        Lists the devices currently available on the HDMI CEC network.
+
+        Returns:
+            list: A list of dictionaries representing discovered devices with details.
+            {
+                "name": "name",
+                "physical address": "0.0.0.0",
+                "logical address": 0,
+                "active source": 0,
+            }
+        """
+        # send command to CEC network to print device configuration
+        self.utPlaneController.sendMessage(self.printConfigString)
+
+        devices = self.readDeviceNetworkList()
+
+        if devices is None or len(devices) == 0:
+            self.session.write("cat " + HDMICEC_DEVICE_LIST_FILE)
+            time.sleep(2)
+            devices = self.readDeviceNetworkList()
 
         return devices
 
