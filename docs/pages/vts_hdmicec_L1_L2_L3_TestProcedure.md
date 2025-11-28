@@ -134,7 +134,7 @@ Run the following command to execute the VTS test:
 
 Example Rack configuration File: [vts_rack_configuration.yml](../../host/configs/vts_rack_configuration.yml)
 
-For more details on rack configuration refer [RAFT](https://github.com/rdkcentral/python_raft/blob/1.7.1/README.md) and [example_rack_config.yml](https://github.com/rdkcentral/python_raft/blob/1.7.1/examples/configs/example_rack_config.yml)
+For more details on rack configuration refer [RAFT](https://github.com/rdkcentral/python_raft/blob/1.8.0/README.md) and [example_rack_config.yml](https://github.com/rdkcentral/python_raft/blob/1.8.0/examples/configs/example_rack_config.yml)
 
 In this file, update the configuration to define the console sessions for the `DUT` and the outbound settings:
 
@@ -185,12 +185,22 @@ rackConfig:
                         httpProxy:    # Local Proxy if required
                         workspaceDirectory: './logs/workspace'   # Local working directory
                     hdmiCECController:
-                        type: remote-cec-client    # Use remote cec controller
-                        adaptor: /dev/ttyACM0      # Adaptor port
-                        address: XXX.XXX.XXX.XXX   # IP address of the server
-                        username: root             # Login username
-                        password: ' '              # Login password
+                        type: virtual-cec-client # Controller name
+                        vendor: "vComponent" # Vendor optional
+                        address: "127.0.0.1" # Needs to be be filled out with IP address
+                        username: ""         # Needs to be filled out with login username
+                        password: ''         # Needs to be filled out with login password
+                        port: 5522           # Needs to te filled out with port number
+                        control_port: 8080   # ut controller port
+                        device_network_configuration: "hdmicec_device_config_add_network.yaml" # Virtual hdmi device network configuration file
 ```
+
+***hdmiCECController:***
+Configure this field according to your test platform. For physical hardware testing, use real CEC clients (e.g., `remote-cec-client`). For virtual device testing, use `virtual-cec-client`. Provide the connection details for the device running vComponent.
+- `control_port` - The port number where vComponent accepts command requests.
+- `device_network_configuration` - Configuration file for the virtual HDMI device network.
+
+For additional information about the CEC vComponent, see: [HDMI CEC Virtual Component](https://github.com/rdkcentral/rdk-aidl-vcomponent-cec/blob/0.1.0/README.md)
 
 #### Device Configuration File
 
@@ -212,8 +222,7 @@ deviceConfig:
         wait_time: 240 # Configurable timeout value to limit the total duration of individual tests
         test:
             profile: "../../profiles/hfp-hdmicec_vcomponent.yaml" #HFP profile used to meet platform requirements
-            controller_port: 8080 # Port where the ut-controller is listening
-
+            device_network_list: "/tmp/hdmi_cec_device_list_info.txt" #File path where the connected HDMI CEC device list is stored
 ```
 
 ### Install the Python Packages

@@ -34,5 +34,4 @@ deviceConfig:
         wait_time: 320 #Configurable timeout value to limit the total duration of individual tests
         test:
             profile: "../../profiles/hfp-hdmicec_vcomponent.yaml" #HFP profile used to meet platform requirements
-            controller_port: 8080 #Port where the ut-controller is listening
             device_network_list: "/tmp/hdmi_cec_device_list_info.txt" #File path where the connected HDMI CEC device list is stored
