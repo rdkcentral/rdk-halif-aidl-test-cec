@@ -35,7 +35,6 @@ from raft.framework.plugins.ut_raft import utHelperClass
 from raft.framework.core.logModule import logModule
 from raft.framework.plugins.ut_raft.utSuiteNavigator import UTSuiteNavigatorClass
 from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
-from deviceNetwork.HdmiCecNetwork import HdmiCecNetwork
 
 HDMICEC_TEST_MENU_CONFIGURATION_FILE = os.path.join(dir_path, "vts_hdmicec_testMenuConfiguration.yaml")
 HDMICEC_TESTCASES_CONFIGURATION_FILE = os.path.join(os.path.join(dir_path, "../configs"), "vts_hdmicec_testcase_configuration.yaml")
@@ -100,10 +99,9 @@ class hdmiCecHelperClass(utHelperClass):
         time.sleep(2)
 
         if configureNetwork:
-            self.cecDevice = HdmiCecNetwork(self.platform, self.device_type, self.hal_session_1,
-                                            self.cpe.get("prompt"), self.deviceTestSetup.get("controller_port"))
+            self.hdmiCECController.start()
 
-            self.connectedDevices = self.cecDevice.listDevices()
+            self.connectedDevices = self.hdmiCECController.listDevices()
 
     def pickLogicalAddressForDut(self, possibleLogicalAddresses:list) -> list:
         """

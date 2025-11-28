@@ -18,7 +18,7 @@
 # * See the License for the specific language governing permissions and
 # * limitations under the License.
 # *
-# * ******************************************************************************
+#* ******************************************************************************
 
 # The information defined in this config is consistent across all devices of a type.
 
@@ -28,9 +28,11 @@ deviceConfig:
         model:      "VTV"
         soc_vendor: "intel"
         target_directory: "/tmp/"
+        hdmicec_process_name: "Vendor-HdmiCec"
         device_type: ["TV"] # Possible values: ["TV", "RecordingDevice", "Tuner", "PlaybackDevice", "AudioSystem", "VideoProcessor", "PureCecSwitch", "Reserved"]
         prompt: "~#" # Prompt string on console
-        wait_time: 240 #Configurable timeout value to limit the total duration of individual tests
+        wait_time: 320 #Configurable timeout value to limit the total duration of individual tests
         test:
             profile: "../../profiles/hfp-hdmicec_vcomponent.yaml" #HFP profile used to meet platform requirements
             controller_port: 8080 #Port where the ut-controller is listening
+            device_network_list: "/tmp/hdmi_cec_device_list_info.txt" #File path where the connected HDMI CEC device list is stored

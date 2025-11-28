@@ -35,7 +35,6 @@ from raft.framework.plugins.ut_raft import utHelperClass
 from raft.framework.plugins.ut_raft.utSuiteNavigator import UTSuiteNavigatorClass
 from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
 from vts_hdmicec_helper import hdmiCecHelperClass
-from deviceNetwork.HdmiCecNetwork import HdmiCecNetwork
 
 HDMICEC_L3_TEST_SUITE_NAME = "VTS_L3_HDMICEC"
 
@@ -91,7 +90,7 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         time.sleep(1)  # Wait for DUT to be ready to receive messages
         for message in self.sendMessageList:
             for _ in range(message["repeat"]):
-                self.cecDevice.sendMessage(message["sourceAddress"], message["destAddress"], message["opcode"], message["payload"])
+                self.hdmiCECController.sendMessage(message["sourceAddress"], message["destAddress"], message["opcode"], message["payload"])
                 time.sleep(1)  # Small delay between messages
 
     def receiveMessage(self, description:str="") -> bool:

@@ -57,14 +57,14 @@ rackConfig:
                 # [ type: "telnet": port: 23 username: "test" password: "test" ]
                 - dut:
                     ip: "127.0.0.1"  # IP Address of the ADA Hub
-                    description: "PC"
+                    description: "VTV"
                     platform: "vDevice"
                     consoles:
                         - default:
                             type: "ssh"
                             port: 5522
-                            username: "root"
-                            ip: "127.0.0.1" #IP address
+                            username: ""
+                            ip: "" #IP address
                             password: ""
                             prompt: "~#" # Prompt string on console
                         - ssh_hal_test:
@@ -87,3 +87,12 @@ rackConfig:
                         upload_url_base_dir: "sftp://server-address/home/workspace/tftp/rack1/slot1" # alternative upload location
                         httpProxy:    # Local Proxy if required
                         workspaceDirectory: './logs/workspace'   # Local working directory
+                    hdmiCECController:
+                        type: virtual-cec-client
+                        vendor: "vComponent"
+                        address: "127.0.0.1" # Needs to be be filled out with IP address
+                        username: "" # Needs to be filled out with login username
+                        password: '' # Needs to be filled out with login password
+                        port: 5522
+                        control_port: 8080
+                        device_network_configuration: "hdmicec_device_config_add_network.yaml"

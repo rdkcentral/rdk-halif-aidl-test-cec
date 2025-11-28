@@ -110,7 +110,11 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         # Check if the message is sent to the CEC BUS
         self.log.stepStart(f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Check data for message receipt')
 
-        results = self.cecDevice.checkMessageReceived(self.cecMessageList)
+        results = self.hdmiCECController.checkMessageReceived(self.cecMessageList["sourceAddress"],
+                                                              self.cecMessageList["destAddress"],
+                                                              self.cecMessageList["opcode"],
+                                                              10,
+                                                              self.cecMessageList.get("payload", []))
 
         self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Check data for message receipt')
 
