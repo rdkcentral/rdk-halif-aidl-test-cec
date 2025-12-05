@@ -69,9 +69,9 @@ Set the following environment variables:
 Example:
 
 ```bash
-export UT_CORE_VERSION=4.7.3
+export UT_CORE_VERSION=5.0.0
 export RDK_HALIF_AIDL_VERSION=0.12.0
-export VCOMPONENT_HDMI_CEC_VERSION=0.1.0
+export VCOMPONENT_HDMI_CEC_VERSION=0.2.0
 export AIDL_BIN=/path/to/linux_binder_idl/out/aidl
 export LINUX_BINDER_OUT_DIR=/path/to/linux_binder_idl/local/
 ```
@@ -192,13 +192,13 @@ rackConfig:
                         password: ''         # Needs to be filled out with login password
                         port: 5522           # Needs to te filled out with port number
                         control_port: 8080   # ut controller port
-                        device_network_configuration: "hdmicec_device_config_add_network.yaml" # Virtual hdmi device network configuration file
+                        device_network_configuration: "/home/hdmicec_device_config_add_network.yaml" # Virtual hdmi device network configuration file
 ```
 
 ***hdmiCECController:***
-Configure this field according to your test platform. For physical hardware testing, use real CEC clients (e.g., `remote-cec-client`). For virtual device testing, use `virtual-cec-client`. Provide the connection details for the device running vComponent.
+Configure this field according to your test platform. For physical hardware testing, use real CEC clients (e.g., `remote-cec-client`). For virtual device testing, use `virtual-cec-client`. For virtual device provide the connection details of the device running vComponent.
 - `control_port` - The port number where vComponent accepts command requests.
-- `device_network_configuration` - Configuration file for the virtual HDMI device network.
+- `device_network_configuration` - Configuration file with host path for the virtual HDMI device network.
 
 For additional information about the CEC vComponent, see: [HDMI CEC Virtual Component](https://github.com/rdkcentral/rdk-aidl-vcomponent-cec/blob/0.1.0/README.md)
 
