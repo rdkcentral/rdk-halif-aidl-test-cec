@@ -25,6 +25,7 @@ import os
 import sys
 import tarfile
 import yaml
+import time
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_path, "../"))
@@ -39,9 +40,12 @@ HDMICEC_TEST_MENU_CONFIGURATION_FILE = os.path.join(dir_path, "vts_hdmicec_testM
 HDMICEC_TESTCASES_CONFIGURATION_FILE = os.path.join(os.path.join(dir_path, "../configs"), "vts_hdmicec_testcase_configuration.yaml")
 HDMICEC_L3_TEST_CONFIG_FILE = os.path.join(os.path.join(dir_path, "../../test_configuration"), "vts_l3_HdmiCec.yaml")
 
+#TODO: remove once the vendor layer start handled by vDevice service
+HDMICEC_BINDER_SERVICE_NAME = "Vendor-HdmiCec"
+
 class hdmiCecHelperClass(utHelperClass):
 
-    def __init__(self, testName:str, qcId:str, log:logModule=None ):
+    def __init__(self, testName:str, configureNetwork:bool, qcId:str, log:logModule=None ):
         """
         Initializes the test class
         """
@@ -62,6 +66,7 @@ class hdmiCecHelperClass(utHelperClass):
         profileOnTarget = profileOnTarget.replace("\\", "/")
         self.waitTime = self.cpe.get("wait_time")
         self.device_type = self.cpe.get("device_type")
+        self.platform = self.cpe.get("platform")
 
         # Load test menu and test case configuration files
         self.l3TestConfigFile = HDMICEC_L3_TEST_CONFIG_FILE
@@ -85,7 +90,41 @@ class hdmiCecHelperClass(utHelperClass):
 
             if tarfile.is_tarfile(filesPath):
                 target_tarfile = os.path.join(self.targetWorkspace, os.path.basename(artifact))
+                target_tarfile = target_tarfile.replace('\\', '/')
                 self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
+
+        #TODO: remove once the vendor layer start handled by vDevice service
+        self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
+        self.hal_session_1.write(f"./{HDMICEC_BINDER_SERVICE_NAME} &")
+        time.sleep(2)
+
+        if configureNetwork:
+            self.hdmiCECController.start()
+
+            self.connectedDevices = self.hdmiCECController.listDevices()
+
+    def pickLogicalAddressForDut(self, possibleLogicalAddresses:list) -> list:
+        """
+        Picks a logical address from the possible logical addresses
+        Args:
+            possibleLogicalAddresses (list): list of possible logical addresses
+        """
+        if not possibleLogicalAddresses:
+            return None
+        # Find a logical address from possibleLogicalAddresses that is not already used by connectedDevices
+        used_logical_addresses = {device.get("logical address") for device in self.connectedDevices}
+
+        available_addresses = [addr for addr in possibleLogicalAddresses if addr not in used_logical_addresses]
+        return available_addresses
+
+    def pickValidLogicalAddressForController(self):
+        """
+        Picks a valid logical address for the controller device
+        """
+        for device in self.connectedDevices:
+            if device.get("logical address") != -1:
+                return device.get("logical address")
+        return None
 
     def getPossibleLogicalAddresses(self, device_type:list):
         """
@@ -170,15 +209,6 @@ class hdmiCecHelperClass(utHelperClass):
                 "Parameters": {"message": message},
                 "Expected_Results": {"metrics": metrics},
             }
-
-    def _generate_messages(self, src_addr: int, opcode_list: list, dst_addr: int, payload_map: dict, metrics: dict) -> list:
-        """Generates a list of CEC messages for a given opcode list."""
-        messages = []
-        for opcode in opcode_list:
-            msg = self._compose_message(opcode, src_addr, dst_addr, payload_map, metrics)
-            if msg:
-                messages.append(msg)
-        return messages
 
     def hdmiCecReadYaml(self, yaml_path: str) -> dict:
         """

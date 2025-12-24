@@ -100,7 +100,7 @@ public:
         metrics.arbitrationFailures = arbitrationFailures->value->get<PropertyValue::Value::Tag::intValue>();
     }
 
-    void validateMetrics(vts_hdmicec_metrics_t &startMetrics, vts_hdmicec_metrics_t &diffMetrics)
+    void validateMetrics(vts_hdmicec_metrics_t &startMetrics, vts_hdmicec_metrics_t &diffMetrics, uint32_t repeatCount)
     {
         std::optional<PropertyValue> directMsgSent;
         std::optional<PropertyValue> directMsgSentAck;
@@ -118,31 +118,31 @@ public:
         metricValue = directMsgSent->value->get<PropertyValue::Value::Tag::intValue>();
         if(metricValue >= 0)
         {
-            UT_ASSERT_EQUAL(metricValue - startMetrics.directedMessagesSent, diffMetrics.directedMessagesSent);
+            UT_ASSERT_EQUAL(metricValue - startMetrics.directedMessagesSent, diffMetrics.directedMessagesSent * repeatCount);
         }
 
         metricValue = directMsgSentAck->value->get<PropertyValue::Value::Tag::intValue>();
         if(metricValue >= 0)
         {
-            UT_ASSERT_EQUAL(metricValue - startMetrics.directedMessagesSentAndAcked, diffMetrics.directedMessagesSentAndAcked);
+            UT_ASSERT_EQUAL(metricValue - startMetrics.directedMessagesSentAndAcked, diffMetrics.directedMessagesSentAndAcked * repeatCount);
         }
 
         metricValue = broadcastMsgSent->value->get<PropertyValue::Value::Tag::intValue>();
         if(metricValue >= 0)
         {
-            UT_ASSERT_EQUAL(metricValue - startMetrics.broadcastMessagesSent, diffMetrics.broadcastMessagesSent);
+            UT_ASSERT_EQUAL(metricValue - startMetrics.broadcastMessagesSent, diffMetrics.broadcastMessagesSent * repeatCount);
         }
 
         metricValue = broadcastMsgSentAck->value->get<PropertyValue::Value::Tag::intValue>();
         if(metricValue >= 0)
         {
-            UT_ASSERT_EQUAL(metricValue - startMetrics.broadcastMessagesSentAndAcked, diffMetrics.broadcastMessagesSentAndAcked);
+            UT_ASSERT_EQUAL(metricValue - startMetrics.broadcastMessagesSentAndAcked, diffMetrics.broadcastMessagesSentAndAcked * repeatCount);
         }
 
         metricValue = arbitrationFailures->value->get<PropertyValue::Value::Tag::intValue>();
         if(metricValue >= 0)
         {
-            UT_ASSERT_EQUAL(metricValue - startMetrics.arbitrationFailures, diffMetrics.arbitrationFailures);
+            UT_ASSERT_EQUAL(metricValue - startMetrics.arbitrationFailures, diffMetrics.arbitrationFailures * repeatCount);
         }
     }
     void TearDown() override
@@ -206,30 +206,34 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
 
         getMetrics(startMetrics);
 
-        // Send message
-        HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, testConfiguration.message, msgStatus);
-
-        // Wait for message to be processed and callback to be invoked
-        this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
-
-        // Verify that the onMessageSent received to controllerListener
-        UT_ASSERT_TRUE(controllerListener->getNextMessage(getMessage, getStatus));
-
-        UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
-
-        if(getMessage.size() == testConfiguration.message.size())
+        for(uint32_t repeatIndex = 0; repeatIndex < testConfiguration.repeat; repeatIndex++)
         {
-            for (size_t i = 0; i < testConfiguration.message.size(); i++)
+            // Send message multiple times based on repeat count
+            HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, testConfiguration.message, msgStatus);
+
+            // Wait for message to be processed and callback to be invoked
+            this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
+
+            // Verify that the onMessageSent received to controllerListener
+            UT_ASSERT_TRUE(controllerListener->getNextMessage(getMessage, getStatus));
+
+            UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
+
+            if(getMessage.size() == testConfiguration.message.size())
             {
-                UT_ASSERT_EQUAL(getMessage[i], testConfiguration.message[i]);
+                for (size_t i = 0; i < testConfiguration.message.size(); i++)
+                {
+                    UT_ASSERT_EQUAL(getMessage[i], testConfiguration.message[i]);
+                }
             }
+
+            UT_ASSERT_TRUE((getStatus ==  hdmicec::SendMessageStatus::ACK_STATE_0) || (getStatus ==  hdmicec::SendMessageStatus::ACK_STATE_1));
+
+            this_thread::sleep_for(chrono::milliseconds(delayBetweenMsgsMsec));
         }
-        // Cast getStatus to int32_t to match with onMessageSentStatus for comparison
-        UT_ASSERT_TRUE((getStatus ==  hdmicec::SendMessageStatus::ACK_STATE_0) || (getStatus ==  hdmicec::SendMessageStatus::ACK_STATE_1));
 
-        validateMetrics(startMetrics, testConfiguration.metrics);
+        validateMetrics(startMetrics, testConfiguration.metrics, testConfiguration.repeat);
 
-        this_thread::sleep_for(chrono::milliseconds(delayBetweenMsgsMsec));
     }
 
     // Remove logical address
@@ -282,48 +286,91 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
 
     for(auto &testConfiguration : testConfigurationList)
     {
-        if(testConfiguration.dutLogicalAddress.size() > 0)
+        controllerListener->resetReceiveMessageQueue();
+        controllerListener->resetStateQueue();
+        controllerListener->resetSendMessageQueue();
+
+        eventListener->resetReceiveMessageQueue();
+        eventListener->resetStateQueue();
+
+        uint8_t messageDestAddress = testConfiguration.message[0] & 0x0F;
+        bool isDutAddressed = false;
+
+        // Check for broadcast address
+        if (messageDestAddress == 0x0F)
         {
-            uint32_t counter = 0;
-
-            // Add logical address
-            HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, testConfiguration.dutLogicalAddress);
-            getMessage.clear();
-
-            //TODO: replace with conditional variable or semaphore
-            while(!controllerListener->getReceiveMessageStatus())
+            isDutAddressed = true;
+        }
+        else
+        {
+            // Check if DUT logical address is in the destination address
+            for(auto &addr : testConfiguration.dutLogicalAddress)
             {
-                this_thread::sleep_for(chrono::milliseconds(1000));
-                counter += 1000;
-                if(counter >= testConfiguration.waitResponseTimeoutMsec)
+                if(addr == messageDestAddress)
                 {
+                    isDutAddressed = true;
                     break;
                 }
             }
+        }
 
-            // Verify that the onMessageReceived received to controllerListener
-            UT_ASSERT_TRUE(controllerListener->getNextReceiveMessage(getMessage));
-            UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
+        if(testConfiguration.dutLogicalAddress.size() > 0)
+        {
+            // Add logical address
+            HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, testConfiguration.dutLogicalAddress);
 
-            if(getMessage.size() == testConfiguration.message.size())
+            for(uint32_t repeatIndex = 0; repeatIndex < testConfiguration.repeat; repeatIndex++)
             {
-                for (size_t i = 0; i < testConfiguration.message.size(); i++)
+                getMessage.clear();
+
+                // check callback for received message only if DUT logical address is assigned to destination address
+                if(isDutAddressed)
                 {
-                    UT_ASSERT_EQUAL(getMessage[i], testConfiguration.message[i]);
+                    uint32_t counter = 0;
+
+                    //TODO: replace with conditional variable or semaphore
+                    while(!controllerListener->getReceiveMessageStatus())
+                    {
+                        this_thread::sleep_for(chrono::milliseconds(1000));
+                        counter += 1000;
+                        if(counter >= testConfiguration.waitResponseTimeoutMsec)
+                        {
+                            break;
+                        }
+                    }
+
+                    // Verify that the onMessageReceived received to controllerListener
+                    UT_ASSERT_TRUE(controllerListener->getNextReceiveMessage(getMessage));
+                    UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
+
+                    if(getMessage.size() == testConfiguration.message.size())
+                    {
+                        for (size_t i = 0; i < testConfiguration.message.size(); i++)
+                        {
+                            UT_ASSERT_EQUAL(getMessage[i], testConfiguration.message[i]);
+                        }
+                    }
+
+                    getMessage.clear();
+
+                    // Verify that the onMessageReceived received to eventListener
+                    UT_ASSERT_TRUE(eventListener->getNextReceiveMessage(getMessage));
+                    UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
+
+                    if(getMessage.size() == testConfiguration.message.size())
+                    {
+                        for (size_t i = 0; i < testConfiguration.message.size(); i++)
+                        {
+                            UT_ASSERT_EQUAL(getMessage[i], testConfiguration.message[i]);
+                        }
+                    }
                 }
-            }
-
-            getMessage.clear();
-
-            // Verify that the onMessageReceived received to eventListener
-            UT_ASSERT_TRUE(eventListener->getNextReceiveMessage(getMessage));
-            UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
-
-            if(getMessage.size() == testConfiguration.message.size())
-            {
-                for (size_t i = 0; i < testConfiguration.message.size(); i++)
+                else
                 {
-                    UT_ASSERT_EQUAL(getMessage[i], testConfiguration.message[i]);
+                    //if logical address is not addressed to DUT, ensure no message is received
+                    this_thread::sleep_for(chrono::milliseconds(testConfiguration.waitResponseTimeoutMsec));
+                    UT_ASSERT_FALSE(controllerListener->getNextReceiveMessage(getMessage));
+                    UT_ASSERT_FALSE(eventListener->getNextReceiveMessage(getMessage));
                 }
             }
 
@@ -332,9 +379,13 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
         }
         else
         {
-            this_thread::sleep_for(chrono::milliseconds(testConfiguration.waitResponseTimeoutMsec));
-            UT_ASSERT_FALSE(controllerListener->getNextReceiveMessage(getMessage));
-            UT_ASSERT_FALSE(eventListener->getNextReceiveMessage(getMessage));
+            for(uint32_t repeatIndex = 0; repeatIndex < testConfiguration.repeat; repeatIndex++)
+            {
+                //if logical address is not assigned to DUT, ensure no message is received
+                this_thread::sleep_for(chrono::milliseconds(testConfiguration.waitResponseTimeoutMsec));
+                UT_ASSERT_FALSE(controllerListener->getNextReceiveMessage(getMessage));
+                UT_ASSERT_FALSE(eventListener->getNextReceiveMessage(getMessage));
+            }
         }
     }
 

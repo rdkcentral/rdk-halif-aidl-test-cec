@@ -30,7 +30,7 @@ RESET='\033[0m'
 declare -r TOP=`dirname $(realpath $0)`
 declare -r HALIF_VERSION=current
 RDK_HALIF_AIDL_VERSION="${RDK_HALIF_AIDL_VERSION="main"}"
-VCOMPONENT_HDMI_CEC_VERSTION="${VCOMPONENT_HDMI_CEC_VERSTION="main"}"
+VCOMPONENT_HDMI_CEC_VERSION="${VCOMPONENT_HDMI_CEC_VERSION="main"}"
 RDK_HALIF_TEST_BASE_URL="https://github.com/rdkcentral/rdk-halif-binder-test-"
 
 declare -A HALIF_COMPONENTS=(
@@ -210,7 +210,7 @@ build_ut_core()
 build_vcomponent_services()
 {
     if [ ! -d ${VCOMPONENT_DIR} ]; then
-        git clone -b $VCOMPONENT_HDMI_CEC_VERSTION 'git@github.com:rdkcentral/rdk-aidl-vcomponent-cec.git' $VCOMPONENT_DIR
+        git clone -b $VCOMPONENT_HDMI_CEC_VERSION 'git@github.com:rdkcentral/rdk-aidl-vcomponent-cec.git' $VCOMPONENT_DIR
         if [ $? -ne 0 ]; then
             echo -e "${BOLD}╔══════════════════════════════════════════════╗${RESET}"
             echo -e "${BOLD}* ${RED}Failed to clone hdmi cec vcomponent.${RESET}"
@@ -309,7 +309,7 @@ help()
 echo -e "${BOLD}${GREEN}VTS Version                : ${RESET}${YELLOW}$(git rev-parse --abbrev-ref HEAD)${RESET}"
 echo -e "${BOLD}${GREEN}UT_CORE_VERSION            : ${RESET}${YELLOW}$UT_CORE_VERSION${RESET}"
 echo -e "${BOLD}${GREEN}RDK_HALIF_AIDL_VERSION     : ${RESET}${YELLOW}$RDK_HALIF_AIDL_VERSION${RESET}"
-echo -e "${BOLD}${GREEN}HDMICEC VCOMPONENT Version : ${RESET}${YELLOW}$VCOMPONENT_HDMI_CEC_VERSTION${RESET}"
+echo -e "${BOLD}${GREEN}HDMICEC VCOMPONENT Version : ${RESET}${YELLOW}$VCOMPONENT_HDMI_CEC_VERSION${RESET}"
 echo -e "${BOLD}${GREEN}AIDL_BIN                   : ${RESET}${YELLOW}$AIDL_BIN${RESET}"
 echo -e "${BOLD}${GREEN}LINUX_BINDER_OUT_DIR       : ${RESET}${YELLOW}$LINUX_BINDER_OUT_DIR${RESET}"
 

@@ -154,6 +154,27 @@ bool HdmiCecControllerListener::getNextReceiveMessage(std::vector<uint8_t>& outM
     return true;
 }
 
+void HdmiCecControllerListener::resetStateQueue()
+{
+    std::lock_guard<std::mutex> lock(mStateMutex);
+    std::queue<pair<State, State>> empty;
+    std::swap(mStateChanges, empty);
+}
+
+void HdmiCecControllerListener::resetSendMessageQueue()
+{
+    std::lock_guard<std::mutex> lock(mMsgSentMutex);
+    std::queue<std::pair<std::vector<uint8_t>, hdmicec::SendMessageStatus>> empty;
+    std::swap(mMessageSentQueue, empty);
+}
+
+void HdmiCecControllerListener::resetReceiveMessageQueue()
+{
+    std::lock_guard<std::mutex> lock(mMsgReceiveMutex);
+    std::queue<std::vector<uint8_t>> empty;
+    std::swap(mMessageReceiveQueue, empty);
+}
+
 /* Implementation of HdmiCecEventListener methods */
 android::binder::Status HdmiCecEventListener::onMessageReceived(const ::std::vector<uint8_t>& message)
 {
@@ -210,6 +231,20 @@ bool HdmiCecEventListener::getNextReceiveMessage(std::vector<uint8_t>& outMessag
     outMessage = std::move(entry);
 
     return true;
+}
+
+void HdmiCecEventListener::resetStateQueue()
+{
+    std::lock_guard<std::mutex> lock(mStateMutex);
+    std::queue<pair<State, State>> empty;
+    std::swap(mStateChanges, empty);
+}
+
+void HdmiCecEventListener::resetReceiveMessageQueue()
+{
+    std::lock_guard<std::mutex> lock(mMsgReceiveMutex);
+    std::queue<std::vector<uint8_t>> empty;
+    std::swap(mMessageReceiveQueue, empty);
 }
 
 /** @} */ // End of HDMI_CEC_HALTEST_HEADER

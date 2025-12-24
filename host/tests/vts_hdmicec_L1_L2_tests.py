@@ -49,7 +49,8 @@ class  VTS_HDMICEC_L1_L2_Tests(hdmiCecHelperClass):
         """
         qcId = "1"
         self.testName = "HdmiCec_L1_L2"
-        super().__init__(self.testName, qcId, log)
+        configureNetwork = False
+        super().__init__(self.testName, configureNetwork, qcId, log)
 
     def runTest(self, testSuite, test_case:str=None):
         """

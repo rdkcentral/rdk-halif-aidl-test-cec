@@ -35,7 +35,6 @@ from raft.framework.plugins.ut_raft import utHelperClass
 from raft.framework.plugins.ut_raft.utSuiteNavigator import UTSuiteNavigatorClass
 from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
 from vts_hdmicec_helper import hdmiCecHelperClass
-from deviceNetwork.HdmiCecNetwork import HdmiCecNetwork
 
 HDMICEC_L3_TEST_SUITE_NAME = "VTS_L3_HDMICEC"
 
@@ -48,75 +47,39 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         Initializes the test class
         """
         self.testName = "HdmiCec_L3_ReceiveMessage"
-        qcId = "1"
-        self.listDirectOpcodesToTest = ["SetOsdName", "CecVersion", "SetOsdName", "CecVersion",
-                                        "SetOsdName", "CecVersion", "SetOsdName", "CecVersion"]
-        self.listBroadcastOpcodesToTest = ["SetMenuLanguage", "DeviceVendorId", "SetMenuLanguage", "DeviceVendorId",
-                                           "SetMenuLanguage", "DeviceVendorId", "SetMenuLanguage", "DeviceVendorId"]
+        qcId = "2"
+        configureNetwork = True
+        super().__init__(self.testName, configureNetwork, qcId, log)
 
-        self.setOSDPayload = ["0x52", "0x44", "0x4B", "0x20", "0x76", "0x44", "0x65", "0x76", "0x69", "0x63", "0x65", "0x20", "0x54", "0x56"]  # "RDK vDevice TV" in ASCII
-        self.cecVersionPayload = ["0x05"]  # CEC Version 1.4a
-        self.setMenuLanguagePayload = ["0x65", "0x6E", "0x67"]  # "eng" in ASCII
-        self.deviceVendorIdPayload = ["0x00", "0x19", "0xA2"]  # RDK Vendor ID
-
-        # Common opcode → payload map
-        self.payload_map = {
-            "CecVersion": self.cecVersionPayload,
-            "SetOsdName": self.setOSDPayload,
-            "SetMenuLanguage": self.setMenuLanguagePayload,
-            "DeviceVendorId": self.deviceVendorIdPayload,
-        }
-
-        super().__init__(self.testName, qcId, log)
-
-        self.vComponent_bin_path = os.path.join(self.cpe.get("target_directory"), self.moduleName, self.cpe.get("hdmicec_process_name"))
-        self.cecDevice = HdmiCecNetwork("vDevice", self.device_type, self.hal_session_1, self.cpe.get("hdmicec_process_name"), self.vComponent_bin_path,
-                                   self.cpe.get("prompt"), self.deviceTestSetup.get("controller_port"))
-
-        self.connectedDevices = self.cecDevice.listDevices()
-
-        self.sendMessageThreadObj = threading.Thread(target=self.sendMessageThread)
-
-    def pickLogicalAddressForDut(self, possibleLogicalAddresses:list):
-        """
-        Picks a logical address from the possible logical addresses
-        Args:
-            possibleLogicalAddresses (list): list of possible logical addresses
-        """
-        if not possibleLogicalAddresses:
-            return None
-        # Find a logical address from possibleLogicalAddresses that is not already used by connectedDevices
-        used_logical_addresses = {device.get("logical address") for device in self.connectedDevices}
-        for addr in possibleLogicalAddresses:
-            if addr not in used_logical_addresses:
-                return addr
-        return None
-
-    def pickValidLogicalAddressForController(self):
-        """
-        Picks a valid logical address for the controller device
-        """
-        for device in self.connectedDevices:
-            if device.get("logical address") != -1:
-                return device.get("logical address")
-        return None
-
-    def updateTestconfigurationFile(self):
+    def updateTestconfigurationFile(self, dutLogicalAddress:list=[], testDestinationAddress:int=None, broadcastRepeatCount:int=5):
         """
         Updates the HDMI CEC L3 ReceiveMessage YAML configuration file.
         """
         data = self.hdmiCecReadYaml(self.l3TestConfigFile)
         receive_msg = data["HdmiCec"]["L3"]
 
-        receive_msg["ReceiveMessage"] = []
-        for opcode in self.listDirectOpcodesToTest:
-            src_addr = self.destinationLogicalAddress
-            dst_addr = self.dutLogicalAddress
-            msg = self._compose_message(opcode, src_addr, dst_addr,  self.payload_map)
-            msg["Parameters"]["logical_address"] = [self.dutLogicalAddress]
-            msg["Parameters"]["wait_for_response_timeout"] = 5000
-            receive_msg["ReceiveMessage"].append(msg)
+        self.sendMessageList = []
+        for parameters in receive_msg.get("ReceiveMessage", []):
+            parameters["Parameters"]["logical_address"] = dutLogicalAddress
 
+            current_dest = parameters["Parameters"]["message"][0]
+
+            dest_addr = int(current_dest, 16) & 0x0F if isinstance(current_dest, str) else current_dest & 0x0F
+            # Use existing destination if it's 0xF, otherwise use testDestinationAddress
+            if dest_addr == 0xF:
+                final_dest = dest_addr
+                parameters["Parameters"]["repeat"] = broadcastRepeatCount
+            else:
+                final_dest = testDestinationAddress
+
+            parameters["Parameters"]["message"][0] = f"0x{(self.controllerLogicalAddress << 4 | final_dest):02X}"
+            self.sendMessageList.append({
+                                        "sourceAddress": f"{self.controllerLogicalAddress:X}",
+                                        "destAddress": f"{final_dest:X}",
+                                        "opcode": parameters["Parameters"]["message"][1],
+                                        "payload": parameters["Parameters"]["message"][2:],
+                                        "repeat": int(parameters["Parameters"].get("repeat", 1))
+                                    })
         # write to YAML
         self.hdmiCecWriteYaml(self.l3TestConfigFile, data)
 
@@ -125,9 +88,41 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         Thread function to send messages to DUT
         """
         time.sleep(1)  # Wait for DUT to be ready to receive messages
-        for opcode in self.listDirectOpcodesToTest:
-            self.cecDevice.sendMessage(self.destinationLogicalAddress, self.dutLogicalAddress, self.opCodeToHex(opcode), self.payload_map.get(opcode))
-            time.sleep(1)  # Small delay between messages
+        for message in self.sendMessageList:
+            for _ in range(message["repeat"]):
+                self.hdmiCECController.sendMessage(message["sourceAddress"], message["destAddress"], message["opcode"], message["payload"])
+                time.sleep(1)  # Small delay between messages
+
+    def receiveMessage(self, description:str="") -> bool:
+
+        """
+        The main test function to send messages to dut from controller.
+        Args:
+            description (str): Description of the test case.
+        Returns:
+            bool: Final result of the test.
+        """
+
+        self.sendMessageThreadObj = threading.Thread(target=self.sendMessageThread)
+
+        self.utMenu.start()
+
+        self.sendMessageThreadObj.start()
+
+        self.log.stepStart(f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Description: {description}')
+        output = self.utMenu.select(HDMICEC_L3_TEST_SUITE_NAME, self.testcase, None, self.waitTime, False)
+
+        results = self.utMenu.collect_results(output, True)
+        if results is None:
+            results = False
+
+        self.sendMessageThreadObj.join()
+
+        self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Description: {description}')
+
+        self.utMenu.stop()
+
+        return results
 
     def testFunction(self):
         """
@@ -137,30 +132,50 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
             bool: Final result of the test.
         """
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
-        results = False
+        results = True
         self.testcase = "ReceiveMessage"
+
         possibleLogicalAddresses = self.getPossibleLogicalAddresses(self.device_type)
         self.dutLogicalAddress = self.pickLogicalAddressForDut(possibleLogicalAddresses)
-        self.destinationLogicalAddress = self.pickValidLogicalAddressForController()
+        self.controllerLogicalAddress = self.pickValidLogicalAddressForController()
 
-        self.updateTestconfigurationFile()
+        if self.dutLogicalAddress is None or self.controllerLogicalAddress is None:
+            self.log.stepResult(False, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Description: Failed to assign DUT address')
+            return False
 
-        self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, os.path.join(self.targetWorkspace, "test_configuration/"))
+        target_config_path = self.targetWorkspace + "/test_configuration/"
 
-        self.utMenu.start()
+        # Scenario 1: Messages sent to DUT and broadcast from controller
+        for addr in self.dutLogicalAddress:
+            self.updateTestconfigurationFile(self.dutLogicalAddress, addr, 5)
 
-        self.sendMessageThreadObj.start()
+            self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, target_config_path)
 
-        self.log.stepStart(f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase}')
-        output = self.utMenu.select(HDMICEC_L3_TEST_SUITE_NAME, self.testcase, None, self.waitTime, False)
+            results &= self.receiveMessage(f"DUT:{self.dutLogicalAddress}, Destination:{addr}")
 
-        results = self.utMenu.collect_results(output, True)
-        if results is None:
-            results = False
+        # Scenario 2: Messages sent to DUT without assigning logical address to DUT
+        for addr in self.dutLogicalAddress:
+            self.updateTestconfigurationFile([], addr, 5)
 
-        self.sendMessageThreadObj.join()
+            self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, target_config_path)
 
-        self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase}')
+            results &= self.receiveMessage(f"DUT:[], Destination:{addr}")
+
+        # Scenario 3: Messages sent to different logical address than DUT
+        # pick logical address not assigned to DUT
+        allPossibleAddresses = set(range(0, 15))
+        dutAddresses = set(self.dutLogicalAddress)
+        availableAddresses = list(allPossibleAddresses - dutAddresses)
+
+        if not availableAddresses:
+            self.log.stepResult(False, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Description: No available logical addresses for Scenario 3')
+            return False
+
+        otherAddr = availableAddresses[0]
+
+        self.updateTestconfigurationFile(self.dutLogicalAddress, otherAddr, 0)
+        self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, target_config_path)
+        results &= self.receiveMessage(f"DUT:{self.dutLogicalAddress}, Destination:{otherAddr}")
 
         return results
 
