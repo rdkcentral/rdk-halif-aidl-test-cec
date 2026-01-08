@@ -45,11 +45,14 @@ HDMICEC_BINDER_SERVICE_NAME = "Vendor-HdmiCec"
 
 class hdmiCecHelperClass(utHelperClass):
 
-    def __init__(self, testName:str, configureNetwork:bool, qcId:str, log:logModule=None ):
+    def __init__(self, testName:str, configureNetwork:bool, qcId:str, log:logModule=None, testMenuConfigFile:str=None, moduleName:str=None, artifactDirPath:str=None):
         """
         Initializes the test class
         """
-        self.moduleName = "HdmiCec"
+        if moduleName is None:
+            self.moduleName = "HdmiCec"
+        else:
+            self.moduleName = moduleName
         super().__init__(testName, qcId, log)
 
         self.log = log
@@ -70,8 +73,14 @@ class hdmiCecHelperClass(utHelperClass):
 
         # Load test menu and test case configuration files
         self.l3TestConfigFile = HDMICEC_L3_TEST_CONFIG_FILE
-        self.testMenuConfiguration = ConfigRead(HDMICEC_TEST_MENU_CONFIGURATION_FILE, self.moduleName)
-        self.testCaseConfiguration = ConfigRead(HDMICEC_TESTCASES_CONFIGURATION_FILE, self.moduleName)
+        if testMenuConfigFile is not None:
+                hdmiCECTEstMenuConfigFile = testMenuConfigFile
+        else:
+                hdmiCECTEstMenuConfigFile= HDMICEC_TEST_MENU_CONFIGURATION_FILE
+
+        self.testMenuConfiguration = ConfigRead(hdmiCECTEstMenuConfigFile, self.moduleName)
+        if moduleName is None:
+            self.testCaseConfiguration = ConfigRead(HDMICEC_TESTCASES_CONFIGURATION_FILE, self.moduleName) # Only needed while running individual tests 
         self.testMenuConfiguration.test.execute = self.testMenuConfiguration.test.execute + f" -p {profileOnTarget}"
 
         # Establish HAL session
@@ -85,7 +94,14 @@ class hdmiCecHelperClass(utHelperClass):
         # Copy required artifacts to target device
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         for artifact in self.testMenuConfiguration.test.artifacts:
-            filesPath = os.path.join(dir_path, artifact)
+            if artifactDirPath is None:
+                filesPath = os.path.join(dir_path, artifact)
+            else:
+                filesPath = os.path.join(artifactDirPath, artifact)
+            self.hal_session.write("ls " + self.targetWorkspace + "/" + os.path.basename(artifact) + "\n")
+            res = self.hal_session.read_until(self.hal_session.prompt, timeout=5)
+            if "No such file or directory" not in res:
+                continue  # File already exists on target, skip copying and exit from loop
             self.utilities.sftpCopy(self.hal_session, filesPath, self.targetWorkspace)
 
             if tarfile.is_tarfile(filesPath):
