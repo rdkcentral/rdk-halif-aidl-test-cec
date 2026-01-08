@@ -74,13 +74,13 @@ class hdmiCecHelperClass(utHelperClass):
         # Load test menu and test case configuration files
         self.l3TestConfigFile = HDMICEC_L3_TEST_CONFIG_FILE
         if testMenuConfigFile is not None:
-                hdmiCECTEstMenuConfigFile = testMenuConfigFile
+            hdmiCECTestMenuConfigFile = testMenuConfigFile
         else:
-                hdmiCECTEstMenuConfigFile= HDMICEC_TEST_MENU_CONFIGURATION_FILE
+            hdmiCECTestMenuConfigFile = HDMICEC_TEST_MENU_CONFIGURATION_FILE
 
-        self.testMenuConfiguration = ConfigRead(hdmiCECTEstMenuConfigFile, self.moduleName)
+        self.testMenuConfiguration = ConfigRead(hdmiCECTestMenuConfigFile, self.moduleName)
         if moduleName is None:
-            self.testCaseConfiguration = ConfigRead(HDMICEC_TESTCASES_CONFIGURATION_FILE, self.moduleName) # Only needed while running individual tests 
+            self.testCaseConfiguration = ConfigRead(HDMICEC_TESTCASES_CONFIGURATION_FILE, self.moduleName) # Only needed while running individual tests
         self.testMenuConfiguration.test.execute = self.testMenuConfiguration.test.execute + f" -p {profileOnTarget}"
 
         # Establish HAL session
@@ -101,7 +101,7 @@ class hdmiCecHelperClass(utHelperClass):
             self.hal_session.write("ls " + self.targetWorkspace + "/" + os.path.basename(artifact) + "\n")
             res = self.hal_session.read_until(self.hal_session.prompt, timeout=5)
             if "No such file or directory" not in res:
-                continue  # File already exists on target, skip copying and exit from loop
+                continue  # File already exists on target, skip copying and continue with next artifact
             self.utilities.sftpCopy(self.hal_session, filesPath, self.targetWorkspace)
 
             if tarfile.is_tarfile(filesPath):
