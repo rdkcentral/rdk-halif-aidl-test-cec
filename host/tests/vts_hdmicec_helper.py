@@ -74,13 +74,16 @@ class hdmiCecHelperClass(utHelperClass):
         # Load test menu and test case configuration files
         self.l3TestConfigFile = HDMICEC_L3_TEST_CONFIG_FILE
         if testMenuConfigFile is not None:
+            # Unified test menu configuration file for all HDMI CEC tests
             hdmiCECTestMenuConfigFile = testMenuConfigFile
         else:
+            # Individual test menu configuration file for HDMI CEC tests
             hdmiCECTestMenuConfigFile = HDMICEC_TEST_MENU_CONFIGURATION_FILE
 
         self.testMenuConfiguration = ConfigRead(hdmiCECTestMenuConfigFile, self.moduleName)
         if moduleName is None:
-            self.testCaseConfiguration = ConfigRead(HDMICEC_TESTCASES_CONFIGURATION_FILE, self.moduleName) # Only needed while running individual tests
+            # Only needed while running individual tests
+            self.testCaseConfiguration = ConfigRead(HDMICEC_TESTCASES_CONFIGURATION_FILE, self.moduleName)
         self.testMenuConfiguration.test.execute = self.testMenuConfiguration.test.execute + f" -p {profileOnTarget}"
 
         # Establish HAL session
@@ -109,11 +112,13 @@ class hdmiCecHelperClass(utHelperClass):
                 target_tarfile = target_tarfile.replace('\\', '/')
                 self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
 
-        #TODO: remove once the vendor layer start handled by vDevice service
-        self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
-        self.hal_session_1.write(f"./{HDMICEC_BINDER_SERVICE_NAME} &")
-        time.sleep(2)
-
+        if moduleName is None:
+            # Service start only needed while running individual tests, in unified case start_services.sh will take care of starting it
+            #TODO: remove once the vendor layer start handled by vDevice service
+            time.sleep(2)
+            self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
+            self.hal_session_1.write(f"./{HDMICEC_BINDER_SERVICE_NAME} &")
+            time.sleep(2)
         if configureNetwork:
             self.hdmiCECController.start()
 
