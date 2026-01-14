@@ -64,7 +64,12 @@ class hdmiCecHelperClass(utHelperClass):
         self.deviceTestSetup = self.cpe.get("test")
         self.targetWorkspace = os.path.join(self.cpe.get("target_directory"), self.moduleName)
         self.moduleHFPFile = os.path.join(dir_path, self.deviceTestSetup.get("profile"))
-        profileOnTarget = os.path.join(self.targetWorkspace, "profiles")
+        if moduleName is None:
+            # Individual test case
+            profileOnTarget = os.path.join(self.targetWorkspace, "profiles")
+        else:
+            # Unified test case
+            profileOnTarget = os.path.join(self.targetWorkspace, "bin", "profiles")
         profileOnTarget = os.path.join(profileOnTarget, os.path.basename(self.moduleHFPFile))
         profileOnTarget = profileOnTarget.replace("\\", "/")
         self.waitTime = self.cpe.get("wait_time")

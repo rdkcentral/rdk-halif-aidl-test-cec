@@ -132,6 +132,9 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
             bool: Final result of the test.
         """
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
+        if self.moduleName != "HdmiCec":
+            # Unified Test Case
+            self.utilities.change_directory(self.hal_session, self.targetWorkspace + f"/bin")
         results = True
         self.testcase = "ReceiveMessage"
 
@@ -143,7 +146,12 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
             self.log.stepResult(False, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Description: Failed to assign DUT address')
             return False
 
-        target_config_path = self.targetWorkspace + "/test_configuration/"
+        if self.moduleName != "HdmiCec":
+            # Unified Test Case
+            target_config_path = self.targetWorkspace + "/bin/test_configuration/"
+        else:
+            # Individual Test Case
+            target_config_path = self.targetWorkspace + "/test_configuration/"
 
         # Scenario 1: Messages sent to DUT and broadcast from controller
         for addr in self.dutLogicalAddress:

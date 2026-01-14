@@ -73,7 +73,12 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
 
         self.hdmiCecWriteYaml(self.l3TestConfigFile, data)
 
-        target_config_path = self.targetWorkspace + "/test_configuration/"
+        if self.moduleName != "HdmiCec":
+            #Unified test case
+            target_config_path = self.targetWorkspace + "/bin/test_configuration/"
+        else:
+            # Individual test case
+            target_config_path = self.targetWorkspace + "/test_configuration/"
 
         self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, target_config_path)
 
@@ -86,6 +91,9 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         """
         self.testcase = "SendMessage"
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
+        if self.moduleName != "HdmiCec":
+            #Unified test case
+            self.utilities.change_directory(self.hal_session, self.targetWorkspace + f"/bin")
         possibleLogicalAddresses = self.getPossibleLogicalAddresses(self.device_type)
         self.dutLogicalAddress = self.pickLogicalAddressForDut(possibleLogicalAddresses)
         self.destinationLogicalAddress = self.pickValidLogicalAddressForController()
