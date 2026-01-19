@@ -124,6 +124,8 @@ class hdmiCecHelperClass(utHelperClass):
             self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
             self.hal_session_1.write(f"./{HDMICEC_BINDER_SERVICE_NAME} &")
             time.sleep(2)
+        else:
+            self.targetWorkspace = os.path.join(self.targetWorkspace, "bin")
         if configureNetwork:
             self.hdmiCECController.start()
 
