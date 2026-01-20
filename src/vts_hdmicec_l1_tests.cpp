@@ -269,11 +269,11 @@ UT_ADD_TEST(VTS_L1_HDMICEC, getLogicalAddresses_pos)
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, open_pos)
 {
-    sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
+    sp<IHdmiCecEventListener> eventListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
 
     /* Open the interface */
-    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, eventListener, hdmiCecController, true);
 
     /* Close the interface */
     HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
@@ -306,19 +306,19 @@ UT_ADD_TEST(VTS_L1_HDMICEC, open_pos)
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, open_neg)
 {
-    sp<IHdmiCecEventListener> invalidControllerListener = nullptr;
-    sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
+    sp<IHdmiCecEventListener> invalideventListener = nullptr;
+    sp<IHdmiCecEventListener> eventListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController_1 = nullptr;
     sp<IHdmiCecController> hdmiCecController_2 = nullptr;
 
     // Expect open to fail with null listener
-    HDMICEC_OPEN_FAILURE(gHDMICECHandle, invalidControllerListener, hdmiCecController_1, State::CLOSED, Status::EX_NULL_POINTER);
+    HDMICEC_OPEN_FAILURE(gHDMICECHandle, invalideventListener, hdmiCecController_1, State::CLOSED, Status::EX_NULL_POINTER);
 
     // Valid open
-    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController_1, true);
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, eventListener, hdmiCecController_1, true);
 
     // Second open attempt should fail
-    HDMICEC_OPEN_FAILURE(gHDMICECHandle, controllerListener, hdmiCecController_2, State::STARTED, Status::EX_ILLEGAL_STATE);
+    HDMICEC_OPEN_FAILURE(gHDMICECHandle, eventListener, hdmiCecController_2, State::STARTED, Status::EX_ILLEGAL_STATE);
 
     // Clean up
     HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController_1, true);
@@ -349,11 +349,11 @@ UT_ADD_TEST(VTS_L1_HDMICEC, open_neg)
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, close_pos)
 {
-    sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
+    sp<IHdmiCecEventListener> eventListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
 
     /* Open first */
-    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, eventListener, hdmiCecController, true);
 
     /* Then close */
     HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
@@ -385,12 +385,12 @@ UT_ADD_TEST(VTS_L1_HDMICEC, close_pos)
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, close_neg)
 {
-    sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
+    sp<IHdmiCecEventListener> eventListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     sp<IHdmiCecController> invalidHdmiCecController = nullptr;
 
     // Open first
-    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, eventListener, hdmiCecController, true);
 
     // Invalid close attempt (null controller)
     HDMICEC_CLOSE_FAILURE(gHDMICECHandle, invalidHdmiCecController, State::STARTED, Status::EX_NULL_POINTER);
@@ -581,13 +581,13 @@ UT_ADD_TEST(VTS_L1_HDMICEC, unregisterEventListener_neg)
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_pos)
 {
-    sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
+    sp<IHdmiCecEventListener> eventListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<int32_t> logicalAddresses_1 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
     vector<int32_t> logicalAddresses_2 = {0};
 
     /* Open HDMI CEC interface */
-    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, eventListener, hdmiCecController, true);
 
     /* Add multiple logical addresses */
     HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses_1);
@@ -639,7 +639,7 @@ UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_pos)
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_neg)
 {
-    sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
+    sp<IHdmiCecEventListener> eventListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<int32_t> logicalAddresses = {1, 2, 3};
     vector<int32_t> invalidLogicalAddresses_1 = {-1};
@@ -650,7 +650,7 @@ UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_neg)
     vector<int32_t> invalidLogicalAddresses_6;
 
     /* Open HDMI CEC interface */
-    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, eventListener, hdmiCecController, true);
 
     /* Attempt to add invalid logical addresses */
     HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, invalidLogicalAddresses_1, Status::EX_NONE);
@@ -714,7 +714,7 @@ UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_neg)
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, removeLogicalAddresses_pos)
 {
-    sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
+    sp<IHdmiCecEventListener> eventListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<int32_t> logicalAddresses_1 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
     vector<int32_t> removeLogicalAddresses_1 = {0, 1, 2, 3};
@@ -724,7 +724,7 @@ UT_ADD_TEST(VTS_L1_HDMICEC, removeLogicalAddresses_pos)
     vector<int32_t> logicalAddresses_2 = {0};
 
     /* Open HDMI CEC interface */
-    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, eventListener, hdmiCecController, true);
 
     /* Add logical addresses */
     HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses_1);
@@ -787,7 +787,7 @@ UT_ADD_TEST(VTS_L1_HDMICEC, removeLogicalAddresses_pos)
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, removeLogicalAddresses_neg)
 {
-    sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
+    sp<IHdmiCecEventListener> eventListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<int32_t> logicalAddresses = {0, 1, 2, 3};
     vector<int32_t> invalidRemoveLogicalAddresses_1 = {-1};
@@ -797,7 +797,7 @@ UT_ADD_TEST(VTS_L1_HDMICEC, removeLogicalAddresses_neg)
     vector<int32_t> invalidRemoveLogicalAddresses_5 = {1, 2, 3, 4};
 
     /* Open HDMI CEC interface */
-    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, eventListener, hdmiCecController, true);
 
     /* Remove logical addresses without adding them first */
     HDMICEC_REMOVE_LOGICAL_ADDRESS_FAILURE(hdmiCecController, logicalAddresses, Status::EX_NONE);
@@ -853,13 +853,13 @@ UT_ADD_TEST(VTS_L1_HDMICEC, removeLogicalAddresses_neg)
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, sendMessage_pos)
 {
-    sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
+    sp<IHdmiCecEventListener> eventListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<uint8_t> directMsg = {0x53, 0x04};
     hdmicec::SendMessageStatus msgStatus;
 
     // Open HDMI CEC interface
-    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, eventListener, hdmiCecController, true);
 
     // Send direct message
     HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, directMsg, msgStatus);
@@ -897,7 +897,7 @@ UT_ADD_TEST(VTS_L1_HDMICEC, sendMessage_pos)
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, sendMessage_neg)
 {
-    sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
+    sp<IHdmiCecEventListener> eventListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<uint8_t> directMsg = {0x53, 0x04};
     vector<uint8_t> invalidMsg_1 = {};
@@ -906,7 +906,7 @@ UT_ADD_TEST(VTS_L1_HDMICEC, sendMessage_neg)
     hdmicec::SendMessageStatus msgStatus;
 
     // Open HDMI CEC interface
-    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, eventListener, hdmiCecController, true);
 
     // Send empty message
     HDMICEC_SEND_MESSAGE_FAILURE(hdmiCecController, invalidMsg_1, msgStatus, Status::EX_ILLEGAL_ARGUMENT);

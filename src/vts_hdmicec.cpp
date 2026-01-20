@@ -110,6 +110,25 @@ bool HdmiCecEventListener::getNextStateChanges(pair<State, State>& stateChanges)
     return true;
 }
 
+bool HdmiCecEventListener::getNextMessage(std::vector<uint8_t>& outMessage,
+                                               hdmicec::SendMessageStatus& outStatus)
+{
+    std::lock_guard<std::mutex> lock(mMsgSentMutex);
+
+    if (mMessageSentQueue.empty())
+    {
+        return false;
+    }
+
+    auto entry = std::move(mMessageSentQueue.front());
+    mMessageSentQueue.pop();
+
+    outMessage = std::move(entry.first);
+    outStatus  = entry.second;
+
+    return true;
+}
+
 bool HdmiCecEventListener::getReceiveMessageStatus()
 {
     std::lock_guard<std::mutex> lock(mMsgReceiveMutex);

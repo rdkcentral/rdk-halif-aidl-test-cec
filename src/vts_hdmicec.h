@@ -140,15 +140,15 @@ using namespace com::rdk::hal::hdmicec;
         } while (sleep_time < MAX_FINAL_STATE_WAIT_MS && lastState != desiredState); \
     } while (0)
 
-#define HDMICEC_OPEN_SUCCESS(hdmicecHandle, controllerListener, hdmiCecController, stateCheck) \
+#define HDMICEC_OPEN_SUCCESS(hdmicecHandle, eventListener, hdmiCecController, stateCheck) \
     do { \
         android::binder::Status status; \
         \
         /* Open the Decoder */ \
-        UT_LOG_DEBUG("Calling open(IN:controllerListener[%p], OUT:hdmiCecController[])", controllerListener); \
-        status = (hdmicecHandle)->open(controllerListener, &hdmiCecController); \
-        UT_LOG_DEBUG("Result open(IN:IN:controllerListener[%p], OUT:hdmiCecController[0x%X]), status:[isOK:%s, exception:%s]", \
-            controllerListener, hdmiCecController.get(), \
+        UT_LOG_DEBUG("Calling open(IN:eventListener[%p], OUT:hdmiCecController[])", eventListener); \
+        status = (hdmicecHandle)->open(eventListener, &hdmiCecController); \
+        UT_LOG_DEBUG("Result open(IN:IN:eventListener[%p], OUT:hdmiCecController[0x%X]), status:[isOK:%s, exception:%s]", \
+            eventListener, hdmiCecController.get(), \
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
         UT_ASSERT_TRUE_FATAL(status.isOk()); \
@@ -163,16 +163,16 @@ using namespace com::rdk::hal::hdmicec;
         } \
     } while (0)
 
-#define HDMICEC_OPEN_FAILURE(hdmicecHandle, controllerListener, hdmiCecController, expectedState, expectedException) \
+#define HDMICEC_OPEN_FAILURE(hdmicecHandle, eventListener, hdmiCecController, expectedState, expectedException) \
     do { \
         android::binder::Status status; \
         com::rdk::hal::hdmicec::State state; \
         \
         /* Attempt to open the Decoder (expected to fail) */ \
-        UT_LOG_DEBUG("Calling open(IN:controllerListener[%p], OUT:hdmiCecController[])", controllerListener); \
-        status = (hdmicecHandle)->open(controllerListener, &hdmiCecController); \
-        UT_LOG_DEBUG("Result open(IN:controllerListener[%p], OUT:hdmiCecController[0x%X]), status:[isOk:%s, exception:%s]", \
-            controllerListener, hdmiCecController.get(), \
+        UT_LOG_DEBUG("Calling open(IN:eventListener[%p], OUT:hdmiCecController[])", eventListener); \
+        status = (hdmicecHandle)->open(eventListener, &hdmiCecController); \
+        UT_LOG_DEBUG("Result open(IN:eventListener[%p], OUT:hdmiCecController[0x%X]), status:[isOk:%s, exception:%s]", \
+            eventListener, hdmiCecController.get(), \
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
         \

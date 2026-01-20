@@ -150,7 +150,7 @@ If user chose to run the test in interactive mode, then the test case has to be 
 | Title | Details |
 | -- | -- |
 | Function Name | `sendMessageValidation` |
-| Description | This test validates sendMessage API with message transmission and callback verification. It ensures that messages of varying sizes can be sent over HDMI CEC after assigning logical addresses, and that the sent messages and status are correctly received via the HdmiCecControllerListener callback. It also validates that messages up to maximum payload length (16 bytes) are supported, the status received via the callback matches expectations, and the message contents are preserved without corruption |
+| Description | This test validates sendMessage API with message transmission and callback verification. It ensures that messages of varying sizes can be sent over HDMI CEC after assigning logical addresses, and that the sent messages and status are correctly received via the HdmiCecEventListener callback. It also validates that messages up to maximum payload length (16 bytes) are supported, the status received via the callback matches expectations, and the message contents are preserved without corruption |
 | Test Group | 02 |
 | Test Case ID | 004 |
 | Priority | High |

@@ -214,6 +214,21 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
             // Wait for message to be processed and callback to be invoked
             this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
 
+            // Verify that the onMessageSent received to controllerListener
+            UT_ASSERT_TRUE(controllerListener->getNextMessage(getMessage, getStatus));
+
+            UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
+
+            if(getMessage.size() == testConfiguration.message.size())
+            {
+                for (size_t i = 0; i < testConfiguration.message.size(); i++)
+                {
+                    UT_ASSERT_EQUAL(getMessage[i], testConfiguration.message[i]);
+                }
+            }
+
+            UT_ASSERT_TRUE((getStatus ==  hdmicec::SendMessageStatus::ACK_STATE_0) || (getStatus ==  hdmicec::SendMessageStatus::ACK_STATE_1));
+
             this_thread::sleep_for(chrono::milliseconds(delayBetweenMsgsMsec));
         }
 
@@ -256,7 +271,6 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
     const char *testName = "ReceiveMessage";
     vector<hdmicecReceiveMsgConfiguration_t> testConfigurationList;
 
-    sp<HdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<HdmiCecEventListener> eventListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<uint8_t> getMessage;
@@ -267,12 +281,10 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
     HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
 
     // Open HDMI CEC interface
-    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, eventListener, hdmiCecController, true);
 
     for(auto &testConfiguration : testConfigurationList)
     {
-        controllerListener->resetReceiveMessageQueue();
-        controllerListener->resetStateQueue();
 
         eventListener->resetReceiveMessageQueue();
         eventListener->resetStateQueue();
@@ -313,7 +325,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
                     uint32_t counter = 0;
 
                     //TODO: replace with conditional variable or semaphore
-                    while(!controllerListener->getReceiveMessageStatus())
+                    while(!eventListener->getReceiveMessageStatus())
                     {
                         this_thread::sleep_for(chrono::milliseconds(1000));
                         counter += 1000;
@@ -323,8 +335,8 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
                         }
                     }
 
-                    // Verify that the onMessageReceived received to controllerListener
-                    UT_ASSERT_TRUE(controllerListener->getNextReceiveMessage(getMessage));
+                    // Verify that the onMessageReceived received to eventListener
+                    UT_ASSERT_TRUE(eventListener->getNextReceiveMessage(getMessage));
                     UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
 
                     if(getMessage.size() == testConfiguration.message.size())
@@ -353,7 +365,6 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
                 {
                     //if logical address is not addressed to DUT, ensure no message is received
                     this_thread::sleep_for(chrono::milliseconds(testConfiguration.waitResponseTimeoutMsec));
-                    UT_ASSERT_FALSE(controllerListener->getNextReceiveMessage(getMessage));
                     UT_ASSERT_FALSE(eventListener->getNextReceiveMessage(getMessage));
                 }
             }
@@ -367,7 +378,6 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
             {
                 //if logical address is not assigned to DUT, ensure no message is received
                 this_thread::sleep_for(chrono::milliseconds(testConfiguration.waitResponseTimeoutMsec));
-                UT_ASSERT_FALSE(controllerListener->getNextReceiveMessage(getMessage));
                 UT_ASSERT_FALSE(eventListener->getNextReceiveMessage(getMessage));
             }
         }
