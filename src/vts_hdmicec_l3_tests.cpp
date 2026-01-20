@@ -288,6 +288,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
 
         eventListener->resetReceiveMessageQueue();
         eventListener->resetStateQueue();
+        eventListener->resetSendMessageQueue();
 
         uint8_t messageDestAddress = testConfiguration.message[0] & 0x0F;
         bool isDutAddressed = false;

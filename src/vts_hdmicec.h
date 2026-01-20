@@ -475,6 +475,7 @@ public:
     bool getNextReceiveMessage(std::vector<uint8_t>& outMessage);
     bool getReceiveMessageStatus();
     void resetStateQueue();
+    void resetSendMessageQueue();
     void resetReceiveMessageQueue();
 private:
     mutex mStateMutex;

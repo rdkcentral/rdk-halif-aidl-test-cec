@@ -160,6 +160,13 @@ void HdmiCecEventListener::resetStateQueue()
     std::swap(mStateChanges, empty);
 }
 
+void HdmiCecEventListener::resetSendMessageQueue()
+{
+    std::lock_guard<std::mutex> lock(mMsgSentMutex);
+    std::queue<std::pair<std::vector<uint8_t>, hdmicec::SendMessageStatus>> empty;
+    std::swap(mMessageSentQueue, empty);
+}
+
 void HdmiCecEventListener::resetReceiveMessageQueue()
 {
     std::lock_guard<std::mutex> lock(mMsgReceiveMutex);
