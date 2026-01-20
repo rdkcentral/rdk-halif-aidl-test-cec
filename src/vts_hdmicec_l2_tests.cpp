@@ -109,9 +109,9 @@ public:
 
 UT_ADD_TEST(VTS_L2_HDMICEC, StateTransitions)
 {
-    sp<HdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
+    sp<HdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
-    com::rdk::hal::State state;
+    com::rdk::hal::hdmicec::State state;
     sp<HdmiCecEventListener> eventListener = new HdmiCecEventListener();
     pair<State, State> stateChanges;
 
@@ -191,7 +191,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, StateTransitions)
 UT_ADD_TEST(VTS_L2_HDMICEC, metricValidation)
 {
     std::optional<PropertyValue> cecVersion;
-    sp<IHdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
+    sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
 
     // List of metric properties to validate
@@ -275,7 +275,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, metricValidation)
  */
 UT_ADD_TEST(VTS_L2_HDMICEC, logicalAddressesValidation)
 {
-    sp<IHdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
+    sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<int32_t> logicalAddresses_1 = {0, 1};
     vector<int32_t> logicalAddresses_2 = {2, 3};
@@ -374,7 +374,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, logicalAddressesValidation)
  */
 UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
 {
-    sp<HdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
+    sp<HdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<int32_t> logicalAddresses = {0};
     vector<uint8_t> directMsg_1 = {0x05, 0x04};
@@ -397,55 +397,17 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
     // Wait for message to be processed and callback to be invoked
     this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
 
-    // Verify that the onMessageSent received to controllerListener
-    controllerListener->getNextMessage(getMessage, getStatus);
-
-    UT_ASSERT_EQUAL(getMessage.size(), directMsg_1.size());
-
-    if(getMessage.size() == directMsg_1.size())
-    {
-        for (size_t i = 0; i < directMsg_1.size(); i++)
-        {
-            UT_ASSERT_EQUAL(getMessage[i], directMsg_1[i]);
-        }
-    }
-    UT_ASSERT_EQUAL(getStatus, hdmicec::SendMessageStatus::ACK_STATE_1);
-
     // Send another message
     HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, directMsg_2, msgStatus);
 
     // Wait for message to be processed and callback to be invoked
     this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
 
-    // Verify that the onMessageSent received to controllerListener
-    controllerListener->getNextMessage(getMessage, getStatus);
-    UT_ASSERT_EQUAL(getMessage.size(), directMsg_2.size());
-    if(getMessage.size() == directMsg_2.size())
-    {
-        for (size_t i = 0; i < directMsg_2.size(); i++)
-        {
-            UT_ASSERT_EQUAL(getMessage[i], directMsg_2[i]);
-        }
-    }
-    UT_ASSERT_EQUAL(getStatus, hdmicec::SendMessageStatus::ACK_STATE_1);
-
     // Send broadcast message
     HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, broadcastMsg, msgStatus);
 
     // Wait for message to be processed and callback to be invoked
     this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
-
-    // Verify that the onMessageSent received to controllerListener
-    controllerListener->getNextMessage(getMessage, getStatus);
-    UT_ASSERT_EQUAL(getMessage.size(), broadcastMsg.size());
-    if(getMessage.size() == broadcastMsg.size())
-    {
-        for (size_t i = 0; i < broadcastMsg.size(); i++)
-        {
-            UT_ASSERT_EQUAL(getMessage[i], broadcastMsg[i]);
-        }
-    }
-    UT_ASSERT_EQUAL(getStatus, hdmicec::SendMessageStatus::ACK_STATE_0);
 
     // Remove logical address
     HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);

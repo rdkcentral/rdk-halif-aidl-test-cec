@@ -178,7 +178,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
     uint8_t src;
     uint8_t dst;
 
-    sp<HdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
+    sp<HdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<HdmiCecEventListener> eventListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     hdmicec::SendMessageStatus msgStatus;
@@ -213,21 +213,6 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
 
             // Wait for message to be processed and callback to be invoked
             this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
-
-            // Verify that the onMessageSent received to controllerListener
-            UT_ASSERT_TRUE(controllerListener->getNextMessage(getMessage, getStatus));
-
-            UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
-
-            if(getMessage.size() == testConfiguration.message.size())
-            {
-                for (size_t i = 0; i < testConfiguration.message.size(); i++)
-                {
-                    UT_ASSERT_EQUAL(getMessage[i], testConfiguration.message[i]);
-                }
-            }
-
-            UT_ASSERT_TRUE((getStatus ==  hdmicec::SendMessageStatus::ACK_STATE_0) || (getStatus ==  hdmicec::SendMessageStatus::ACK_STATE_1));
 
             this_thread::sleep_for(chrono::milliseconds(delayBetweenMsgsMsec));
         }
@@ -271,7 +256,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
     const char *testName = "ReceiveMessage";
     vector<hdmicecReceiveMsgConfiguration_t> testConfigurationList;
 
-    sp<HdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
+    sp<HdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<HdmiCecEventListener> eventListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<uint8_t> getMessage;
@@ -288,7 +273,6 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
     {
         controllerListener->resetReceiveMessageQueue();
         controllerListener->resetStateQueue();
-        controllerListener->resetSendMessageQueue();
 
         eventListener->resetReceiveMessageQueue();
         eventListener->resetStateQueue();

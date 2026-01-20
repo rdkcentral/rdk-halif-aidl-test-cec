@@ -65,116 +65,6 @@
 #include "vts_hdmicec.h"
 #include "vts_hdmicec_helper_functions.h"
 
-/* Implementation of HdmiCecControllerListener methods */
-android::binder::Status HdmiCecControllerListener::onMessageReceived(const ::std::vector<uint8_t>& message)
-{
-    {
-        std::lock_guard<std::mutex> lock(mMsgReceiveMutex);
-        mMessageReceiveQueue.emplace(message);
-    }
-
-    UT_LOG_INFO("HdmiCecControllerListener::onMessageReceived called with message[%s]", vecByteToHexString(message).c_str());
-    return android::binder::Status::ok();
-}
-
-android::binder::Status HdmiCecControllerListener::onStateChanged(::com::rdk::hal::State oldState, ::com::rdk::hal::State newState)
-{
-    UT_LOG_INFO("HdmiCecControllerListener::onStateChanged called with oldState:%s, newState:%s",
-                com::rdk::hal::toString(oldState).c_str(), com::rdk::hal::toString(newState).c_str());
-    {
-        lock_guard<mutex> lock(mStateMutex);
-        mStateChanges.push({oldState, newState});
-    }
-    return android::binder::Status::ok();
-}
-
-android::binder::Status HdmiCecControllerListener::onMessageSent(const ::std::vector<uint8_t>& message, ::com::rdk::hal::hdmicec::SendMessageStatus status)
-{
-    {
-        std::lock_guard<std::mutex> lock(mMsgSentMutex);
-        mMessageSentQueue.emplace(message, status);
-    }
-
-    UT_LOG_INFO("HdmiCecControllerListener::onMessageSent called with message: [%s] status[%s]",vecByteToHexString(message).c_str(), hdmicec::toString(status).c_str());
-    return android::binder::Status::ok();
-}
-
-bool HdmiCecControllerListener::getNextStateChanges(pair<State, State>& stateChanges)
-{
-    lock_guard<mutex> lock(mStateMutex);
-
-    if (mStateChanges.empty())
-        return false;
-
-    stateChanges = mStateChanges.front();
-    mStateChanges.pop();
-    return true;
-}
-
-bool HdmiCecControllerListener::getNextMessage(std::vector<uint8_t>& outMessage,
-                                               hdmicec::SendMessageStatus& outStatus)
-{
-    std::lock_guard<std::mutex> lock(mMsgSentMutex);
-
-    if (mMessageSentQueue.empty())
-    {
-        return false;
-    }
-
-    auto entry = std::move(mMessageSentQueue.front());
-    mMessageSentQueue.pop();
-
-    outMessage = std::move(entry.first);
-    outStatus  = entry.second;
-
-    return true;
-}
-
-bool HdmiCecControllerListener::getReceiveMessageStatus()
-{
-    std::lock_guard<std::mutex> lock(mMsgReceiveMutex);
-
-    return !mMessageReceiveQueue.empty();
-}
-
-bool HdmiCecControllerListener::getNextReceiveMessage(std::vector<uint8_t>& outMessage)
-{
-    std::lock_guard<std::mutex> lock(mMsgReceiveMutex);
-
-    if (mMessageReceiveQueue.empty())
-    {
-        return false;
-    }
-
-    auto entry = std::move(mMessageReceiveQueue.front());
-    mMessageReceiveQueue.pop();
-
-    outMessage = std::move(entry);
-
-    return true;
-}
-
-void HdmiCecControllerListener::resetStateQueue()
-{
-    std::lock_guard<std::mutex> lock(mStateMutex);
-    std::queue<pair<State, State>> empty;
-    std::swap(mStateChanges, empty);
-}
-
-void HdmiCecControllerListener::resetSendMessageQueue()
-{
-    std::lock_guard<std::mutex> lock(mMsgSentMutex);
-    std::queue<std::pair<std::vector<uint8_t>, hdmicec::SendMessageStatus>> empty;
-    std::swap(mMessageSentQueue, empty);
-}
-
-void HdmiCecControllerListener::resetReceiveMessageQueue()
-{
-    std::lock_guard<std::mutex> lock(mMsgReceiveMutex);
-    std::queue<std::vector<uint8_t>> empty;
-    std::swap(mMessageReceiveQueue, empty);
-}
-
 /* Implementation of HdmiCecEventListener methods */
 android::binder::Status HdmiCecEventListener::onMessageReceived(const ::std::vector<uint8_t>& message)
 {
@@ -186,14 +76,25 @@ android::binder::Status HdmiCecEventListener::onMessageReceived(const ::std::vec
     return android::binder::Status::ok();
 }
 
-android::binder::Status HdmiCecEventListener::onStateChanged(::com::rdk::hal::State oldState, ::com::rdk::hal::State newState)
+android::binder::Status HdmiCecEventListener::onStateChanged(::com::rdk::hal::hdmicec::State oldState, ::com::rdk::hal::hdmicec::State newState)
 {
     UT_LOG_INFO("HdmiCecEventListener::onStateChanged called with oldState:%s, newState:%s",
-                com::rdk::hal::toString(oldState).c_str(), com::rdk::hal::toString(newState).c_str());
+                com::rdk::hal::hdmicec::toString(oldState).c_str(), com::rdk::hal::hdmicec::toString(newState).c_str());
     {
         lock_guard<mutex> lock(mStateMutex);
         mStateChanges.push({oldState, newState});
     }
+    return android::binder::Status::ok();
+}
+
+android::binder::Status HdmiCecEventListener::onMessageSent(const ::std::vector<uint8_t> &message, ::com::rdk::hal::hdmicec::SendMessageStatus status)
+{
+    {
+        std::lock_guard<std::mutex> lock(mMsgSentMutex);
+        mMessageSentQueue.emplace(message, status);
+    }
+
+    UT_LOG_INFO("HdmiCecEventListener::onMessageSent called with message: [%s] status[%s]",vecByteToHexString(message).c_str(), hdmicec::toString(status).c_str());
     return android::binder::Status::ok();
 }
 

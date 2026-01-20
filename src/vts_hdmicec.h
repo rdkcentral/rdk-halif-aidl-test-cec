@@ -84,11 +84,9 @@
 #include <binder/Status.h>
 #include <utils/String16.h>
 
-#include "com/rdk/hal/hdmicec/BnHdmiCecControllerListener.h"
 #include "com/rdk/hal/hdmicec/BnHdmiCecEventListener.h"
 #include "com/rdk/hal/hdmicec/IHdmiCec.h"
 #include "com/rdk/hal/hdmicec/IHdmiCecController.h"
-#include "com/rdk/hal/hdmicec/IHdmiCecControllerListener.h"
 #include "com/rdk/hal/hdmicec/IHdmiCecEventListener.h"
 
 #include "vts_hdmicec_helper_functions.h"
@@ -159,7 +157,7 @@ using namespace com::rdk::hal::hdmicec;
         \
         if (stateCheck) \
         { \
-            com::rdk::hal::State lastState; \
+            com::rdk::hal::hdmicec::State lastState; \
             HDMICEC_WAIT_FOR_STATE(hdmicecHandle, State::STARTED, lastState); \
             UT_ASSERT_EQUAL_FATAL(lastState, State::STARTED); \
         } \
@@ -168,7 +166,7 @@ using namespace com::rdk::hal::hdmicec;
 #define HDMICEC_OPEN_FAILURE(hdmicecHandle, controllerListener, hdmiCecController, expectedState, expectedException) \
     do { \
         android::binder::Status status; \
-        com::rdk::hal::State state; \
+        com::rdk::hal::hdmicec::State state; \
         \
         /* Attempt to open the Decoder (expected to fail) */ \
         UT_LOG_DEBUG("Calling open(IN:controllerListener[%p], OUT:hdmiCecController[])", controllerListener); \
@@ -203,7 +201,7 @@ using namespace com::rdk::hal::hdmicec;
         UT_ASSERT_EQUAL_FATAL(status.exceptionCode(), Status::EX_NONE); \
         if (stateCheck) \
         { \
-            ::com::rdk::hal::State lastState; \
+            ::com::rdk::hal::hdmicec::State lastState; \
             HDMICEC_WAIT_FOR_STATE(hdmicecHandle, State::CLOSED, lastState); \
             UT_ASSERT_EQUAL_FATAL(lastState, State::CLOSED); \
         } \
@@ -213,7 +211,7 @@ using namespace com::rdk::hal::hdmicec;
     do { \
         ::android::binder::Status status; \
         bool _aidl_return; \
-        com::rdk::hal::State state; \
+        com::rdk::hal::hdmicec::State state; \
         UT_LOG_DEBUG("Calling close(IN:hdmiCecController[%p], OUT:_aidl_return[])", hdmiCecController.get()); \
         status = hdmicecHandle->close(hdmiCecController, &_aidl_return); \
         UT_LOG_DEBUG("Result close(IN:hdmiCecController[%p], OUT:_aidl_return[%s]), status:[isOK:%s, exception:%s]", \
@@ -462,31 +460,6 @@ using namespace com::rdk::hal::hdmicec;
         UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
     } while (0)
 
-/* Contoller Listener Class */
-class HdmiCecControllerListener : public BnHdmiCecControllerListener
-{
-public:
-    HdmiCecControllerListener() : BnHdmiCecControllerListener(){}
-    virtual ~HdmiCecControllerListener() = default;
-    android::binder::Status onMessageReceived(const ::std::vector<uint8_t>& message) override;
-    android::binder::Status onStateChanged(::com::rdk::hal::State oldState, ::com::rdk::hal::State newState) override;
-    android::binder::Status onMessageSent(const ::std::vector<uint8_t>& message, hdmicec::SendMessageStatus status) override;
-    bool getNextStateChanges(pair<State, State>& stateChanges);
-    bool getNextMessage( std::vector<uint8_t>& outMessage, hdmicec::SendMessageStatus& outStatus);
-    bool getNextReceiveMessage(std::vector<uint8_t>& outMessage);
-    bool getReceiveMessageStatus();
-    void resetStateQueue();
-    void resetSendMessageQueue();
-    void resetReceiveMessageQueue();
-private:
-    mutex mStateMutex;
-    mutex mMsgSentMutex;
-    mutex mMsgReceiveMutex;
-    std::queue<pair<State, State>> mStateChanges;
-    std::queue<std::pair<std::vector<uint8_t>, hdmicec::SendMessageStatus>> mMessageSentQueue;
-    std::queue<std::vector<uint8_t>> mMessageReceiveQueue;
-};
-
 /* Event Listener Class */
 class HdmiCecEventListener : public BnHdmiCecEventListener
 {
@@ -495,7 +468,8 @@ public:
     virtual ~HdmiCecEventListener() = default;
 
     android::binder::Status onMessageReceived(const ::std::vector<uint8_t>& message) override;
-    android::binder::Status onStateChanged(::com::rdk::hal::State oldState, ::com::rdk::hal::State newState) override;
+    android::binder::Status onStateChanged(::com::rdk::hal::hdmicec::State oldState, ::com::rdk::hal::hdmicec::State newState) override;
+    android::binder::Status onMessageSent(const ::std::vector<uint8_t>& message, ::com::rdk::hal::hdmicec::SendMessageStatus status) override;
     bool getNextStateChanges(pair<State, State>& stateChanges);
     bool getNextMessage( std::vector<uint8_t>& outMessage, hdmicec::SendMessageStatus& outStatus);
     bool getNextReceiveMessage(std::vector<uint8_t>& outMessage);
@@ -504,8 +478,10 @@ public:
     void resetReceiveMessageQueue();
 private:
     mutex mStateMutex;
+    mutex mMsgSentMutex;
     mutex mMsgReceiveMutex;
     std::queue<pair<State, State>> mStateChanges;
+    std::queue<std::pair<std::vector<uint8_t>, hdmicec::SendMessageStatus>> mMessageSentQueue;
     std::queue<std::vector<uint8_t>> mMessageReceiveQueue;
 };
 
