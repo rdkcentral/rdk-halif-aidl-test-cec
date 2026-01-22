@@ -347,7 +347,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, logicalAddressesValidation)
  *
  * This test ensures that messages of varying sizes can be sent over HDMI CEC
  * after assigning logical addresses, and that the sent messages and status are
- * correctly received via the HdmiCecControllerListener callback.
+ * correctly received via the HdmiCecEventListener callback.
  *
  * It also validates that:
  * - Messages up to maximum payload length (16 bytes) are supported
