@@ -178,7 +178,6 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
     uint8_t src;
     uint8_t dst;
 
-    sp<HdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<HdmiCecEventListener> eventListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     hdmicec::SendMessageStatus msgStatus;
@@ -195,7 +194,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
     HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
 
     // Open HDMI CEC interface
-    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+    HDMICEC_OPEN_SUCCESS(gHDMICECHandle, eventListener, hdmiCecController, true);
 
     // Add logical address
     HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, sourceLogicalAddresses);
@@ -214,8 +213,8 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
             // Wait for message to be processed and callback to be invoked
             this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
 
-            // Verify that the onMessageSent received to controllerListener
-            UT_ASSERT_TRUE(controllerListener->getNextMessage(getMessage, getStatus));
+            // Verify that the onMessageSent received to eventListener
+            UT_ASSERT_TRUE(eventListener->getNextMessage(getMessage, getStatus));
 
             UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
 
