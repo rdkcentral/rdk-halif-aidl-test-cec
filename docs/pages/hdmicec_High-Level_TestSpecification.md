@@ -38,14 +38,14 @@ Consumer Electronics Control (CEC) is a single-wire bidirectional bus within an 
 |Test|Description|HAL APIs|
 |----|-----------|--------|
 |Verify state of cec|Ensure current state is received during the sequence: open()->close()->open()|open(), getState(), close()|
-|Verify states using listener|Validate that the CEC event listener is registered, verify states using listener callback. Callbacks needs to be verified|open(),registerEventListener(), unregisterEventListener(), close(), HdmiCecEventListener.onStateChanged() , HdmiCecEventListener.onStateChanged()|
+|Verify states using listener|Validate that the CEC event listener is registered, verify states using listener callback. Callbacks needs to be verified|open(),registerEventListener(), unregisterEventListener(), close(), HdmiCecEventListener.onStateChanged()|
 |Validate property|Verify the property value for the input property key. If the metric is implemented by the vendor then the value should be zero else -1|getProperty()|
 |Validate logical address|Verify the logical addresses that have been set. Note that, after calling removeLogicalAddresses(), getLogicalAddresses() should return empty array |open(), addLogicalAddresses(), getLogicalAddresses(),removeLogicalAddresses() close() |
-|Negative test for sendmessage|Verify SendMessageStatus recieved is BUSY, when a sendMessage() is called without any connected devices and also no callbacks are received  |open(), registerEventListener(), sendMessage(), HdmiCecEventListener.onMessageSent(), HdmiCecEventListener.onMessageReceived(), HdmiCecEventListener.onMessageReceived(), unregisterEventListener(), close()|
+|Negative test for sendmessage|Verify SendMessageStatus recieved is BUSY, when a sendMessage() is called without any connected devices and also no callbacks are received  |open(), registerEventListener(), sendMessage(), HdmiCecEventListener.onMessageSent(), HdmiCecEventListener.onMessageReceived(), unregisterEventListener(), close()|
 
 ## L3 Test Specification
 
 |Test|	Description	|HAL APIs used|
 |-----|------------|-------------|
-|Send CEC Commands|	Send `cec` commands to controller and check whether the messages received at controller or not|open(), registerEventListener(), sendMessage(), HdmiCecEventListener.onMessageSent(), HdmiCecEventListener.onMessageReceived(), HdmiCecEventListener.onMessageReceived(), unregisterEventListener(), close()|
-|Receive CEC Commands|	Send `cec` commands to `DUT` from controller and check whether the HAL triggers callbacks |open(), registerEventListener(), sendMessage(), HdmiCecEventListener.onMessageSent(), HdmiCecEventListener.onMessageReceived(), HdmiCecEventListener.onMessageReceived(), unregisterEventListener(), close()|
+|Send CEC Commands|	Send `cec` commands to controller and check whether the messages received at controller or not|open(), registerEventListener(), sendMessage(), HdmiCecEventListener.onMessageSent(), HdmiCecEventListener.onMessageReceived(), unregisterEventListener(), close()|
+|Receive CEC Commands|	Send `cec` commands to `DUT` from controller and check whether the HAL triggers callbacks |open(), registerEventListener(), sendMessage(), HdmiCecEventListener.onMessageSent(), HdmiCecEventListener.onMessageReceived(), unregisterEventListener(), close()|
