@@ -42,7 +42,7 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
     """
     Runs L3 ReceiveMessage test
     """
-    def __init__(self, log:logModule=None, testMenuConfigFile=None, moduleName=None, artifactDirPath=None):
+    def __init__(self, log:logModule=None, testMenuConfigFile: str=None, moduleName: str=None, artifactDirPath: str=None):
         """
         Initializes the test class
         """
