@@ -178,8 +178,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
     uint8_t src;
     uint8_t dst;
 
-    sp<HdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
-    sp<HdmiCecEventListener> eventListener = new HdmiCecEventListener();
+    sp<HdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     hdmicec::SendMessageStatus msgStatus;
     UT_status_t status = UT_STATUS_OK;
@@ -192,7 +191,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
     UT_ASSERT_EQUAL_FATAL(status, UT_STATUS_OK);
 
     // Register Event Listener
-    HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
+    HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, controllerListener);
 
     // Open HDMI CEC interface
     HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
@@ -214,7 +213,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
             // Wait for message to be processed and callback to be invoked
             this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
 
-            // Verify that the onMessageSent received to controllerListener
+            // Verify that the onMessageSent received to eventListener
             UT_ASSERT_TRUE(controllerListener->getNextMessage(getMessage, getStatus));
 
             UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
@@ -243,7 +242,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
     HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
 
     // Unregister Event Listener
-    HDMICEC_UNREGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
+    HDMICEC_UNREGISTER_EVENT_SUCCESS(gHDMICECHandle, controllerListener);
 
 }
 
@@ -271,27 +270,24 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
     const char *testName = "ReceiveMessage";
     vector<hdmicecReceiveMsgConfiguration_t> testConfigurationList;
 
-    sp<HdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
-    sp<HdmiCecEventListener> eventListener = new HdmiCecEventListener();
+    sp<HdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<uint8_t> getMessage;
 
     vts_hdmicec_parse_receiveMessage_config(VTS_HDMICEC_TEST_CONFIG_PATH, gModuleName, gTestGroup, testName, testConfigurationList);
 
     // Register Event Listener
-    HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
+    HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, controllerListener);
 
     // Open HDMI CEC interface
     HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
 
     for(auto &testConfiguration : testConfigurationList)
     {
+
         controllerListener->resetReceiveMessageQueue();
         controllerListener->resetStateQueue();
         controllerListener->resetSendMessageQueue();
-
-        eventListener->resetReceiveMessageQueue();
-        eventListener->resetStateQueue();
 
         uint8_t messageDestAddress = testConfiguration.message[0] & 0x0F;
         bool isDutAddressed = false;
@@ -339,7 +335,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
                         }
                     }
 
-                    // Verify that the onMessageReceived received to controllerListener
+                    // Verify that the onMessageReceived received to eventListener
                     UT_ASSERT_TRUE(controllerListener->getNextReceiveMessage(getMessage));
                     UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
 
@@ -354,7 +350,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
                     getMessage.clear();
 
                     // Verify that the onMessageReceived received to eventListener
-                    UT_ASSERT_TRUE(eventListener->getNextReceiveMessage(getMessage));
+                    UT_ASSERT_TRUE(controllerListener->getNextReceiveMessage(getMessage));
                     UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
 
                     if(getMessage.size() == testConfiguration.message.size())
@@ -370,7 +366,6 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
                     //if logical address is not addressed to DUT, ensure no message is received
                     this_thread::sleep_for(chrono::milliseconds(testConfiguration.waitResponseTimeoutMsec));
                     UT_ASSERT_FALSE(controllerListener->getNextReceiveMessage(getMessage));
-                    UT_ASSERT_FALSE(eventListener->getNextReceiveMessage(getMessage));
                 }
             }
 
@@ -384,7 +379,6 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
                 //if logical address is not assigned to DUT, ensure no message is received
                 this_thread::sleep_for(chrono::milliseconds(testConfiguration.waitResponseTimeoutMsec));
                 UT_ASSERT_FALSE(controllerListener->getNextReceiveMessage(getMessage));
-                UT_ASSERT_FALSE(eventListener->getNextReceiveMessage(getMessage));
             }
         }
     }
@@ -393,7 +387,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
     HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
 
     // Unregister Event Listener
-    HDMICEC_UNREGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
+    HDMICEC_UNREGISTER_EVENT_SUCCESS(gHDMICECHandle, controllerListener);
 }
 
 /** @} */ // End of HDMI_CEC_HALTEST L3 File

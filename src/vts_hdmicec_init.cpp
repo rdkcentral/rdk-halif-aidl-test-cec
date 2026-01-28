@@ -70,11 +70,9 @@
 #include <binder/Status.h>
 #include <utils/String16.h>
 
-#include "com/rdk/hal/hdmicec/BpHdmiCecControllerListener.h"
 #include "com/rdk/hal/hdmicec/BpHdmiCecEventListener.h"
 #include "com/rdk/hal/hdmicec/IHdmiCec.h"
 #include "com/rdk/hal/hdmicec/IHdmiCecController.h"
-#include "com/rdk/hal/hdmicec/IHdmiCecControllerListener.h"
 #include "com/rdk/hal/hdmicec/IHdmiCecEventListener.h"
 
 #include "vts_hdmicec_parse_hfp.h"

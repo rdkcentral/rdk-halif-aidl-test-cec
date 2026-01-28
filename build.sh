@@ -34,7 +34,7 @@ VCOMPONENT_HDMI_CEC_VERSION="${VCOMPONENT_HDMI_CEC_VERSION="main"}"
 RDK_HALIF_TEST_BASE_URL="https://github.com/rdkcentral/rdk-halif-binder-test-"
 
 declare -A HALIF_COMPONENTS=(
-  [cec]="current"
+  [hdmicec]="current"
 )
 
 declare -A HALIF_TEST_COMPONENTS=(
