@@ -121,7 +121,7 @@ using namespace com::rdk::hal::hdmicec;
         ::android::binder::Status status; \
         UT_LOG_DEBUG("Calling getState(OUT:state[]"); \
         status = (hdmicecHandle)->getState(&state); \
-        UT_LOG_DEBUG("Result getState(OUT:state[%s]), status:[isOK:%s, exception:%s]", com::rdk::hal::toString(state).c_str(), \
+        UT_LOG_DEBUG("Result getState(OUT:state[%s]), status:[isOK:%s, exception:%s]", ::com::rdk::hal::hdmicec::toString(state).c_str(), \
                 UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
                 UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
         UT_ASSERT_TRUE(status.isOk()); \
