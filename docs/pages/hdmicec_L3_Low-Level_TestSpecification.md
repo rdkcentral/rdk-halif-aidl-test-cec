@@ -37,7 +37,7 @@ The goal is to ensure that:
 ### References
 
 - `High Level Test Specification` - [hdmicec_High-Level_TestSpecification.md](hdmicec_High-Level_TestSpecification.md)
-- [CEC AIDL interface](https://github.com/rdkcentral/rdk-halif-aidl/tree/0.12.0/cec/)
+- [CEC AIDL interface](https://github.com/rdkcentral/rdk-halif-aidl/tree/0.13.1/hdmicec)
 
 ## Level 3 Test Specification
 
