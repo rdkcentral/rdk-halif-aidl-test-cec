@@ -86,8 +86,7 @@ public:
  *
  * This test validates the state machine behavior of the HDMI CEC interface.
  * It ensures that the interface transitions correctly between CLOSED and STARTED states,
- * and that state change notifications are received by both the controller listener
- * and the event listener.
+ * and that state change notifications are received by the event listener.
  *
  * **Test Group ID:** Basic: 02@n
  * **Test Case ID:** 001@n
@@ -109,14 +108,13 @@ public:
 
 UT_ADD_TEST(VTS_L2_HDMICEC, StateTransitions)
 {
-    sp<HdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
+    sp<HdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
-    com::rdk::hal::State state;
-    sp<HdmiCecEventListener> eventListener = new HdmiCecEventListener();
+    com::rdk::hal::hdmicec::State state;
     pair<State, State> stateChanges;
 
     // Register event listener
-    HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
+    HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, controllerListener);
 
     // Call getState and retrieve the current HDMI CEC interface state
     HDMICEC_GET_STATE(gHDMICECHandle, state);
@@ -126,7 +124,6 @@ UT_ADD_TEST(VTS_L2_HDMICEC, StateTransitions)
 
     // Ensure no spurious state changes before open()
     UT_ASSERT_FALSE(controllerListener->getNextStateChanges(stateChanges));
-    UT_ASSERT_FALSE(eventListener->getNextStateChanges(stateChanges));
 
     /* multiple open and close test */
     for (int32_t i = 0; i < 2; i++)
@@ -134,36 +131,35 @@ UT_ADD_TEST(VTS_L2_HDMICEC, StateTransitions)
         // Open the HDMI CEC interface
         HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
 
-        // Verify that the onStateChanged for STARTED received to controllerListener
+        // Verify that the onStateChanged for STARTED received to eventListener
         UT_ASSERT_TRUE(controllerListener->getNextStateChanges(stateChanges));
         UT_ASSERT_EQUAL(stateChanges.first, State::CLOSED);
         UT_ASSERT_EQUAL(stateChanges.second, State::STARTED);
 
         // Verify that the onStateChanged for STARTED received to eventListener
-        UT_ASSERT_TRUE(eventListener->getNextStateChanges(stateChanges));
+        UT_ASSERT_TRUE(controllerListener->getNextStateChanges(stateChanges));
         UT_ASSERT_EQUAL(stateChanges.first, State::CLOSED);
         UT_ASSERT_EQUAL(stateChanges.second, State::STARTED);
 
         // close the HDMI CEC interface
         HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
 
-        // Verify that the onStateChanged for CLOSED received to controllerListener
+        // Verify that the onStateChanged for CLOSED received to eventListener
         UT_ASSERT_TRUE(controllerListener->getNextStateChanges(stateChanges));
         UT_ASSERT_EQUAL(stateChanges.first, State::STARTED);
         UT_ASSERT_EQUAL(stateChanges.second, State::CLOSED);
 
         // Verify that the onStateChanged for CLOSED received to eventListener
-        UT_ASSERT_TRUE(eventListener->getNextStateChanges(stateChanges));
+        UT_ASSERT_TRUE(controllerListener->getNextStateChanges(stateChanges));
         UT_ASSERT_EQUAL(stateChanges.first, State::STARTED);
         UT_ASSERT_EQUAL(stateChanges.second, State::CLOSED);
 
         // Ensure no spurious state changes after close()
         UT_ASSERT_FALSE(controllerListener->getNextStateChanges(stateChanges));
-        UT_ASSERT_FALSE(eventListener->getNextStateChanges(stateChanges));
     }
 
     // Unregister event listener
-    HDMICEC_UNREGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
+    HDMICEC_UNREGISTER_EVENT_SUCCESS(gHDMICECHandle, controllerListener);
 }
 
 /**
@@ -191,7 +187,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, StateTransitions)
 UT_ADD_TEST(VTS_L2_HDMICEC, metricValidation)
 {
     std::optional<PropertyValue> cecVersion;
-    sp<IHdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
+    sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
 
     // List of metric properties to validate
@@ -275,7 +271,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, metricValidation)
  */
 UT_ADD_TEST(VTS_L2_HDMICEC, logicalAddressesValidation)
 {
-    sp<IHdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
+    sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<int32_t> logicalAddresses_1 = {0, 1};
     vector<int32_t> logicalAddresses_2 = {2, 3};
@@ -351,7 +347,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, logicalAddressesValidation)
  *
  * This test ensures that messages of varying sizes can be sent over HDMI CEC
  * after assigning logical addresses, and that the sent messages and status are
- * correctly received via the HdmiCecControllerListener callback.
+ * correctly received via the HdmiCecEventListener callback.
  *
  * It also validates that:
  * - Messages up to maximum payload length (16 bytes) are supported
@@ -374,7 +370,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, logicalAddressesValidation)
  */
 UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
 {
-    sp<HdmiCecControllerListener> controllerListener = new HdmiCecControllerListener();
+    sp<HdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<int32_t> logicalAddresses = {0};
     vector<uint8_t> directMsg_1 = {0x05, 0x04};
@@ -397,7 +393,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
     // Wait for message to be processed and callback to be invoked
     this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
 
-    // Verify that the onMessageSent received to controllerListener
+    // Verify that the onMessageSent received to eventListener
     controllerListener->getNextMessage(getMessage, getStatus);
 
     UT_ASSERT_EQUAL(getMessage.size(), directMsg_1.size());
@@ -417,7 +413,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
     // Wait for message to be processed and callback to be invoked
     this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
 
-    // Verify that the onMessageSent received to controllerListener
+    // Verify that the onMessageSent received to eventListener
     controllerListener->getNextMessage(getMessage, getStatus);
     UT_ASSERT_EQUAL(getMessage.size(), directMsg_2.size());
     if(getMessage.size() == directMsg_2.size())
@@ -435,7 +431,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
     // Wait for message to be processed and callback to be invoked
     this_thread::sleep_for(chrono::milliseconds(MAX_MESSAGE_SENT_WAIT_MS));
 
-    // Verify that the onMessageSent received to controllerListener
+    // Verify that the onMessageSent received to eventListener
     controllerListener->getNextMessage(getMessage, getStatus);
     UT_ASSERT_EQUAL(getMessage.size(), broadcastMsg.size());
     if(getMessage.size() == broadcastMsg.size())
