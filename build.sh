@@ -54,10 +54,10 @@ OUT_TAR_FILE=vts-HdmiCec.tar.gz
 
 DEF_LINUX_BINDER="`realpath ${TOP}/../`/linux_binder_idl"
 # AIDL_BIN: path of aidl compiler
-AIDL_BIN=${AIDL_BIN:-${DEF_LINUX_BINDER}/out/aidl}
+AIDL_BIN=${AIDL_BIN:-${DEF_LINUX_BINDER}/out/host/bin/aidl}
 # LINUX_BINDER_OUT_DIR: output installed after building linux_binder_idl
 # contains bin/servicemanager, lib/libbinder etc
-LINUX_BINDER_OUT_DIR=${LINUX_BINDER_OUT_DIR:-${DEF_LINUX_BINDER}/local}
+LINUX_BINDER_OUT_DIR=${LINUX_BINDER_OUT_DIR:-${DEF_LINUX_BINDER}/out/target}
 
 mkdir -p $TOP_BUILD_DIR
 
@@ -255,8 +255,9 @@ install_test()
     install -t ${INSTALL_PATH} run.sh
 
     cp -r ${PROFILES_DIR} ${INSTALL_PATH}
-    cp -r "${VCOMPONENT_DIR}/vcomponent_configurations" ${INSTALL_PATH}
-    cp -r "${VCOMPONENT_DIR}/hdmicec_post_command.sh" ${INSTALL_PATH}
+    # NOTE : Uncomment this, if vcomponent is also getting built
+    #cp -r "${VCOMPONENT_DIR}/vcomponent_configurations" ${INSTALL_PATH}
+    #cp -r "${VCOMPONENT_DIR}/hdmicec_post_command.sh" ${INSTALL_PATH}
     cp -r "${TOP}/test_configuration" ${INSTALL_PATH}
 
     cd ${INSTALL_PATH}
@@ -328,7 +329,8 @@ elif [[ "$1" == [Tt]arget=* ]]; then
     build_aidl_libs
     build_ut_core
     build_halif_test
-    build_vcomponent_services
+    # NOTE : Uncomment this to build vcomponent as well
+    #build_vcomponent_services
     install_test
     echo -e "${BOLD}╔════════════════════════════════╗${RESET}"
     echo -e "${BOLD}* ${GREEN}Build Successful${RESET}               ${BOLD}*${RESET}"
