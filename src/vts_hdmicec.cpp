@@ -72,7 +72,7 @@ android::binder::Status HdmiCecEventListener::onMessageReceived(const ::std::vec
         std::lock_guard<std::mutex> lock(mMsgReceiveMutex);
         mMessageReceiveQueue.emplace(message);
     }
-    UT_LOG_INFO("HdmiCecEventListener::onMessageReceived called with message[%s]",vecByteToHexString(message).c_str());
+    UT_LOG_INFO("HdmiCecEventListener::onMessageReceived called with message[%s]",hdmicecVecByteToHexString(message).c_str());
     return android::binder::Status::ok();
 }
 
@@ -94,7 +94,7 @@ android::binder::Status HdmiCecEventListener::onMessageSent(const ::std::vector<
         mMessageSentQueue.emplace(message, status);
     }
 
-    UT_LOG_INFO("HdmiCecEventListener::onMessageSent called with message: [%s] status[%s]",vecByteToHexString(message).c_str(), hdmicec::toString(status).c_str());
+    UT_LOG_INFO("HdmiCecEventListener::onMessageSent called with message: [%s] status[%s]",hdmicecVecByteToHexString(message).c_str(), hdmicec::toString(status).c_str());
     return android::binder::Status::ok();
 }
 
