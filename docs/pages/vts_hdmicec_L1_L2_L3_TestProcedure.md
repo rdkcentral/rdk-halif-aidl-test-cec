@@ -26,11 +26,15 @@
 
 ## Build the VTS
 
+### Prerequisites
+This document assumes the build is executed on an x86 environment. If building on a standard Linux/Ubuntu machine, ensure the required packages are installed:
+[UT-Core basic package installation script](https://github.com/rdkcentral/ut-core/wiki/UT-Core-Building-using-Docker-or-Vagrant#script-for-installing-basic-packages-for-ut-core)
+
 ### Build Linux binder
 
 The test suite depends on the Linux binder with `AIDL` support. Follow these steps to build it:
 
-For detailed build instructions, please refer to [Linux Binder](https://github.com/rdkcentral/linux_binder_idl/tree/1.0.0)
+For detailed build instructions, please refer to [Linux Binder](https://github.com/rdkcentral/linux_binder_idl/blob/2.0.0/README.md)
 
 Here are the simplest steps outlined:
 
@@ -39,7 +43,7 @@ git clone -b develop 'https://github.com/rdkcentral/linux_binder_idl.git'
 
 cd linux_binder_idl
 
-./build-linux-binder-aidl.sh 64
+./build-linux-binder-aidl.sh
 ```
 
 ### Build VTS binaries
@@ -56,13 +60,13 @@ cd rdk-halif-aidl-test-cec
 
 Set the following environment variables:
 
-- AIDL_BIN: Path to the `AIDL` compiler (e.g., /path/to/linux_binder_idl/out/aidl).
+- AIDL_BIN: Path to the `AIDL` compiler (e.g., /path/to/linux_binder_idl/out/host/bin/aidl).
 
-- LINUX_BINDER_OUT_DIR: Path to the Linux binder output directory (e.g., /path/to/linux_binder_idl/local).
+- LINUX_BINDER_OUT_DIR: Path to the Linux binder output directory (e.g., /path/to/linux_binder_idl/out/target).
 
 - UT_CORE_VERSION: Specific version of the UT-Core framework (e.g., 4.7.0). Defaults to the latest tagged version.
 
-- VCOMPONENT_HDMI_CEC_VERSION: Specific version of the HDMI CEC Virtual Component (e.g., 1.0.0). Defaults to the latest HEAD.
+- VCOMPONENT_HDMI_CEC_VERSION: Specific version of the HDMI CEC Virtual Component (e.g., 1.0.0). Defaults to the latest HEAD. Only required when building the vcomponent; it is not built by default.
 
 - RDK_HALIF_AIDL_VERSION: Specific version of the AIDL HAL Specification (e.g., 0.12.0). Defaults to the latest HEAD.
 
@@ -71,9 +75,8 @@ Example:
 ```bash
 export UT_CORE_VERSION=5.0.0
 export RDK_HALIF_AIDL_VERSION=0.13.1
-export VCOMPONENT_HDMI_CEC_VERSION=0.2.0
-export AIDL_BIN=/path/to/linux_binder_idl/out/aidl
-export LINUX_BINDER_OUT_DIR=/path/to/linux_binder_idl/local/
+export AIDL_BIN=/path/to/linux_binder_idl/out/host/bin/aidl
+export LINUX_BINDER_OUT_DIR=/path/to/linux_binder_idl/out/target
 ```
 
 By default, `UT` logs are disabled. To enable them, set the following environment variable:
@@ -81,6 +84,13 @@ By default, `UT` logs are disabled. To enable them, set the following environmen
 ```bash
 export ENABLE_UT_INFO_LOGGING=1
 ```
+
+If building the vcomponent, refer to the `NOTE` comment in [build.sh](../../build.sh) and set the following environment variable:
+```bash
+export VCOMPONENT_HDMI_CEC_VERSION=0.2.0
+```
+
+Also, note that run.sh needs to be modified for target device.
 
 Run the build script:
 
@@ -120,7 +130,7 @@ cd /tmp/HdmiCec
 
 ### Run the VTS Test on Target Device
 
-Run the following command to execute the VTS test:
+Run the following command to execute the VTS test, assuming running it on a vComponent. Note: use the profile file corresponding to your platform.
 
 ```bash
 ./run.sh -p profiles/hfp-hdmicec_vcomponent.yaml
