@@ -89,7 +89,7 @@ const ut_control_keyStringMapping_t statusHdmiCecException_mapTable[] =
 };
 
 
-std::string vecIntToString(std::vector<int32_t>& addrs)
+std::string hdmicecVecIntToString(std::vector<int32_t>& addrs)
 {
     std::string s = "";
     for (size_t i = 0; i < addrs.size(); ++i)
@@ -100,7 +100,7 @@ std::string vecIntToString(std::vector<int32_t>& addrs)
     return s;
 }
 
-std::string vecByteToHexString(const std::vector<uint8_t>& data)
+std::string hdmicecVecByteToHexString(const std::vector<uint8_t>& data)
 {
     std::ostringstream oss;
     oss << std::uppercase << std::hex;  // uppercase hex letters
