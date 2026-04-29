@@ -352,7 +352,7 @@ using namespace com::rdk::hal::hdmicec;
         UT_LOG_DEBUG("Calling getLogicalAddresses(OUT:logicalAddresses[])"); \
         status = hdmicecHandle->getLogicalAddresses(&logicalAddresses); \
         UT_LOG_DEBUG("Result getLogicalAddresses(OUT:logicalAddresses[%s]), status:[isOK:%s, exception:%s]", \
-            vecIntToString(logicalAddresses).c_str(), \
+            hdmicecVecIntToString(logicalAddresses).c_str(), \
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
         UT_ASSERT_TRUE(status.isOk()); \
@@ -363,10 +363,10 @@ using namespace com::rdk::hal::hdmicec;
     do { \
         ::android::binder::Status status; \
         bool _aidl_return; \
-        UT_LOG_DEBUG("Calling addLogicalAddresses(IN:logicalAddresses[%s], OUT:_aidl_return[])", vecIntToString(logicalAddresses).c_str()); \
+        UT_LOG_DEBUG("Calling addLogicalAddresses(IN:logicalAddresses[%s], OUT:_aidl_return[])", hdmicecVecIntToString(logicalAddresses).c_str()); \
         status = hdmiCecController->addLogicalAddresses(logicalAddresses, &_aidl_return); \
         UT_LOG_DEBUG("Result addLogicalAddresses(IN:logicalAddresses[%s], OUT:_aidl_return[%s]), status:[isOK:%s, exception:%s]", \
-            vecIntToString(logicalAddresses).c_str(), \
+            hdmicecVecIntToString(logicalAddresses).c_str(), \
             UT_Control_GetMapString(bool_mapTable_cec, _aidl_return), \
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
@@ -379,10 +379,10 @@ using namespace com::rdk::hal::hdmicec;
     do { \
         ::android::binder::Status status; \
         bool _aidl_return; \
-        UT_LOG_DEBUG("Calling addLogicalAddresses(IN:logicalAddresses[%s], OUT:_aidl_return[])", vecIntToString(logicalAddresses).c_str()); \
+        UT_LOG_DEBUG("Calling addLogicalAddresses(IN:logicalAddresses[%s], OUT:_aidl_return[])", hdmicecVecIntToString(logicalAddresses).c_str()); \
         status = hdmiCecController->addLogicalAddresses(logicalAddresses, &_aidl_return); \
         UT_LOG_DEBUG("Result addLogicalAddresses(IN:logicalAddresses[%s], OUT:_aidl_return[%s]), status:[isOK:%s, exception:%s]", \
-            vecIntToString(logicalAddresses).c_str(), \
+            hdmicecVecIntToString(logicalAddresses).c_str(), \
             UT_Control_GetMapString(bool_mapTable_cec, _aidl_return), \
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
@@ -398,10 +398,10 @@ using namespace com::rdk::hal::hdmicec;
     do { \
         ::android::binder::Status status; \
         bool _aidl_return; \
-        UT_LOG_DEBUG("Calling removeLogicalAddresses(IN:logicalAddresses[%s], OUT:_aidl_return[])", vecIntToString(logicalAddresses).c_str()); \
+        UT_LOG_DEBUG("Calling removeLogicalAddresses(IN:logicalAddresses[%s], OUT:_aidl_return[])", hdmicecVecIntToString(logicalAddresses).c_str()); \
         status = hdmiCecController->removeLogicalAddresses(logicalAddresses, &_aidl_return); \
         UT_LOG_DEBUG("Result removeLogicalAddresses(OUT:logicalAddresses[%s], OUT:_aidl_return[%s]), status:[isOK:%s, exception:%s]", \
-            vecIntToString(logicalAddresses).c_str(), \
+            hdmicecVecIntToString(logicalAddresses).c_str(), \
             UT_Control_GetMapString(bool_mapTable_cec, _aidl_return), \
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
@@ -414,10 +414,10 @@ using namespace com::rdk::hal::hdmicec;
     do { \
         ::android::binder::Status status; \
         bool _aidl_return; \
-        UT_LOG_DEBUG("Calling removeLogicalAddresses(IN:logicalAddresses[%s], OUT:_aidl_return[])", vecIntToString(logicalAddresses).c_str()); \
+        UT_LOG_DEBUG("Calling removeLogicalAddresses(IN:logicalAddresses[%s], OUT:_aidl_return[])", hdmicecVecIntToString(logicalAddresses).c_str()); \
         status = hdmiCecController->removeLogicalAddresses(logicalAddresses, &_aidl_return); \
         UT_LOG_DEBUG("Result removeLogicalAddresses(OUT:logicalAddresses[%s], OUT:_aidl_return[%s]), status:[isOK:%s, exception:%s]", \
-            vecIntToString(logicalAddresses).c_str(), \
+            hdmicecVecIntToString(logicalAddresses).c_str(), \
             UT_Control_GetMapString(bool_mapTable_cec, _aidl_return), \
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
@@ -432,10 +432,10 @@ using namespace com::rdk::hal::hdmicec;
 #define HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, message, sendStatus) \
     do { \
         ::android::binder::Status status; \
-        UT_LOG_DEBUG("Calling sendMessage(IN:message[%s], OUT:sendStatus[])", vecByteToHexString(message).c_str()); \
+        UT_LOG_DEBUG("Calling sendMessage(IN:message[%s], OUT:sendStatus[])", hdmicecVecByteToHexString(message).c_str()); \
         status = hdmiCecController->sendMessage(message, &sendStatus); \
         UT_LOG_DEBUG("Result sendMessage(IN:message[%s], OUT:sendStatus[%s]), status:[isOK:%s, exception:%s]", \
-            vecByteToHexString(message).c_str(), \
+            hdmicecVecByteToHexString(message).c_str(), \
             hdmicec::toString(sendStatus).c_str(), \
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
@@ -446,10 +446,10 @@ using namespace com::rdk::hal::hdmicec;
 #define HDMICEC_SEND_MESSAGE_FAILURE(hdmiCecController, message, sendStatus, exception) \
     do { \
         ::android::binder::Status status; \
-        UT_LOG_DEBUG("Calling sendMessage(IN:message[%s], OUT:sendStatus[])", vecByteToHexString(message).c_str()); \
+        UT_LOG_DEBUG("Calling sendMessage(IN:message[%s], OUT:sendStatus[])", hdmicecVecByteToHexString(message).c_str()); \
         status = hdmiCecController->sendMessage(message, &sendStatus); \
         UT_LOG_DEBUG("Result sendMessage(IN:message[%s], OUT:sendStatus[%s]), status:[isOK:%s, exception:%s]", \
-            vecByteToHexString(message).c_str(), \
+            hdmicecVecByteToHexString(message).c_str(), \
             hdmicec::toString(sendStatus).c_str(), \
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
