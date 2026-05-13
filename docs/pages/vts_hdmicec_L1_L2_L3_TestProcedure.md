@@ -70,8 +70,8 @@ Example:
 
 ```bash
 export UT_CORE_VERSION=5.0.0
-export RDK_HALIF_AIDL_VERSION=0.13.1
-export VCOMPONENT_HDMI_CEC_VERSION=0.2.0
+export RDK_HALIF_AIDL_VERSION=0.15.0
+export VCOMPONENT_HDMI_CEC_VERSION=0.2.1
 export AIDL_BIN=/path/to/linux_binder_idl/out/aidl
 export LINUX_BINDER_OUT_DIR=/path/to/linux_binder_idl/local/
 ```
