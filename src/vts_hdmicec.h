@@ -237,6 +237,12 @@ using namespace com::rdk::hal::hdmicec;
         { \
             switch (propertyValue->value.value().getTag()) \
             { \
+                case PropertyValue::Value::Tag::byteValue: \
+                    UT_LOG_DEBUG("Result getProperty(IN:property[%s], OUT:propertyValue[%d]), status:[isOK:%s, exception:%s]", hdmicec::toString(property).c_str(), \
+                    (int)propertyValue->value->get<PropertyValue::Value::Tag::byteValue>(), \
+                    UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
+                    UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
+                    break; \
                 case PropertyValue::Value::Tag::intValue: \
                     UT_LOG_DEBUG("Result getProperty(IN:property[%s], OUT:propertyValue[%d]), status:[isOK:%s, exception:%s]", hdmicec::toString(property).c_str(), \
                     propertyValue->value->get<PropertyValue::Value::Tag::intValue>(), \
