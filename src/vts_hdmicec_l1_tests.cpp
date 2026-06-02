@@ -156,8 +156,8 @@ UT_ADD_TEST(VTS_L1_HDMICEC, getProperty_pos)
     HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::HAL_CEC_VERSION, cecVersion);
     UT_ASSERT_TRUE(cecVersion.has_value());
     UT_ASSERT_EQUAL(
-        cecVersion->value->get<PropertyValue::Value::Tag::intValue>(),
-        gHdmiCecDeviceInfo.hal_cec_version);
+        cecVersion->value->get<PropertyValue::Value::Tag::byteValue>(),
+        static_cast<int8_t>(gHdmiCecDeviceInfo.hal_cec_version));
 
     // Validate metric properties
     for (auto property : testProperties)

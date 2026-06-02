@@ -74,7 +74,7 @@
 
 struct hdmicec_device_info
 {
-    int32_t hal_cec_version;
+    int8_t hal_cec_version;
 };
 
 extern hdmicec_device_info gHdmiCecDeviceInfo;

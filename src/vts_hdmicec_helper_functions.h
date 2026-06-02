@@ -102,8 +102,8 @@ using namespace com::rdk::hal::hdmicec;
 extern const ut_control_keyStringMapping_t bool_mapTable_cec[];
 extern const ut_control_keyStringMapping_t statusHdmiCecException_mapTable[];
 
-std::string vecIntToString(std::vector<int32_t>& addrs);
-std::string vecByteToHexString(const std::vector<uint8_t>& data);
+std::string hdmicecVecIntToString(std::vector<int32_t>& addrs);
+std::string hdmicecVecByteToHexString(const std::vector<uint8_t>& data);
 
 #endif //__VTS_HDMICEC_HELPER_H__
 
