@@ -40,9 +40,6 @@ HDMICEC_TEST_MENU_CONFIGURATION_FILE = os.path.join(dir_path, "vts_hdmicec_testM
 HDMICEC_TESTCASES_CONFIGURATION_FILE = os.path.join(os.path.join(dir_path, "../configs"), "vts_hdmicec_testcase_configuration.yaml")
 HDMICEC_L3_TEST_CONFIG_FILE = os.path.join(os.path.join(dir_path, "../../test_configuration"), "vts_l3_HdmiCec.yaml")
 
-#TODO: remove once the vendor layer start handled by vDevice service
-HDMICEC_BINDER_SERVICE_NAME = "Vendor-HdmiCec"
-
 class hdmiCecHelperClass(utHelperClass):
 
     def __init__(self, testName:str, configureNetwork:bool, qcId:str, log:logModule=None, testMenuConfigFile:str=None, moduleName:str=None, artifactDirPath:str=None):
@@ -118,12 +115,7 @@ class hdmiCecHelperClass(utHelperClass):
                 self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
 
         if moduleName is None:
-            # Service start only needed while running individual tests, in unified case start_services.sh will take care of starting it
-            #TODO: remove once the vendor layer start handled by vDevice service
-            time.sleep(2)
-            self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
-            self.hal_session_1.write(f"./{HDMICEC_BINDER_SERVICE_NAME} &")
-            time.sleep(2)
+            self.log.info("Vendor service is already running, skipping vendor service start")
         else:
             self.targetWorkspace = os.path.join(self.targetWorkspace, "bin")
         if configureNetwork:
