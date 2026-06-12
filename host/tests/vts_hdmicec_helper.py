@@ -98,26 +98,34 @@ class hdmiCecHelperClass(utHelperClass):
 
         # Copy required artifacts to target device
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
-        for artifact in self.testMenuConfiguration.test.artifacts:
-            if artifactDirPath is None:
-                filesPath = os.path.join(dir_path, artifact)
-            else:
-                filesPath = os.path.join(artifactDirPath, artifact)
-            self.hal_session.write("ls " + self.targetWorkspace + "/" + os.path.basename(artifact) + "\n")
-            res = self.hal_session.read_until(self.hal_session.prompt, timeout=5)
-            if "No such file or directory" not in res:
-                continue  # File already exists on target, skip copying and continue with next artifact
-            self.utilities.sftpCopy(self.hal_session, filesPath, self.targetWorkspace)
 
-            if tarfile.is_tarfile(filesPath):
-                target_tarfile = os.path.join(self.targetWorkspace, os.path.basename(artifact))
-                target_tarfile = target_tarfile.replace('\\', '/')
-                self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
+        # Check if deployment already exists by looking for run.sh.
+        # Unified layout has run.sh under bin/, standalone has it directly in targetWorkspace.
+        if moduleName is None:
+            run_sh_path = self.targetWorkspace + "/run.sh"
+        else:
+            run_sh_path = self.targetWorkspace + "/bin/run.sh"
+        self.hal_session.write("ls " + run_sh_path + "\n")
+        res = self.hal_session.read_until(self.hal_session.prompt, timeout=5)
+
+        if "No such file or directory" in res:
+            for artifact in self.testMenuConfiguration.test.artifacts:
+                if artifactDirPath is None:
+                    filesPath = os.path.join(dir_path, artifact)
+                else:
+                    filesPath = os.path.join(artifactDirPath, artifact)
+                self.utilities.sftpCopy(self.hal_session, filesPath, self.targetWorkspace)
+
+                if tarfile.is_tarfile(filesPath):
+                    target_tarfile = os.path.join(self.targetWorkspace, os.path.basename(artifact))
+                    target_tarfile = target_tarfile.replace('\\', '/')
+                    self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
 
         if moduleName is None:
             self.log.info("Vendor service is already running, skipping vendor service start")
         else:
             self.targetWorkspace = os.path.join(self.targetWorkspace, "bin")
+            self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         if configureNetwork:
             self.hdmiCECController.start()
 
