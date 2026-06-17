@@ -60,6 +60,7 @@ class hdmiCecHelperClass(utHelperClass):
         # Parse device configuration
         self.deviceTestSetup = self.cpe.get("test")
         self.targetWorkspace = os.path.join(self.cpe.get("target_directory"), self.moduleName)
+        self.targetWorkspace = self.targetWorkspace.replace("\\", "/")
         self.moduleHFPFile = os.path.join(dir_path, self.deviceTestSetup.get("profile"))
         if moduleName is None:
             # Individual test case
@@ -105,6 +106,7 @@ class hdmiCecHelperClass(utHelperClass):
             run_sh_path = self.targetWorkspace + "/run.sh"
         else:
             run_sh_path = self.targetWorkspace + "/bin/run.sh"
+            run_sh_path = run_sh_path.replace('\\', '/')
         self.hal_session.write("ls " + run_sh_path + "\n")
         res = self.hal_session.read_until(self.hal_session.prompt, timeout=5)
 
@@ -114,6 +116,7 @@ class hdmiCecHelperClass(utHelperClass):
                     filesPath = os.path.join(dir_path, artifact)
                 else:
                     filesPath = os.path.join(artifactDirPath, artifact)
+                filesPath = filesPath.replace('\\', '/')
                 self.utilities.sftpCopy(self.hal_session, filesPath, self.targetWorkspace)
 
                 if tarfile.is_tarfile(filesPath):
