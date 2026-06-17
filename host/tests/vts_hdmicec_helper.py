@@ -125,6 +125,7 @@ class hdmiCecHelperClass(utHelperClass):
             self.log.info("Vendor service is already running, skipping vendor service start")
         else:
             self.targetWorkspace = os.path.join(self.targetWorkspace, "bin")
+            self.targetWorkspace = self.targetWorkspace.replace('\\', '/')
             self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         if configureNetwork:
             self.hdmiCECController.start()
