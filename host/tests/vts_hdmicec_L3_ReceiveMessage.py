@@ -42,14 +42,14 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
     """
     Runs L3 ReceiveMessage test
     """
-    def __init__(self, log:logModule=None):
+    def __init__(self, log:logModule=None, testMenuConfigFile: str=None, moduleName: str=None, artifactDirPath: str=None):
         """
         Initializes the test class
         """
         self.testName = "HdmiCec_L3_ReceiveMessage"
         qcId = "2"
         configureNetwork = True
-        super().__init__(self.testName, configureNetwork, qcId, log)
+        super().__init__(self.testName, configureNetwork, qcId, log, testMenuConfigFile, moduleName, artifactDirPath)
 
     def updateTestconfigurationFile(self, dutLogicalAddress:list=[], testDestinationAddress:int=None, broadcastRepeatCount:int=5):
         """
@@ -144,7 +144,6 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
             return False
 
         target_config_path = self.targetWorkspace + "/test_configuration/"
-
         # Scenario 1: Messages sent to DUT and broadcast from controller
         for addr in self.dutLogicalAddress:
             self.updateTestconfigurationFile(self.dutLogicalAddress, addr, 5)

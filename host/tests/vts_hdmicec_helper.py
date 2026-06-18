@@ -40,16 +40,16 @@ HDMICEC_TEST_MENU_CONFIGURATION_FILE = os.path.join(dir_path, "vts_hdmicec_testM
 HDMICEC_TESTCASES_CONFIGURATION_FILE = os.path.join(os.path.join(dir_path, "../configs"), "vts_hdmicec_testcase_configuration.yaml")
 HDMICEC_L3_TEST_CONFIG_FILE = os.path.join(os.path.join(dir_path, "../../test_configuration"), "vts_l3_HdmiCec.yaml")
 
-#TODO: remove once the vendor layer start handled by vDevice service
-HDMICEC_BINDER_SERVICE_NAME = "Vendor-HdmiCec"
-
 class hdmiCecHelperClass(utHelperClass):
 
-    def __init__(self, testName:str, configureNetwork:bool, qcId:str, log:logModule=None ):
+    def __init__(self, testName:str, configureNetwork:bool, qcId:str, log:logModule=None, testMenuConfigFile:str=None, moduleName:str=None, artifactDirPath:str=None):
         """
         Initializes the test class
         """
-        self.moduleName = "HdmiCec"
+        if moduleName is None:
+            self.moduleName = "HdmiCec"
+        else:
+            self.moduleName = moduleName
         super().__init__(testName, qcId, log)
 
         self.log = log
@@ -60,8 +60,14 @@ class hdmiCecHelperClass(utHelperClass):
         # Parse device configuration
         self.deviceTestSetup = self.cpe.get("test")
         self.targetWorkspace = os.path.join(self.cpe.get("target_directory"), self.moduleName)
+        self.targetWorkspace = self.targetWorkspace.replace("\\", "/")
         self.moduleHFPFile = os.path.join(dir_path, self.deviceTestSetup.get("profile"))
-        profileOnTarget = os.path.join(self.targetWorkspace, "profiles")
+        if moduleName is None:
+            # Individual test case
+            profileOnTarget = os.path.join(self.targetWorkspace, "profiles")
+        else:
+            # Unified test case
+            profileOnTarget = os.path.join(self.targetWorkspace, "bin", "profiles")
         profileOnTarget = os.path.join(profileOnTarget, os.path.basename(self.moduleHFPFile))
         profileOnTarget = profileOnTarget.replace("\\", "/")
         self.waitTime = self.cpe.get("wait_time")
@@ -70,12 +76,21 @@ class hdmiCecHelperClass(utHelperClass):
 
         # Load test menu and test case configuration files
         self.l3TestConfigFile = HDMICEC_L3_TEST_CONFIG_FILE
-        self.testMenuConfiguration = ConfigRead(HDMICEC_TEST_MENU_CONFIGURATION_FILE, self.moduleName)
-        self.testCaseConfiguration = ConfigRead(HDMICEC_TESTCASES_CONFIGURATION_FILE, self.moduleName)
+        if testMenuConfigFile is not None:
+            # Unified test menu configuration file for all HDMI CEC tests
+            hdmiCECTestMenuConfigFile = testMenuConfigFile
+        else:
+            # Individual test menu configuration file for HDMI CEC tests
+            hdmiCECTestMenuConfigFile = HDMICEC_TEST_MENU_CONFIGURATION_FILE
+
+        self.testMenuConfiguration = ConfigRead(hdmiCECTestMenuConfigFile, self.moduleName)
+        if moduleName is None:
+            # Only needed while running individual tests
+            self.testCaseConfiguration = ConfigRead(HDMICEC_TESTCASES_CONFIGURATION_FILE, self.moduleName)
         self.testMenuConfiguration.test.execute = self.testMenuConfiguration.test.execute + f" -p {profileOnTarget}"
 
         # Establish HAL session
-        self.hal_session = self.dut.getConsoleSession("ssh_hal_test")
+        self.hal_session = self.dut.getConsoleSession("ssh_hal_test_0")
         self.hal_session_1 = self.dut.getConsoleSession("ssh_hal_test_1")
 
         # Initialize UT menu navigator and utilities
@@ -84,20 +99,37 @@ class hdmiCecHelperClass(utHelperClass):
 
         # Copy required artifacts to target device
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
-        for artifact in self.testMenuConfiguration.test.artifacts:
-            filesPath = os.path.join(dir_path, artifact)
-            self.utilities.sftpCopy(self.hal_session, filesPath, self.targetWorkspace)
 
-            if tarfile.is_tarfile(filesPath):
-                target_tarfile = os.path.join(self.targetWorkspace, os.path.basename(artifact))
-                target_tarfile = target_tarfile.replace('\\', '/')
-                self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
+        # Check if deployment already exists by looking for run.sh.
+        # Unified layout has run.sh under bin/, standalone has it directly in targetWorkspace.
+        if moduleName is None:
+            run_sh_path = self.targetWorkspace + "/run.sh"
+        else:
+            run_sh_path = self.targetWorkspace + "/bin/run.sh"
+            run_sh_path = run_sh_path.replace('\\', '/')
+        self.hal_session.write("ls " + run_sh_path + "\n")
+        res = self.hal_session.read_until(self.hal_session.prompt, timeout=5)
 
-        #TODO: remove once the vendor layer start handled by vDevice service
-        self.utilities.change_directory(self.hal_session_1, self.targetWorkspace)
-        self.hal_session_1.write(f"./{HDMICEC_BINDER_SERVICE_NAME} &")
-        time.sleep(2)
+        if "No such file or directory" in res:
+            for artifact in self.testMenuConfiguration.test.artifacts:
+                if artifactDirPath is None:
+                    filesPath = os.path.join(dir_path, artifact)
+                else:
+                    filesPath = os.path.join(artifactDirPath, artifact)
+                filesPath = filesPath.replace('\\', '/')
+                self.utilities.sftpCopy(self.hal_session, filesPath, self.targetWorkspace)
 
+                if tarfile.is_tarfile(filesPath):
+                    target_tarfile = os.path.join(self.targetWorkspace, os.path.basename(artifact))
+                    target_tarfile = target_tarfile.replace('\\', '/')
+                    self.utilities.untar(self.hal_session, target_tarfile, self.targetWorkspace)
+
+        if moduleName is None:
+            self.log.info("Vendor service is already running, skipping vendor service start")
+        else:
+            self.targetWorkspace = os.path.join(self.targetWorkspace, "bin")
+            self.targetWorkspace = self.targetWorkspace.replace('\\', '/')
+            self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         if configureNetwork:
             self.hdmiCECController.start()
 

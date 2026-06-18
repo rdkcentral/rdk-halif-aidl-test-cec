@@ -40,14 +40,14 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
     """
     Runs L3 SendMessage test
     """
-    def __init__(self, log:logModule=None):
+    def __init__(self, log:logModule=None, testMenuConfigFile: str=None, moduleName: str=None, artifactDirPath: str=None):
         """
         Initializes the test class
         """
         self.testName = "HdmiCec_L3_SendMessage"
         qcId = "1"
         configureNetwork = True
-        super().__init__(self.testName, configureNetwork, qcId, log)
+        super().__init__(self.testName, configureNetwork, qcId, log, testMenuConfigFile, moduleName, artifactDirPath)
 
     def updateTestconfigurationFile(self, dutLogicalAddress:int, destinationLogicalAddress:int):
         """
@@ -74,7 +74,6 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         self.hdmiCecWriteYaml(self.l3TestConfigFile, data)
 
         target_config_path = self.targetWorkspace + "/test_configuration/"
-
         self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, target_config_path)
 
     def testFunction(self):
