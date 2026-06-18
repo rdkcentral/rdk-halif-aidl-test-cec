@@ -10,9 +10,14 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
+            "python": "${workspaceFolder}/host/python_venv/bin/python",
             "console": "integratedTerminal",
-            "args":[ "--config", "vts_rack_configuration.yml",
-            "--deviceConfig", "vts_device_configuration.yml"
+            "cwd": "${workspaceFolder}",
+            "args": [
+                "--config",
+                "${workspaceFolder}/host/configs/vts_rack_configuration.yml",
+                "--deviceConfig",
+                "${workspaceFolder}/host/configs/vts_device_configuration.yml"
             ]
         },
         {
