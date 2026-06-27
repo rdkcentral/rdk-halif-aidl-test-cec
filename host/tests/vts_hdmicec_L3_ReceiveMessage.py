@@ -143,6 +143,8 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
             self.log.stepResult(False, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Description: Failed to assign DUT address')
             return False
 
+        self.controllerLogicalAddress = int(self.controllerLogicalAddress)
+
         target_config_path = self.targetWorkspace + "/test_configuration/"
         # Scenario 1: Messages sent to DUT and broadcast from controller
         for addr in self.dutLogicalAddress:
