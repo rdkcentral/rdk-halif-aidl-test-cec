@@ -87,7 +87,7 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         """
         Thread function to send messages to DUT
         """
-        time.sleep(1)  # Wait for DUT to be ready to receive messages
+        time.sleep(20)  # Wait for DUT to be ready to receive messages
         for message in self.sendMessageList:
             for _ in range(message["repeat"]):
                 self.hdmiCECController.sendMessage(message["sourceAddress"], message["destAddress"], message["opcode"], message["payload"])

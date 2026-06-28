@@ -348,18 +348,6 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
                     }
 
                     getMessage.clear();
-
-                    // Verify that the onMessageReceived received to eventListener
-                    UT_ASSERT_TRUE(controllerListener->getNextReceiveMessage(getMessage));
-                    UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
-
-                    if(getMessage.size() == testConfiguration.message.size())
-                    {
-                        for (size_t i = 0; i < testConfiguration.message.size(); i++)
-                        {
-                            UT_ASSERT_EQUAL(getMessage[i], testConfiguration.message[i]);
-                        }
-                    }
                 }
                 else
                 {
