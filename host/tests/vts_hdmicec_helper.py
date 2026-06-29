@@ -131,8 +131,6 @@ class hdmiCecHelperClass(utHelperClass):
             self.targetWorkspace = self.targetWorkspace.replace('\\', '/')
             self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         if configureNetwork:
-            self.hdmiCECController.start()
-
             for i in range(5):
                 self.connectedDevices = self.hdmiCECController.listDevices()
                 if self.connectedDevices:
