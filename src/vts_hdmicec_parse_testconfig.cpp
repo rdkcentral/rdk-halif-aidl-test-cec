@@ -181,7 +181,8 @@ UT_status_t vts_hdmicec_parse_sendMessage_config(char *configurationFile, const 
 }
 
 UT_status_t vts_hdmicec_parse_receiveMessage_config(char *configurationFile, const char *module, const char *testGroup,
-                                                    const char *testName, vector<hdmicecReceiveMsgConfiguration_t> &testConfigurationList)
+                                                    const char *testName, vector<hdmicecReceiveMsgConfiguration_t> &testConfigurationList,
+                                                    std::vector<int32_t>& sourceLogicalAddresses)
 {
     void *testconfig = vcomponentkvp_create_instance(configurationFile);
     ut_kvp_instance_t* kvpTestInstance = (ut_kvp_instance_t*)testconfig;
@@ -189,21 +190,23 @@ UT_status_t vts_hdmicec_parse_receiveMessage_config(char *configurationFile, con
 
     const std::string testList = string(module) + "." + string(testGroup) + "." + string(testName);
 
-    int32_t responseCount = ut_kvp_getListCount(kvpTestInstance, testList.c_str());
+    std::string logicalAddressKey = testList + ".source_logical_address";
+    int32_t logicalAddressLen = ut_kvp_getListCount(kvpTestInstance, logicalAddressKey.c_str());
+    for (uint32_t index = 0; index < logicalAddressLen; index++)
+    {
+        sourceLogicalAddresses.push_back(ut_kvp_getUInt32Field(kvpTestInstance, (logicalAddressKey + "." + std::to_string(index)).c_str()));
+    }
+
+    const std::string cecMessage = testList + ".cec_messages";
+    int32_t responseCount = ut_kvp_getListCount(kvpTestInstance, cecMessage.c_str());
 
     for(int32_t index = 0; index < responseCount; index++)
     {
         memset(&testConfiguration, 0, sizeof(hdmicecReceiveMsgConfiguration_t));
-        std::string logicalAddressKey = testList + "." + std::to_string(index) + ".Parameters.logical_address";
-        std::string waitKey = testList + "." + std::to_string(index) + ".Parameters.wait_for_response_timeout";
-        std::string messageKey = testList + "." + std::to_string(index) + ".Parameters.message";
-        std::string repeatKey = testList + "." + std::to_string(index) + ".Parameters.repeat";
 
-        int32_t logicalAddressLen = ut_kvp_getListCount(kvpTestInstance, logicalAddressKey.c_str());
-        for (uint32_t index = 0; index < logicalAddressLen; index++)
-        {
-            testConfiguration.dutLogicalAddress.push_back(ut_kvp_getUInt32Field(kvpTestInstance, (logicalAddressKey + "." + std::to_string(index)).c_str()));
-        }
+        std::string waitKey = cecMessage + "." + std::to_string(index) + ".Parameters.wait_for_response_timeout";
+        std::string messageKey = cecMessage + "." + std::to_string(index) + ".Parameters.message";
+        std::string repeatKey = cecMessage + "." + std::to_string(index) + ".Parameters.repeat";
 
         testConfiguration.waitResponseTimeoutMsec = ut_kvp_getUInt32Field(kvpTestInstance, waitKey.c_str());
 

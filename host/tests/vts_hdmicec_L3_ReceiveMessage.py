@@ -56,11 +56,15 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         Updates the HDMI CEC L3 ReceiveMessage YAML configuration file.
         """
         data = self.hdmiCecReadYaml(self.l3TestConfigFile)
-        receive_msg = data["HdmiCec"]["L3"]
+        receive_msg = data["HdmiCec"]["L3"]["ReceiveMessage"]
+
+        receive_msg["source_logical_address"] = dutLogicalAddress
+
+        cecMessages = receive_msg.get("cec_messages", [])
 
         self.sendMessageList = []
-        for parameters in receive_msg.get("ReceiveMessage", []):
-            parameters["Parameters"]["logical_address"] = dutLogicalAddress
+
+        for parameters in cecMessages:
 
             current_dest = parameters["Parameters"]["message"][0]
 
@@ -87,11 +91,11 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         """
         Thread function to send messages to DUT
         """
-        time.sleep(20)  # Wait for DUT to be ready to receive messages
+        time.sleep(5)  # Wait for DUT to be ready to receive messages
         for message in self.sendMessageList:
             for _ in range(message["repeat"]):
                 self.hdmiCECController.sendMessage(message["sourceAddress"], message["destAddress"], message["opcode"], message["payload"])
-                time.sleep(1)  # Small delay between messages
+                time.sleep(0.2)  # Small delay between messages
 
     def receiveMessage(self, description:str="") -> bool:
 
@@ -181,7 +185,7 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         return results
 
 if __name__ == '__main__':
-    summaryLogName = os.path.splitext(os.path.basename(__file__))[0] + "_summery"
+    summaryLogName = os.path.splitext(os.path.basename(__file__))[0] + "_summary"
     summaryLog  = logModule(summaryLogName, level=logModule.INFO)
     test = VTS_HDMICEC_L3_ReceiveMessage(summaryLog )
     test.run(False)
