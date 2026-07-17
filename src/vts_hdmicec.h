@@ -105,17 +105,6 @@ using namespace com::rdk::hal::hdmicec;
 #define MAX_FINAL_STATE_WAIT_MS  500
 #define MAX_MESSAGE_SENT_WAIT_MS  50
 
-#ifndef ENABLE_UT_INFO_LOGGING
-#ifdef UT_LOG_DEBUG
-#undef UT_LOG_DEBUG
-#define UT_LOG_DEBUG(...)
-#endif
-#ifdef UT_LOG_INFO
-#undef UT_LOG_INFO
-#define UT_LOG_INFO(...)
-#endif
-#endif
-
 #define HDMICEC_GET_STATE(hdmicecHandle, state) \
     do { \
         ::android::binder::Status status; \

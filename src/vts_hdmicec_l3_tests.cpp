@@ -175,8 +175,6 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
     std::vector<hdmicecSendMsgConfiguration_t> testConfigurationList;
     std::vector<int32_t> sourceLogicalAddresses;
     int32_t delayBetweenMsgsMsec = 0;
-    uint8_t src;
-    uint8_t dst;
 
     sp<HdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
@@ -269,18 +267,25 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
 {
     const char *testName = "ReceiveMessage";
     vector<hdmicecReceiveMsgConfiguration_t> testConfigurationList;
+    std::vector<int32_t> sourceLogicalAddresses;
 
     sp<HdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<uint8_t> getMessage;
 
-    vts_hdmicec_parse_receiveMessage_config(VTS_HDMICEC_TEST_CONFIG_PATH, gModuleName, gTestGroup, testName, testConfigurationList);
+    vts_hdmicec_parse_receiveMessage_config(VTS_HDMICEC_TEST_CONFIG_PATH, gModuleName, gTestGroup, testName, testConfigurationList, sourceLogicalAddresses);
 
     // Register Event Listener
     HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, controllerListener);
 
     // Open HDMI CEC interface
     HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
+
+    // Add logical address
+    if (sourceLogicalAddresses.size() > 0)
+    {
+        HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, sourceLogicalAddresses);
+    }
 
     for(auto &testConfiguration : testConfigurationList)
     {
@@ -300,7 +305,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
         else
         {
             // Check if DUT logical address is in the destination address
-            for(auto &addr : testConfiguration.dutLogicalAddress)
+            for(auto &addr : sourceLogicalAddresses)
             {
                 if(addr == messageDestAddress)
                 {
@@ -310,77 +315,57 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
             }
         }
 
-        if(testConfiguration.dutLogicalAddress.size() > 0)
+        if(sourceLogicalAddresses.size() > 0 && isDutAddressed)
         {
-            // Add logical address
-            HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, testConfiguration.dutLogicalAddress);
-
             for(uint32_t repeatIndex = 0; repeatIndex < testConfiguration.repeat; repeatIndex++)
             {
                 getMessage.clear();
 
-                // check callback for received message only if DUT logical address is assigned to destination address
-                if(isDutAddressed)
+
+                uint32_t counter = 0;
+
+                //TODO: replace with conditional variable or semaphore
+                while(!controllerListener->getReceiveMessageStatus())
                 {
-                    uint32_t counter = 0;
-
-                    //TODO: replace with conditional variable or semaphore
-                    while(!controllerListener->getReceiveMessageStatus())
+                    this_thread::sleep_for(chrono::milliseconds(100));
+                    counter += 100;
+                    if(counter >= testConfiguration.waitResponseTimeoutMsec)
                     {
-                        this_thread::sleep_for(chrono::milliseconds(1000));
-                        counter += 1000;
-                        if(counter >= testConfiguration.waitResponseTimeoutMsec)
-                        {
-                            break;
-                        }
-                    }
-
-                    // Verify that the onMessageReceived received to eventListener
-                    UT_ASSERT_TRUE(controllerListener->getNextReceiveMessage(getMessage));
-                    UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
-
-                    if(getMessage.size() == testConfiguration.message.size())
-                    {
-                        for (size_t i = 0; i < testConfiguration.message.size(); i++)
-                        {
-                            UT_ASSERT_EQUAL(getMessage[i], testConfiguration.message[i]);
-                        }
-                    }
-
-                    getMessage.clear();
-
-                    // Verify that the onMessageReceived received to eventListener
-                    UT_ASSERT_TRUE(controllerListener->getNextReceiveMessage(getMessage));
-                    UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
-
-                    if(getMessage.size() == testConfiguration.message.size())
-                    {
-                        for (size_t i = 0; i < testConfiguration.message.size(); i++)
-                        {
-                            UT_ASSERT_EQUAL(getMessage[i], testConfiguration.message[i]);
-                        }
+                        break;
                     }
                 }
-                else
+
+                // Verify that the onMessageReceived received to eventListener
+                UT_ASSERT_TRUE(controllerListener->getNextReceiveMessage(getMessage));
+                UT_ASSERT_EQUAL(getMessage.size(), testConfiguration.message.size());
+
+                if(getMessage.size() == testConfiguration.message.size())
                 {
-                    //if logical address is not addressed to DUT, ensure no message is received
-                    this_thread::sleep_for(chrono::milliseconds(testConfiguration.waitResponseTimeoutMsec));
-                    UT_ASSERT_FALSE(controllerListener->getNextReceiveMessage(getMessage));
+                    for (size_t i = 0; i < testConfiguration.message.size(); i++)
+                    {
+                        UT_ASSERT_EQUAL(getMessage[i], testConfiguration.message[i]);
+                    }
                 }
+
+                getMessage.clear();
             }
-
-            // Remove logical address
-            HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, testConfiguration.dutLogicalAddress);
         }
         else
         {
             for(uint32_t repeatIndex = 0; repeatIndex < testConfiguration.repeat; repeatIndex++)
             {
                 //if logical address is not assigned to DUT, ensure no message is received
-                this_thread::sleep_for(chrono::milliseconds(testConfiguration.waitResponseTimeoutMsec));
+                // TODO: make it configurable:
+                this_thread::sleep_for(chrono::milliseconds(2000));
                 UT_ASSERT_FALSE(controllerListener->getNextReceiveMessage(getMessage));
             }
         }
+    }
+
+    // Remove logical address
+    if (sourceLogicalAddresses.size() > 0)
+    {
+        HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, sourceLogicalAddresses);
     }
 
     // Close HDMI CEC interface

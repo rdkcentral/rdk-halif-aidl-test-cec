@@ -3,7 +3,7 @@
 # * If not stated otherwise in this file or this component's LICENSE file the
 # * following copyright and licenses apply:
 # *
-# * Copyright 2025 RDK Management
+# * Copyright 2026 RDK Management
 # *
 # * Licensed under the Apache License, Version 2.0 (the "License");
 # * you may not use this file except in compliance with the License.
@@ -19,58 +19,56 @@
 # * limitations under the License.
 # *
 # * ******************************************************************************
-
 HdmiCec:
   L3:
     SendMessage:
-      source_logical_address: [0] # DUT logical address
+      source_logical_address: [4] # DUT logical address
       delay_between_messages: 100 # Delay between each sendmessage in milliseconds
       cec_messages:
       - Parameters:
           # Sends set OSD Name message from DUT to destination
-          message: ['0x05', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
+          message: ['0x41', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
             '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
           repeat: 5 # Number of times to send the message
         Expected_Results: # Expected Metrics after sending the message
           metrics: {directedMessagesSent: 1, directedMessagesSentAndAcked: 1, broadcastMessagesSent: 0,
             broadcastMessagesSentAndAcked: 0, arbitrationFailures: 0}
       - Parameters:
-          message: ['0x05', '0x9F', '0x05'] # Get CEC Version message
+          message: ['0x41', '0x9F', '0x05'] # Get CEC Version message
           repeat: 5
         Expected_Results:
           metrics: {directedMessagesSent: 1, directedMessagesSentAndAcked: 1, broadcastMessagesSent: 0,
             broadcastMessagesSentAndAcked: 0, arbitrationFailures: 0}
       - Parameters:
-          message: ['0x0F', '0x32', '0x65', '0x6E', '0x67'] # set menu language to English
+          message: ['0x4F', '0x32', '0x65', '0x6E', '0x67'] # set menu language to English
           repeat: 5
         Expected_Results:
           metrics: {directedMessagesSent: 0, directedMessagesSentAndAcked: 0, broadcastMessagesSent: 1,
             broadcastMessagesSentAndAcked: 1, arbitrationFailures: 0}
       - Parameters:
-          message: ['0x0F', '0x87', '0x00', '0x19', '0xA2'] # Device Vendor ID message
+          message: ['0x4F', '0x87', '0x00', '0x19', '0xA2'] # Device Vendor ID message
           repeat: 5
         Expected_Results:
           metrics: {directedMessagesSent: 0, directedMessagesSentAndAcked: 0, broadcastMessagesSent: 1,
             broadcastMessagesSentAndAcked: 1, arbitrationFailures: 0}
     ReceiveMessage:
-    - Parameters:
-        message: ['0x41', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
-          '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
-        repeat: 5
-        logical_address: &id001 [0, 3, 10]
-        wait_for_response_timeout: 5000
-    - Parameters:
-        message: ['0x41', '0x9F', '0x05']
-        repeat: 5
-        logical_address: *id001
-        wait_for_response_timeout: 5000
-    - Parameters:
-        message: ['0x4F', '0x32', '0x65', '0x6E', '0x67']
-        repeat: 0
-        logical_address: *id001
-        wait_for_response_timeout: 5000
-    - Parameters:
-        message: ['0x4F', '0x87', '0x00', '0x19', '0xA2']
-        repeat: 0
-        logical_address: *id001
-        wait_for_response_timeout: 5000
+      source_logical_address: [4, 8, 11] # DUT logical address
+      cec_messages:
+      - Parameters:
+          # Sends set OSD Name message from controller to DUT
+          message: ['0x10', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
+            '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
+          repeat: 5 # Number of times to send the message
+          wait_for_response_timeout: 5000 # Wait time to receive the response
+      - Parameters:
+          message: ['0x10', '0x9F', '0x05']
+          repeat: 5
+          wait_for_response_timeout: 5000
+      - Parameters:
+          message: ['0x1F', '0x32', '0x65', '0x6E', '0x67']
+          repeat: 0
+          wait_for_response_timeout: 5000
+      - Parameters:
+          message: ['0x1F', '0x87', '0x00', '0x19', '0xA2']
+          repeat: 0
+          wait_for_response_timeout: 5000
