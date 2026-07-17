@@ -55,7 +55,7 @@ HdmiCec:
       source_logical_address: [4, 8, 11] # DUT logical address
       cec_messages:
       - Parameters:
-          # Sends set OSD Name message from DUT to destination
+          # Sends set OSD Name message from controller to DUT
           message: ['0x10', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
             '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
           repeat: 5 # Number of times to send the message
