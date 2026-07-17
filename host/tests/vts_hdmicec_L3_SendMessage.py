@@ -71,7 +71,7 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
                 "destAddress": final_dest,
                 "opcode": cecmessage["Parameters"]["message"][1],
                 "payload": cecmessage["Parameters"]["message"][2:],
-                "repeat": cecmessage["Parameters"].get("repeat", 1)
+                "repeat": int(cecmessage["Parameters"].get("repeat", 1))
             })
 
         self.hdmiCecWriteYaml(self.l3TestConfigFile, data)

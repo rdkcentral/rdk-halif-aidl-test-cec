@@ -136,7 +136,7 @@ class hdmiCecHelperClass(utHelperClass):
                 if self.connectedDevices:
                     break
                 else:
-                    self.log.info(f"Attempt {i+1}: No connected devices found. Retrying in 5 seconds...")
+                    self.log.info(f"Attempt {i+1}: No connected devices found. Retrying in 1 seconds...")
                     time.sleep(1)
 
     def pickLogicalAddressForDut(self, possibleLogicalAddresses:list) -> list:

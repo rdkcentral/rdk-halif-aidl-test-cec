@@ -175,8 +175,6 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
     std::vector<hdmicecSendMsgConfiguration_t> testConfigurationList;
     std::vector<int32_t> sourceLogicalAddresses;
     int32_t delayBetweenMsgsMsec = 0;
-    uint8_t src;
-    uint8_t dst;
 
     sp<HdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
@@ -357,6 +355,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
             for(uint32_t repeatIndex = 0; repeatIndex < testConfiguration.repeat; repeatIndex++)
             {
                 //if logical address is not assigned to DUT, ensure no message is received
+                // TODO: make it configurable:
                 this_thread::sleep_for(chrono::milliseconds(2000));
                 UT_ASSERT_FALSE(controllerListener->getNextReceiveMessage(getMessage));
             }
