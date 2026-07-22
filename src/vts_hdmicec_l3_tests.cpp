@@ -225,6 +225,8 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
                 }
             }
 
+            UT_ASSERT_TRUE((getStatus ==  hdmicec::SendMessageStatus::ACK_STATE_0) || (getStatus ==  hdmicec::SendMessageStatus::ACK_STATE_1));
+
             getMessage.clear();
 
             // Verify that the onMessageSent received to eventListener
@@ -371,6 +373,8 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
                 }
 
                 getMessage.clear();
+
+                counter = 0;
 
                 /* Validate listener callbacks registered using event listener registration */
                 //TODO: replace with conditional variable or semaphore
