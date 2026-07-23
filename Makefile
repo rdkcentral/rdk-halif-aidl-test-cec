@@ -80,7 +80,7 @@ SRC_DIRS += $(ROOT_DIR)/test
 # to the exact paths captured at that moment — avoiding wildcard/find at make
 # parse time, which silently returns empty on a clean tree.
 HALIF_OUT_DIR        := $(ROOT_DIR)/rdk-halif-aidl/out
-HALIF_LIB_DIR        := $(HALIF_OUT_DIR)/target/lib/halif
+HALIF_LIB_DIR        := $(HALIF_OUT_DIR)/target/lib/rdk-halif-aidl
 
 -include $(HALIF_OUT_DIR)/halif_generated.mk
 

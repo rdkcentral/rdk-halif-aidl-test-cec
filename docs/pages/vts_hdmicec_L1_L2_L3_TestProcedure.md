@@ -233,6 +233,9 @@ Once the environment is set up, execute the test cases with the following comman
 ```bash
 python vts_hdmicec_L1_L2_tests.py --config </PATH>/host/tests/configs/vts_rack_configuration.yaml --deviceConfig </PATH>/host/tests/configs/vts_device_configuration.yaml
 ```
+##### Device Setup
+
+No device should be connected to the `DUT` for `L1` and `L2` test cases. For vDevice configurations, provide only the device network configuration that contains the `DUT` entry (see the [RAFT virtual CEC controller example config](https://github.com/rdkcentral/python_raft/blob/1.9.0/examples/configs/example_rack_config.yml#L98)).
 
 #### L3
 
@@ -240,7 +243,7 @@ python vts_hdmicec_L1_L2_tests.py --config </PATH>/host/tests/configs/vts_rack_c
 
 ###### vDevice
 
-For vDevice, no external hardware needs to be connected to the setup.
+For vDevice, no external hardware needs to be connected to the setup. Use the [RAFT virtual CEC controller example config](https://github.com/rdkcentral/python_raft/blob/1.9.0/examples/configs/example_rack_config.yml#L98) to simulate `cec` communication.
 
 ###### Real Device
 
