@@ -23,6 +23,7 @@
 
 import os
 import sys
+import time
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(dir_path, "../"))
@@ -57,6 +58,7 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         send_msg = data["HdmiCec"]["L3"]["SendMessage"]
         send_msg["source_logical_address"] = [dutLogicalAddress]
 
+        self.cecMessageList = []
         for cecmessage in send_msg.get("cec_messages", []):
             current_dest = cecmessage["Parameters"]["message"][0]
             # Extract destination address from the first byte (lower 4 bits)
@@ -64,12 +66,13 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
             # Use existing destination if it's 0xF, otherwise use destinationLogicalAddress
             final_dest = dest_addr if dest_addr == 0x0F else destinationLogicalAddress
             cecmessage["Parameters"]["message"][0] = f"0x{(dutLogicalAddress << 4 | final_dest):02X}"
-            self.cecMessageList = {
+            self.cecMessageList.append({
                 "sourceAddress": dutLogicalAddress,
                 "destAddress": final_dest,
                 "opcode": cecmessage["Parameters"]["message"][1],
-                "payload": cecmessage["Parameters"]["message"][2:]
-            }
+                "payload": cecmessage["Parameters"]["message"][2:],
+                "repeat": int(cecmessage["Parameters"].get("repeat", 1))
+            })
 
         self.hdmiCecWriteYaml(self.l3TestConfigFile, data)
 
@@ -93,7 +96,7 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
             self.log.stepResult(False, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Description: Failed to assign DUT address')
             return False
 
-        self.updateTestconfigurationFile(self.dutLogicalAddress[0], self.destinationLogicalAddress)
+        self.updateTestconfigurationFile(self.dutLogicalAddress[0], int(self.destinationLogicalAddress))
 
         self.utMenu.start()
 
@@ -106,23 +109,32 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
 
         self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase}')
 
-        # Check if the message is sent to the CEC BUS
-        self.log.stepStart(f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Check data for message receipt')
+        time.sleep(30)  # Wait for messages to be sent and received
 
-        results = self.hdmiCECController.checkMessageReceived(self.cecMessageList["sourceAddress"],
-                                                              self.cecMessageList["destAddress"],
-                                                              self.cecMessageList["opcode"],
-                                                              10,
-                                                              self.cecMessageList.get("payload", []))
+        finalResult = True
 
-        self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Check data for message receipt')
+        for cecmessage in self.cecMessageList:
+            for _ in range(cecmessage["repeat"]):
+                # Check if the message is sent to the CEC BUS
+                self.log.stepStart(f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Check data for message receipt')
+
+
+                results = self.hdmiCECController.checkMessageReceived(f"{cecmessage['sourceAddress']:x}",
+                                                                      f"{cecmessage['destAddress']:x}",
+                                                                      cecmessage["opcode"],
+                                                                      10,
+                                                                      cecmessage.get("payload", []))
+
+                self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Check data for message receipt')
+
+                finalResult = finalResult and results
 
         self.utMenu.stop()
 
-        return results
+        return finalResult
 
 if __name__ == '__main__':
-    summaryLogName = os.path.splitext(os.path.basename(__file__))[0] + "_summery"
+    summaryLogName = os.path.splitext(os.path.basename(__file__))[0] + "_summary"
     summaryLog = logModule(summaryLogName, level=logModule.INFO)
     test = VTS_HDMICEC_L3_SendMessage(summaryLog)
     test.run(False)

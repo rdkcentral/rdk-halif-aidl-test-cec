@@ -131,9 +131,13 @@ class hdmiCecHelperClass(utHelperClass):
             self.targetWorkspace = self.targetWorkspace.replace('\\', '/')
             self.utilities.change_directory(self.hal_session, self.targetWorkspace)
         if configureNetwork:
-            self.hdmiCECController.start()
-
-            self.connectedDevices = self.hdmiCECController.listDevices()
+            for i in range(5):
+                self.connectedDevices = self.hdmiCECController.listDevices()
+                if self.connectedDevices:
+                    break
+                else:
+                    self.log.info(f"Attempt {i+1}: No connected devices found. Retrying in 1 seconds...")
+                    time.sleep(1)
 
     def pickLogicalAddressForDut(self, possibleLogicalAddresses:list) -> list:
         """
