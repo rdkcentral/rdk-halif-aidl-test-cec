@@ -71,7 +71,7 @@ hdmicec_device_info gHdmiCecDeviceInfo = {0};
 
 UT_status_t vts_hdmicec_parse_hfp()
 {
-    gHdmiCecDeviceInfo.hal_cec_version = static_cast<int8_t>(UT_KVP_PROFILE_GET_UINT8("IHdmiCec.HAL_CEC_VERSION"));
+    gHdmiCecDeviceInfo.hal_cec_version = static_cast<int8_t>(UT_KVP_PROFILE_GET_UINT8("hdmicec.HAL_CEC_VERSION"));
     return UT_STATUS_OK;
 }
 
