@@ -104,7 +104,7 @@ cd /tmp/HdmiCec
 Run the following command to execute the VTS test:
 
 ```bash
-./run.sh -p profiles/hfp-hdmicec_vcomponent.yaml
+./run.sh -p profiles/hfp-hdmicec.yaml
 ```
 
 ## Run Tests in Python Environment
@@ -202,7 +202,7 @@ deviceConfig:
         prompt: "~#" # Prompt string on console
         wait_time: 240 # Configurable timeout value to limit the total duration of individual tests
         test:
-            profile: "../../profiles/hfp-hdmicec_vcomponent.yaml" #HFP profile used to meet platform requirements
+            profile: "../../profiles/hfp-hdmicec.yaml" #HFP profile used to meet platform requirements
             device_network_list: "/tmp/hdmi_cec_device_list_info.txt" #File path where the connected HDMI CEC device list is stored
 ```
 
