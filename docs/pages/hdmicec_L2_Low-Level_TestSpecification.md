@@ -181,6 +181,6 @@ If user chose to run the test in interactive mode, then the test case has to be 
 | 11 | Send broadcast CEC message | Message: {0x0F, 0x85} | Function should return success status ||
 | 12 | Wait for message callback | | onMessageSent callback should be triggered with message and status ||
 | 13 | Verify callback message | | Message should match {0x0F, 0x85} ||
-| 14 | Verify callback status | | Status should be ACK_STATE_0 ||
+| 14 | Verify callback status | | Status should be ACK_STATE_1 ||
 | 15 | Remove logical address | {0} | Function should return `True` ||
 | 16 | Close the HDMI CEC | | Function should return `True` ||
