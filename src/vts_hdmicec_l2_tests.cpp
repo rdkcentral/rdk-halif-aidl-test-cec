@@ -441,7 +441,7 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
             UT_ASSERT_EQUAL(getMessage[i], broadcastMsg[i]);
         }
     }
-    UT_ASSERT_EQUAL(getStatus, hdmicec::SendMessageStatus::ACK_STATE_0);
+    UT_ASSERT_EQUAL(getStatus, hdmicec::SendMessageStatus::ACK_STATE_1);
 
     // Remove logical address
     HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
