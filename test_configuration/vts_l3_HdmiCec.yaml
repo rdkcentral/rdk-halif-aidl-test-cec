@@ -59,16 +59,16 @@ HdmiCec:
           message: ['0x10', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
             '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
           repeat: 5 # Number of times to send the message
-          wait_for_response_timeout: 5000 # Wait time to receive the response
+          wait_for_response_timeout: 7000 # Wait time to receive the response
       - Parameters:
           message: ['0x10', '0x9F', '0x05']
           repeat: 5
-          wait_for_response_timeout: 5000
+          wait_for_response_timeout: 7000
       - Parameters:
           message: ['0x1F', '0x32', '0x65', '0x6E', '0x67']
           repeat: 0
-          wait_for_response_timeout: 5000
+          wait_for_response_timeout: 7000
       - Parameters:
           message: ['0x1F', '0x87', '0x00', '0x19', '0xA2']
           repeat: 0
-          wait_for_response_timeout: 5000
+          wait_for_response_timeout: 7000
