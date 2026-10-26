@@ -30,7 +30,7 @@ RESET='\033[0m'
 declare -r TOP=`dirname $(realpath $0)`
 UT_CORE_DEFAULT_VERSION="5.1.0"
 export UT_CORE_VERSION="${UT_CORE_VERSION:-${UT_CORE_DEFAULT_VERSION}}"
-RDK_HALIF_AIDL_VERSION="${RDK_HALIF_AIDL_VERSION:-main}"
+RDK_HALIF_AIDL_VERSION="feature/provide-proper-packaging"
 HALIF_MODULE="hdmicec"
 OUT_TAR_FILE=vts-HdmiCec.tar.gz
 
@@ -522,6 +522,9 @@ build_ut_core()
 ###############################################################################
 build_halif_test()
 {
+    # Setup PKG_CONFIG_PATH pointing to .pc files from rdk-halif-aidl modules
+    export PKG_CONFIG_PATH="${RDK_HAL_DIR}/out/target/lib/rdk-halif-aidl/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+
     # Build the tests
     make -j`nproc` -C ${TOP} TARGET=$TARGET VARIANT=CPP
     if [ $? -ne 0 ]; then

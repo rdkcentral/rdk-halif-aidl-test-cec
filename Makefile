@@ -82,9 +82,9 @@ SRC_DIRS += $(ROOT_DIR)/test
 HALIF_OUT_DIR        := $(ROOT_DIR)/rdk-halif-aidl/out
 HALIF_LIB_DIR        := $(HALIF_OUT_DIR)/target/lib/rdk-halif-aidl
 
--include $(HALIF_OUT_DIR)/halif_generated.mk
+HALIF_AIDL_HDMICEC_CXXFLAGS :=  $(shell pkg-config --cflags rdk-halif-aidl-hdmicec)
+HALIF_AIDL_HDMICEC_XLDFLAGS :=  $(shell pkg-config --libs rdk-halif-aidl-hdmicec)
 
-INC_DIRS             := $(HALIF_INC_DIRS)
 INC_DIRS             += $(ROOT_DIR)/build/usr/include
 INC_DIRS             += $(SRC_DIRS)
 
@@ -95,10 +95,12 @@ XLDFLAGS             += -L$(HALIF_LIB_DIR)
 XLDFLAGS             += -Wl,-rpath-link=$(HALIF_LIB_DIR)
 XLDFLAGS             += $(HALIF_MODULE_LIBS)
 XLDFLAGS             += -lbinder -lutils
+XLDFLAGS             += $(HALIF_AIDL_HDMICEC_XLDFLAGS)
 
 # required for std::optional
 CXXFLAGS += -std=c++17
 CXXFLAGS += -Wall -Wformat -Werror=format
+CXXFLAGS += $(HALIF_AIDL_HDMICEC_CXXFLAGS)
 
 # TODO: remove this once the ut-core implements runtime logging configuration
 ifeq ($(DISABLE_UT_INFO_LOGGING),1)
@@ -122,7 +124,7 @@ export CXXFLAGS
 all: $(TARGET_EXEC)
 
 check-halif-built:
-	@[ -n "$(HALIF_INC_DIRS)" ] || { \
+	@[ -n "$(HALIF_AIDL_HDMICEC_CXXFLAGS)" ] || { \
 		echo "ERROR: HAL interfaces not built."; \
 		echo "       Run: ./build.sh Target=$(TARGET)"; \
 		exit 1; \
