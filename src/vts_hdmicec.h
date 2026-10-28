@@ -165,14 +165,16 @@ using namespace com::rdk::hal::hdmicec;
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
         \
-        if (expectedException == Status::EX_NONE) \
+        if (expectedException == Status::EX_NONE) { \
             UT_ASSERT_TRUE(status.isOk()); \
-        else \
+            UT_ASSERT_EQUAL(status.exceptionCode(), Status::EX_NONE); \
+            UT_ASSERT_EQUAL(hdmiCecController.get(), nullptr); \
+            HDMICEC_GET_STATE(hdmicecHandle, state); \
+            UT_ASSERT_EQUAL_FATAL(state, expectedState); \
+        } else { \
             UT_ASSERT_FALSE(status.isOk()); \
-        UT_ASSERT_EQUAL(status.exceptionCode(), expectedException); \
-        UT_ASSERT_EQUAL(hdmiCecController.get(), nullptr); \
-        HDMICEC_GET_STATE(hdmicecHandle, state); \
-        UT_ASSERT_EQUAL_FATAL(state, expectedState); \
+            UT_ASSERT_EQUAL(status.exceptionCode(), expectedException); \
+        } \
     } while (0)
 
 #define HDMICEC_CLOSE_SUCCESS(hdmicecHandle, hdmiCecController, stateCheck) \
@@ -208,13 +210,15 @@ using namespace com::rdk::hal::hdmicec;
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
         UT_ASSERT_FALSE(_aidl_return); \
-        if (expectedException == Status::EX_NONE) \
+        if (expectedException == Status::EX_NONE) { \
             UT_ASSERT_TRUE(status.isOk()); \
-        else \
+            UT_ASSERT_EQUAL(status.exceptionCode(), expectedException); \
+            HDMICEC_GET_STATE(hdmicecHandle, state); \
+            UT_ASSERT_EQUAL_FATAL(state, expectedState); \
+        } else { \
             UT_ASSERT_FALSE(status.isOk()); \
-        UT_ASSERT_EQUAL(status.exceptionCode(), expectedException); \
-        HDMICEC_GET_STATE(hdmicecHandle, state); \
-        UT_ASSERT_EQUAL_FATAL(state, expectedState); \
+            UT_ASSERT_EQUAL(status.exceptionCode(), expectedException); \
+        } \
     } while (0)
 
 #define HDMICEC_GET_PROPERTY_SUCCESS(hdmicecHandle, property, propertyValue) \
@@ -268,11 +272,12 @@ using namespace com::rdk::hal::hdmicec;
                     UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
                     UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
         UT_ASSERT_FALSE(propertyValue.has_value()); \
-        if (exception == Status::EX_NONE) \
+        if (exception == Status::EX_NONE) { \
             UT_ASSERT_TRUE(status.isOk()); \
-        else \
+        } else { \
             UT_ASSERT_FALSE(status.isOk()); \
-        UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
+            UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
+        } \
     } while (0)
 
 #define HDMICEC_REGISTER_EVENT_SUCCESS(hdmicecHandle, eventListener) \
@@ -300,12 +305,12 @@ using namespace com::rdk::hal::hdmicec;
             eventListener.get(), UT_Control_GetMapString(bool_mapTable_cec, _aidl_return), \
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
-        if (exception == Status::EX_NONE) \
+        if (exception == Status::EX_NONE) { \
             UT_ASSERT_TRUE(status.isOk()); \
-        else \
+        } else { \
             UT_ASSERT_FALSE(status.isOk()); \
-        UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
-        UT_ASSERT_FALSE(_aidl_return); \
+            UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
+        } \
     } while (0)
 
 #define HDMICEC_UNREGISTER_EVENT_SUCCESS(hdmicecHandle, eventListener) \
@@ -333,12 +338,12 @@ using namespace com::rdk::hal::hdmicec;
             eventListener.get(), UT_Control_GetMapString(bool_mapTable_cec, _aidl_return), \
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
-        if (exception == Status::EX_NONE) \
+        if (exception == Status::EX_NONE) { \
             UT_ASSERT_TRUE(status.isOk()); \
-        else \
+        } else { \
             UT_ASSERT_FALSE(status.isOk()); \
-        UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
-        UT_ASSERT_FALSE(_aidl_return); \
+            UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
+        } \
     } while (0)
 
 #define HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(hdmicecHandle, logicalAddresses) \
@@ -382,11 +387,12 @@ using namespace com::rdk::hal::hdmicec;
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
         UT_ASSERT_FALSE(_aidl_return); \
-        if (exception == Status::EX_NONE) \
+        if (exception == Status::EX_NONE) { \
             UT_ASSERT_TRUE(status.isOk()); \
-        else \
+        } else { \
             UT_ASSERT_FALSE(status.isOk()); \
-        UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
+            UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
+        } \
     } while (0);
 
 #define HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmicecControlHandle, logicalAddresses) \
@@ -417,11 +423,12 @@ using namespace com::rdk::hal::hdmicec;
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
         UT_ASSERT_FALSE(_aidl_return); \
-        if (exception == Status::EX_NONE) \
+        if (exception == Status::EX_NONE) { \
             UT_ASSERT_TRUE(status.isOk()); \
-        else \
+        } else { \
             UT_ASSERT_FALSE(status.isOk()); \
-        UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
+            UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
+        } \
     } while (0)
 
 #define HDMICEC_SEND_MESSAGE_SUCCESS(hdmiCecController, message, sendStatus) \
@@ -448,11 +455,12 @@ using namespace com::rdk::hal::hdmicec;
             hdmicec::toString(sendStatus).c_str(), \
             UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
             UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
-        if (exception == Status::EX_NONE) \
+        if (exception == Status::EX_NONE) { \
             UT_ASSERT_TRUE(status.isOk()); \
-        else \
+        } else { \
             UT_ASSERT_FALSE(status.isOk()); \
-        UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
+            UT_ASSERT_EQUAL(status.exceptionCode(), exception); \
+        } \
     } while (0)
 
 /* Event Listener Class */
