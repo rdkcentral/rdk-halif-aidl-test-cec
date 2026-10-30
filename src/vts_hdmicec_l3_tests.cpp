@@ -339,7 +339,7 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
             }
         }
 
-        if(sourceLogicalAddresses.size() > 0 && isDutAddressed)
+        if(isDutAddressed)
         {
             for(uint32_t repeatIndex = 0; repeatIndex < testConfiguration.repeat; repeatIndex++)
             {
