@@ -144,6 +144,8 @@ UT_ADD_TEST(VTS_L1_HDMICEC, getState_pos)
 UT_ADD_TEST(VTS_L1_HDMICEC, getProperty_pos)
 {
     std::optional<PropertyValue> cecVersion;
+    std::optional<PropertyValue> primaryDeviceType;
+    std::optional<PropertyValue> secondaryDeviceType;
 
     std::vector<Property> testProperties = {
         hdmicec::Property::METRIC_DIRECTED_MESSAGES_SENT,
@@ -158,6 +160,18 @@ UT_ADD_TEST(VTS_L1_HDMICEC, getProperty_pos)
     UT_ASSERT_EQUAL(
         cecVersion->value->get<PropertyValue::Value::Tag::byteValue>(),
         static_cast<int8_t>(gHdmiCecDeviceInfo.hal_cec_version));
+
+    HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::PRIMARY_DEVICE_TYPE, primaryDeviceType);
+    UT_ASSERT_TRUE(primaryDeviceType.has_value());
+    UT_ASSERT_EQUAL(
+        primaryDeviceType->value->get<PropertyValue::Value::Tag::intValue>(),
+        static_cast<int32_t>(gHdmiCecDeviceInfo.primary_device_type));
+
+    HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::SECONDARY_DEVICE_TYPE, secondaryDeviceType);
+    UT_ASSERT_TRUE(secondaryDeviceType.has_value());
+    UT_ASSERT_EQUAL(
+        secondaryDeviceType->value->get<PropertyValue::Value::Tag::intValue>(),
+        static_cast<int32_t>(gHdmiCecDeviceInfo.secondary_device_type));
 
     // Validate metric properties
     for (auto property : testProperties)
