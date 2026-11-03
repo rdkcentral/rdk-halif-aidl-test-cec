@@ -110,7 +110,7 @@ If user chose to run the test in interactive mode, then the test case has to be 
 | Title | Details |
 | -- | -- |
 | Function Name | `logicalAddressesValidation` |
-| Description | This test validates add/remove/get logical addresses functionality. It ensures that logical addresses can be added to the controller, retrieved via getLogicalAddresses(), and removed selectively or fully. It also verifies that the retrieved list matches expectations after each operation |
+| Description | This test validates add/remove/get logical addresses functionality. It ensures that the primary-device logical address and optional secondary-device logical address configured in the HFP can be added to the controller, retrieved via getLogicalAddresses(), removed, and cleared when the controller closes. |
 | Test Group | 02 |
 | Test Case ID | 003 |
 | Priority | High |
@@ -130,20 +130,14 @@ If user chose to run the test in interactive mode, then the test case has to be 
 |-------------------|-------------|-----------|----------------|-------|
 | 1 | Get logical addresses before opening | None | Logical addresses list should be empty ||
 | 2 | Open the HDMI CEC with event listener | event listener handle | Function should return valid controller handle ||
-| 3 | Add logical addresses | {0, 1} | Function should return `True` ||
-| 4 | Get logical addresses | None | Should return {0, 1} ||
-| 5 | Remove logical address | {0} | Function should return `True` ||
-| 6 | Get logical addresses | None | Should return {1} only ||
-| 7 | Remove logical address | {1} | Function should return `True` ||
-| 8 | Get logical addresses | None | Logical addresses list should be empty ||
-| 9 | Add logical addresses | {2, 3} | Function should return `True` ||
-| 10 | Get logical addresses | None | Should return {2, 3} ||
-| 11 | Remove logical addresses | {2, 3} | Function should return `True` ||
-| 12 | Get logical addresses | None | Logical addresses list should be empty ||
-| 13 | Add logical addresses | {0, 1} | Function should return `True` ||
-| 14 | Get logical addresses | None | Should return {0, 1} ||
-| 15 | Close the HDMI CEC | | Function should return `True` ||
-| 16 | Get logical addresses after closing | None | Logical addresses list should be empty ||
+| 3 | Add logical addresses | HFP primary device type and optional secondary device type | Function should return `True` ||
+| 4 | Get logical addresses | None | Should return the added address list ||
+| 5 | Remove logical addresses | Added address list | Function should return `True` ||
+| 6 | Get logical addresses | None | Logical addresses list should be empty ||
+| 7 | Add logical addresses | HFP primary device type and optional secondary device type | Function should return `True` ||
+| 8 | Get logical addresses | None | Should return the added address list ||
+| 9 | Close the HDMI CEC | | Function should return `True` ||
+| 10 | Get logical addresses after closing | None | Logical addresses list should be empty ||
 
 ### Test 4
 

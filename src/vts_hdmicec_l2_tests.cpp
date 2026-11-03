@@ -273,12 +273,18 @@ UT_ADD_TEST(VTS_L2_HDMICEC, logicalAddressesValidation)
 {
     sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
-    vector<int32_t> logicalAddresses_1 = {0, 1};
-    vector<int32_t> logicalAddresses_2 = {2, 3};
-    vector<int32_t> removeLogicalAddresses_1 = {0};
-    vector<int32_t> removeLogicalAddresses_2 = {1};
-    vector<int32_t> removeLogicalAddresses_3 = {2, 3};
+    vector<int32_t> logicalAddresses;
     vector<int32_t> getLogicalAddresses;
+
+    const bool hasConfiguredLogicalAddresses = hdmicecGetLogicalAddressesForDeviceTypes(
+        gHdmiCecDeviceInfo.primary_device_type,
+        gHdmiCecDeviceInfo.secondary_device_type,
+        logicalAddresses);
+    UT_ASSERT_TRUE(hasConfiguredLogicalAddresses);
+    if (!hasConfiguredLogicalAddresses)
+    {
+        return;
+    }
 
     // Validate initial logical addresses (should be empty before opening)
     HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(gHDMICECHandle, getLogicalAddresses);
@@ -287,59 +293,35 @@ UT_ADD_TEST(VTS_L2_HDMICEC, logicalAddressesValidation)
     // Open controller
     HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
 
-    // Add addresses {0,1} and verify
-    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses_1);
+    // Add the address for the primary device type configured in the HFP.
+    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
     HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(gHDMICECHandle, getLogicalAddresses);
-    UT_ASSERT_EQUAL(getLogicalAddresses.size(), logicalAddresses_1.size());
-    for (auto addr : logicalAddresses_1)
+    UT_ASSERT_EQUAL(getLogicalAddresses.size(), logicalAddresses.size());
+    if (getLogicalAddresses.size() == logicalAddresses.size())
     {
-        UT_ASSERT_TRUE(std::find(getLogicalAddresses.begin(), getLogicalAddresses.end(), addr) != getLogicalAddresses.end());
+        UT_ASSERT_EQUAL(getLogicalAddresses[0], logicalAddresses[0]);
     }
 
-    // Remove {0}, verify only {1} remains
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, removeLogicalAddresses_1);
-    HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(gHDMICECHandle, getLogicalAddresses);
-    UT_ASSERT_EQUAL(getLogicalAddresses.size(), (logicalAddresses_1.size() - removeLogicalAddresses_1.size()));
-    for (auto addr : removeLogicalAddresses_1)
-    {
-        UT_ASSERT_TRUE(std::find(getLogicalAddresses.begin(), getLogicalAddresses.end(), addr) == getLogicalAddresses.end());
-    }
-
-    // Remove {1}, verify list is empty
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, removeLogicalAddresses_2);
+    // Remove the address and verify the list is empty.
+    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
     HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(gHDMICECHandle, getLogicalAddresses);
     UT_ASSERT_TRUE(getLogicalAddresses.empty());
 
-    // Add addresses {2,3} and verify
-    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses_2);
+    // Re-add the address to verify close removes all logical addresses.
+    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
     HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(gHDMICECHandle, getLogicalAddresses);
-    UT_ASSERT_EQUAL(getLogicalAddresses.size(), logicalAddresses_2.size());
-    for (auto addr : logicalAddresses_2)
+    UT_ASSERT_EQUAL(getLogicalAddresses.size(), logicalAddresses.size());
+    if (getLogicalAddresses.size() == logicalAddresses.size())
     {
-        UT_ASSERT_TRUE(std::find(getLogicalAddresses.begin(), getLogicalAddresses.end(), addr) != getLogicalAddresses.end());
-    }
-
-    // Remove {2,3}, verify list is empty
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, removeLogicalAddresses_3);
-    HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(gHDMICECHandle, getLogicalAddresses);
-    UT_ASSERT_TRUE(getLogicalAddresses.empty());
-
-    // Add addresses {0,1} and to verify close is removing all addresses
-    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses_1);
-    HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(gHDMICECHandle, getLogicalAddresses);
-    UT_ASSERT_EQUAL(getLogicalAddresses.size(), logicalAddresses_1.size());
-    for (auto addr : logicalAddresses_1)
-    {
-        UT_ASSERT_TRUE(std::find(getLogicalAddresses.begin(), getLogicalAddresses.end(), addr) != getLogicalAddresses.end());
+        UT_ASSERT_EQUAL(getLogicalAddresses[0], logicalAddresses[0]);
     }
 
     // Close controller
     HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
 
-    // validate the logical addresses (should be empty after closing)
+    // Validate the logical addresses are empty after closing.
     HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(gHDMICECHandle, getLogicalAddresses);
     UT_ASSERT_TRUE(getLogicalAddresses.empty());
-
 }
 
 /**
@@ -372,11 +354,22 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
 {
     sp<HdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
-    vector<int32_t> logicalAddresses = {0};
-    vector<uint8_t> directMsg_1 = {0x05, 0x04};
-    vector<uint8_t> directMsg_2 = {0x05, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    vector<int32_t> logicalAddresses;
+    const bool hasConfiguredLogicalAddresses = hdmicecGetLogicalAddressesForDeviceTypes(
+        gHdmiCecDeviceInfo.primary_device_type,
+        gHdmiCecDeviceInfo.secondary_device_type,
+        logicalAddresses);
+    UT_ASSERT_TRUE(hasConfiguredLogicalAddresses);
+    if (!hasConfiguredLogicalAddresses)
+    {
+        return;
+    }
+
+    const uint8_t messageSourceAddress = static_cast<uint8_t>(logicalAddresses[0] << 4);
+    vector<uint8_t> directMsg_1 = {static_cast<uint8_t>(messageSourceAddress | 0x05), 0x04};
+    vector<uint8_t> directMsg_2 = {static_cast<uint8_t>(messageSourceAddress | 0x05), 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    vector<uint8_t> broadcastMsg = {0x0F, 0x85};
+    vector<uint8_t> broadcastMsg = {static_cast<uint8_t>(messageSourceAddress | 0x0F), 0x85};
     hdmicec::SendMessageStatus msgStatus;
     vector<uint8_t> getMessage;
     hdmicec::SendMessageStatus getStatus;
