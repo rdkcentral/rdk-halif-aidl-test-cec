@@ -40,6 +40,16 @@ HDMICEC_TEST_MENU_CONFIGURATION_FILE = os.path.join(dir_path, "vts_hdmicec_testM
 HDMICEC_TESTCASES_CONFIGURATION_FILE = os.path.join(os.path.join(dir_path, "../configs"), "vts_hdmicec_testcase_configuration.yaml")
 HDMICEC_L3_TEST_CONFIG_FILE = os.path.join(os.path.join(dir_path, "../../test_configuration"), "vts_l3_HdmiCec.yaml")
 
+HFP_DEVICE_TYPE_LOGICAL_ADDRESSES = {
+    "TV": [0],
+    "RECORDING_DEVICE": [1, 2, 9],
+    "TUNER": [3, 6, 7, 10],
+    "PLAYBACK_DEVICE": [4, 8, 11],
+    "AUDIO_SYSTEM": [5],
+    "CEC_SWITCH": [13],
+    "PROCESSOR": [14],
+}
+
 class hdmiCecHelperClass(utHelperClass):
 
     def __init__(self, testName:str, configureNetwork:bool, qcId:str, log:logModule=None, testMenuConfigFile:str=None, moduleName:str=None, artifactDirPath:str=None):
@@ -152,6 +162,35 @@ class hdmiCecHelperClass(utHelperClass):
 
         available_addresses = [addr for addr in possibleLogicalAddresses if addr not in used_logical_addresses]
         return available_addresses
+
+    def getAllocatedLogicalAddressesFromHfp(self):
+        """Select one available logical address for each device type in the HFP."""
+        with open(self.moduleHFPFile, "r") as profile_file:
+            hfp = yaml.safe_load(profile_file)
+
+        hdmicec_hfp = hfp.get("hdmicec", {})
+        device_types = [hdmicec_hfp.get("PRIMARY_DEVICE_TYPE")]
+        secondary_device_type = hdmicec_hfp.get("SECONDARY_DEVICE_TYPE", "NONE")
+        if secondary_device_type != "NONE":
+            device_types.append(secondary_device_type)
+
+        used_logical_addresses = {device.get("logical address") for device in self.connectedDevices}
+        allocated_logical_addresses = []
+        for device_type in device_types:
+            candidates = HFP_DEVICE_TYPE_LOGICAL_ADDRESSES.get(device_type)
+            if not candidates:
+                return None
+
+            logical_address = next(
+                (address for address in candidates
+                 if address not in used_logical_addresses and address not in allocated_logical_addresses),
+                None)
+            if logical_address is None:
+                return None
+
+            allocated_logical_addresses.append(logical_address)
+
+        return allocated_logical_addresses
 
     def pickValidLogicalAddressForController(self):
         """

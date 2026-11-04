@@ -296,10 +296,21 @@ UT_ADD_TEST(VTS_L2_HDMICEC, logicalAddressesValidation)
     // Add the address for the primary device type configured in the HFP.
     HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
     HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(gHDMICECHandle, getLogicalAddresses);
+    // Validate that the retrieved logical addresses match the added ones
     UT_ASSERT_EQUAL(getLogicalAddresses.size(), logicalAddresses.size());
-    if (getLogicalAddresses.size() == logicalAddresses.size())
+    // Validate that all logical addresses are correctly added
+    for (const int32_t logicalAddress : logicalAddresses)
     {
-        UT_ASSERT_EQUAL(getLogicalAddresses[0], logicalAddresses[0]);
+        bool isLogicalAddressPresent = false;
+        for (const int32_t returnedLogicalAddress : getLogicalAddresses)
+        {
+            if (returnedLogicalAddress == logicalAddress)
+            {
+                isLogicalAddressPresent = true;
+                break;
+            }
+        }
+        UT_ASSERT_TRUE(isLogicalAddressPresent);
     }
 
     // Remove the address and verify the list is empty.
@@ -311,9 +322,19 @@ UT_ADD_TEST(VTS_L2_HDMICEC, logicalAddressesValidation)
     HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
     HDMICEC_GET_LOGICAL_ADDRESS_SUCCESS(gHDMICECHandle, getLogicalAddresses);
     UT_ASSERT_EQUAL(getLogicalAddresses.size(), logicalAddresses.size());
-    if (getLogicalAddresses.size() == logicalAddresses.size())
+    // Validate that all logical addresses are correctly re-added after removal
+    for (const int32_t logicalAddress : logicalAddresses)
     {
-        UT_ASSERT_EQUAL(getLogicalAddresses[0], logicalAddresses[0]);
+        bool isLogicalAddressPresent = false;
+        for (const int32_t returnedLogicalAddress : getLogicalAddresses)
+        {
+            if (returnedLogicalAddress == logicalAddress)
+            {
+                isLogicalAddressPresent = true;
+                break;
+            }
+        }
+        UT_ASSERT_TRUE(isLogicalAddressPresent);
     }
 
     // Close controller
@@ -365,11 +386,11 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
         return;
     }
 
-    const uint8_t messageSourceAddress = static_cast<uint8_t>(logicalAddresses[0] << 4);
-    vector<uint8_t> directMsg_1 = {static_cast<uint8_t>(messageSourceAddress | 0x05), 0x04};
+    const uint8_t messageSourceAddress = static_cast<uint8_t>(logicalAddresses[0] << 4); // Shift logical address to the upper nibble
+    vector<uint8_t> directMsg_1 = {static_cast<uint8_t>(messageSourceAddress | 0x05), 0x04}; // Direct message with opcode 0x04
     vector<uint8_t> directMsg_2 = {static_cast<uint8_t>(messageSourceAddress | 0x05), 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-    vector<uint8_t> broadcastMsg = {static_cast<uint8_t>(messageSourceAddress | 0x0F), 0x85};
+                                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Direct message with maximum payload length (16 bytes)
+    vector<uint8_t> broadcastMsg = {static_cast<uint8_t>(messageSourceAddress | 0x0F), 0x85}; // Broadcast message with opcode 0x85
     hdmicec::SendMessageStatus msgStatus;
     vector<uint8_t> getMessage;
     hdmicec::SendMessageStatus getStatus;

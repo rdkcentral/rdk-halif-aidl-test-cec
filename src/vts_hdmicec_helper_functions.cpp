@@ -132,6 +132,12 @@ bool hdmicecGetLogicalAddressForDeviceType(DeviceType deviceType, int32_t& logic
         case DeviceType::AUDIO_SYSTEM:
             logicalAddress = 5;
             return true;
+        case DeviceType::CEC_SWITCH:
+            logicalAddress = 13;
+            return true;
+        case DeviceType::PROCESSOR:
+            logicalAddress = 14;
+            return true;
         default:
             return false;
     }
@@ -164,6 +170,38 @@ bool hdmicecGetLogicalAddressesForDeviceTypes(DeviceType primaryDeviceType,
     }
 
     logicalAddresses.push_back(secondaryLogicalAddress);
+    return true;
+}
+
+bool hdmicecValidateLogicalAddressList(const std::vector<int32_t>& logicalAddresses,
+                                       bool allowEmpty)
+{
+    if (logicalAddresses.empty())
+    {
+        return allowEmpty;
+    }
+
+    if (logicalAddresses.size() > 2)
+    {
+        return false;
+    }
+
+    for (size_t index = 0; index < logicalAddresses.size(); ++index)
+    {
+        if (logicalAddresses[index] < 0 || logicalAddresses[index] > 14)
+        {
+            return false;
+        }
+
+        for (size_t compareIndex = index + 1; compareIndex < logicalAddresses.size(); ++compareIndex)
+        {
+            if (logicalAddresses[index] == logicalAddresses[compareIndex])
+            {
+                return false;
+            }
+        }
+    }
+
     return true;
 }
 

@@ -109,6 +109,8 @@ bool hdmicecGetLogicalAddressForDeviceType(DeviceType deviceType, int32_t& logic
 bool hdmicecGetLogicalAddressesForDeviceTypes(DeviceType primaryDeviceType,
 											   DeviceType secondaryDeviceType,
 											   std::vector<int32_t>& logicalAddresses);
+bool hdmicecValidateLogicalAddressList(const std::vector<int32_t>& logicalAddresses,
+									   bool allowEmpty);
 
 #endif //__VTS_HDMICEC_HELPER_H__
 
