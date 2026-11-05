@@ -386,11 +386,16 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
         return;
     }
 
-    const uint8_t messageSourceAddress = static_cast<uint8_t>(logicalAddresses[0] << 4); // Shift logical address to the upper nibble
-    vector<uint8_t> directMsg_1 = {static_cast<uint8_t>(messageSourceAddress | 0x05), 0x04}; // Direct message with opcode 0x04
-    vector<uint8_t> directMsg_2 = {static_cast<uint8_t>(messageSourceAddress | 0x05), 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    const uint8_t sourceAddress = static_cast<uint8_t>(logicalAddresses[0]);
+    constexpr uint8_t preferredDestinationAddress = 0x05; // Preferred destination address for direct messages
+    constexpr uint8_t fallbackDestinationAddress = 0x0A; // Fallback destination address for direct messages
+    const uint8_t destinationAddress =
+        sourceAddress == preferredDestinationAddress ? fallbackDestinationAddress : preferredDestinationAddress; // Choose destination address based on source address
+    const uint8_t directMessageHeader = static_cast<uint8_t>((sourceAddress << 4) | destinationAddress); // Construct direct message header with source and destination addresses
+    vector<uint8_t> directMsg_1 = {directMessageHeader, 0x04}; // Direct message with opcode 0x04
+    vector<uint8_t> directMsg_2 = {directMessageHeader, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                                     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}; // Direct message with maximum payload length (16 bytes)
-    vector<uint8_t> broadcastMsg = {static_cast<uint8_t>(messageSourceAddress | 0x0F), 0x85}; // Broadcast message with opcode 0x85
+    vector<uint8_t> broadcastMsg = {static_cast<uint8_t>((sourceAddress << 4) | 0x0F), 0x85}; // Broadcast message with opcode 0x85
     hdmicec::SendMessageStatus msgStatus;
     vector<uint8_t> getMessage;
     hdmicec::SendMessageStatus getStatus;
