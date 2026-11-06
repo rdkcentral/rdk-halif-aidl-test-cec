@@ -122,7 +122,7 @@ UT_ADD_TEST(VTS_L1_HDMICEC, getState_pos)
  * @brief L1 Positive Test for the HDMI CEC HAL getProperty() API
  *
  * This test verifies that the getProperty() API returns valid property values
- * for supported keys such as HAL_CEC_VERSION and metric counters.
+ * for supported keys such as HAL_CEC_VERSION, PRIMARY_DEVICE_TYPE, SECONDARY_DEVICE_TYPE, and metric counters.
  *
  * **Test Group ID:** Basic: 01@n
  * **Test Case ID:** 002@n
@@ -139,11 +139,15 @@ UT_ADD_TEST(VTS_L1_HDMICEC, getState_pos)
  * |Variation / Step|Description|Test Data|Expected Result|Notes|
  * |----------------|-----------|---------|---------------|-----|
  * |01|Query HAL_CEC_VERSION property|HAL_CEC_VERSION|Value should match device info (hfp version)|Mandatory property|
- * |02|Query metric counter properties|Metric properties|If implemented, return 0; if not implemented, return -1|Metrics counters start at 0|
+ * |02|Query PRIMARY_DEVICE_TYPE property|PRIMARY_DEVICE_TYPE|Value should match device info|Mandatory property|
+ * |03|Query SECONDARY_DEVICE_TYPE property|SECONDARY_DEVICE_TYPE|Value should match device info|Mandatory property|
+ * |04|Query metric counter properties|Metric properties|If implemented, return 0; if not implemented, return -1|Metrics counters start at 0|
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, getProperty_pos)
 {
     std::optional<PropertyValue> cecVersion;
+    std::optional<PropertyValue> primaryDeviceType;
+    std::optional<PropertyValue> secondaryDeviceType;
 
     std::vector<Property> testProperties = {
         hdmicec::Property::METRIC_DIRECTED_MESSAGES_SENT,
@@ -158,6 +162,18 @@ UT_ADD_TEST(VTS_L1_HDMICEC, getProperty_pos)
     UT_ASSERT_EQUAL(
         cecVersion->value->get<PropertyValue::Value::Tag::byteValue>(),
         static_cast<int8_t>(gHdmiCecDeviceInfo.hal_cec_version));
+
+    HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::PRIMARY_DEVICE_TYPE, primaryDeviceType);
+    UT_ASSERT_TRUE(primaryDeviceType.has_value());
+    UT_ASSERT_EQUAL(
+        primaryDeviceType->value->get<PropertyValue::Value::Tag::intValue>(),
+        static_cast<int32_t>(gHdmiCecDeviceInfo.primary_device_type));
+
+    HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::SECONDARY_DEVICE_TYPE, secondaryDeviceType);
+    UT_ASSERT_TRUE(secondaryDeviceType.has_value());
+    UT_ASSERT_EQUAL(
+        secondaryDeviceType->value->get<PropertyValue::Value::Tag::intValue>(),
+        static_cast<int32_t>(gHdmiCecDeviceInfo.secondary_device_type));
 
     // Validate metric properties
     for (auto property : testProperties)
@@ -555,8 +571,8 @@ UT_ADD_TEST(VTS_L1_HDMICEC, unregisterEventListener_neg)
 /**
  * @brief L1 Positive Test for the HDMI CEC HAL addLogicalAddresses() API
  *
- * This test verifies that the addLogicalAddresses() API successfully adds valid logical
- * addresses, and they can be removed again. Multiple addresses and single addresses are tested.
+ * This test verifies that addLogicalAddresses() accepts the one or two logical
+ * addresses configured by the HFP, both as a list and one address at a time.
  *
  * **Test Group ID:** Basic: 01@n
  * **Test Case ID:** 013@n
@@ -573,31 +589,42 @@ UT_ADD_TEST(VTS_L1_HDMICEC, unregisterEventListener_neg)
  * |Variation / Step|Description|Test Data|Expected Result|Notes|
  * |----------------|-----------|---------|---------------|-----|
  * |01|Call open()|Valid controller listener|Should return handle|should pass|
- * |02|Call addLogicalAddresses()|{0–14} (all valid addresses)|Return status=true|should pass|
- * |03|Call removeLogicalAddresses()|{0–14}|Return status=true|should pass|
- * |04|Call addLogicalAddresses()|{0} (single valid address)|Return status=true|should pass|
- * |05|Call removeLogicalAddresses()|{0}|Return status=true|should pass|
+ * |02|Call addLogicalAddresses()|HFP address list|Return status=true|One or two permitted addresses|
+ * |03|Call removeLogicalAddresses()|HFP address list|Return status=true|should pass|
+ * |04|Call addLogicalAddresses()|Each HFP address|Return status=true|Addresses added one at a time|
+ * |05|Call removeLogicalAddresses()|HFP address list|Return status=true|should pass|
  * |06|Call close()|Valid controller handle|Return status=true|should pass|
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_pos)
 {
     sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
-    vector<int32_t> logicalAddresses_1 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
-    vector<int32_t> logicalAddresses_2 = {0};
+    vector<int32_t> logicalAddresses;
+
+    const bool hasConfiguredLogicalAddresses = hdmicecGetLogicalAddressesForDeviceTypes(
+        gHdmiCecDeviceInfo.primary_device_type,
+        gHdmiCecDeviceInfo.secondary_device_type,
+        logicalAddresses);
+    UT_ASSERT_TRUE(hasConfiguredLogicalAddresses);
+    if (!hasConfiguredLogicalAddresses)
+    {
+        return;
+    }
 
     /* Open HDMI CEC interface */
     HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
 
-    /* Add multiple logical addresses */
-    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses_1);
-    /* Remove multiple logical addresses */
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses_1);
+    /* Add the configured logical addresses in one call. */
+    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
+    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
 
-    /* Add single logical address */
-    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses_2);
-    /* Remove single logical address */
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses_2);
+    /* Add each configured logical address separately. */
+    for (const int32_t logicalAddress : logicalAddresses)
+    {
+        vector<int32_t> singleLogicalAddress = {logicalAddress};
+        HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, singleLogicalAddress);
+    }
+    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
 
     /* Close HDMI CEC interface */
     HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
@@ -606,8 +633,8 @@ UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_pos)
 /**
  * @brief L1 Negative Test for the HDMI CEC HAL addLogicalAddresses() API
  *
- * This test verifies that the addLogicalAddresses() API rejects invalid logical addresses,
- * duplicates, out-of-range values, and invalid state scenarios.
+ * This test verifies that addLogicalAddresses() rejects out-of-range addresses,
+ * requests containing more than two addresses, addresses already added, and invalid states.
  *
  * **Test Group ID:** Basic: 01@n
  * **Test Case ID:** 014@n
@@ -628,45 +655,52 @@ UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_pos)
  * |03|Call addLogicalAddresses() with -1|{-1}|Return status=false|should pass|
  * |04|Call addLogicalAddresses() with 15|{15}|Return status=false|should pass|
  * |05|Call addLogicalAddresses() with 100|{100}|Return status=false|should pass|
- * |06|Call addLogicalAddresses() with duplicates|{3,3}|Return status=false|should pass|
+ * |06|Call addLogicalAddresses() with duplicate addresses|{3,3}|Return status=false|should pass|
  * |07|Call addLogicalAddresses() with mixed duplicates|{1,2,1,3,2}|Return status=false|should pass|
- * |08|Call addLogicalAddresses() with empty list|{}|Return status=false|should pass|
- * |09|Call addLogicalAddresses() with valid addresses|{1,2,3}|Return status=true|should pass|
- * |10|Call addLogicalAddresses() with same addresses|{1,2,3}|Return status=false (already added)|should pass|
- * |11|Call removeLogicalAddresses()|{1,2,3}|Return status=true|should pass|
- * |12|Call close()|Valid controller handle  |Return status=true|should pass|
- * |13|Call addLogicalAddresses() after close|{1,2,3}|Return status=false (ILLEGAL_STATE)|should pass|
+ * |08|Call addLogicalAddresses() with an empty list|{}|Return status=false|should pass|
+ * |09|Call addLogicalAddresses() with more than two addresses|{0,1,2}|Return status=false|should pass|
+ * |10|Call addLogicalAddresses()|HFP address list|Return status=true|should pass|
+ * |11|Call addLogicalAddresses() with already-added addresses|HFP address list|Return status=false|should pass|
+ * |12|Call removeLogicalAddresses()|HFP address list|Return status=true|should pass|
+ * |13|Call close()|Valid controller handle  |Return status=true|should pass|
+ * |14|Call addLogicalAddresses() after close|HFP address list|Return status=false (ILLEGAL_STATE)|should pass|
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_neg)
 {
     sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
-    vector<int32_t> logicalAddresses = {1, 2, 3};
-    vector<int32_t> invalidLogicalAddresses_1 = {-1};
-    vector<int32_t> invalidLogicalAddresses_2 = {15};
-    vector<int32_t> invalidLogicalAddresses_3 = {100};
-    vector<int32_t> invalidLogicalAddresses_4 = {3, 3};
-    vector<int32_t> invalidLogicalAddresses_5 = {1, 2, 1, 3, 2};
-    vector<int32_t> invalidLogicalAddresses_6;
+    vector<int32_t> logicalAddresses;
+    vector<int32_t> belowRangeLogicalAddresses = {-1};
+    vector<int32_t> aboveRangeLogicalAddresses = {15};
+    vector<int32_t> farAboveRangeLogicalAddresses = {100};
+    vector<int32_t> duplicateLogicalAddresses = {3, 3};
+    vector<int32_t> mixedDuplicateLogicalAddresses = {1, 2, 1, 3, 2};
+    vector<int32_t> emptyLogicalAddresses;
+    vector<int32_t> tooManyLogicalAddresses = {0, 1, 2};
+
+    const bool hasConfiguredLogicalAddresses = hdmicecGetLogicalAddressesForDeviceTypes(
+        gHdmiCecDeviceInfo.primary_device_type,
+        gHdmiCecDeviceInfo.secondary_device_type,
+        logicalAddresses);
+    UT_ASSERT_TRUE(hasConfiguredLogicalAddresses);
+    if (!hasConfiguredLogicalAddresses)
+    {
+        return;
+    }
 
     /* Open HDMI CEC interface */
     HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
 
-    /* Attempt to add invalid logical addresses */
-    HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, invalidLogicalAddresses_1, Status::EX_NONE);
-    HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, invalidLogicalAddresses_2, Status::EX_NONE);
-    HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, invalidLogicalAddresses_3, Status::EX_NONE);
+    HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, belowRangeLogicalAddresses, Status::EX_NONE);
+    HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, aboveRangeLogicalAddresses, Status::EX_NONE);
+    HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, farAboveRangeLogicalAddresses, Status::EX_NONE);
+    HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, duplicateLogicalAddresses, Status::EX_NONE);
+    HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, mixedDuplicateLogicalAddresses, Status::EX_NONE);
+    HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, emptyLogicalAddresses, Status::EX_NONE);
+    HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, tooManyLogicalAddresses, Status::EX_NONE);
 
-    /* Attempt to add duplicate logical addresses */
-    HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, invalidLogicalAddresses_4, Status::EX_NONE);
-    HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, invalidLogicalAddresses_5, Status::EX_NONE);
-
-    /* Attempt to add empty logical address list */
-    HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, invalidLogicalAddresses_6, Status::EX_NONE);
-
-    /* Add valid logical addresses */
+    /* Addresses already added must be rejected. */
     HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
-    /* Attempt to add the same logical addresses again */
     HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, logicalAddresses, Status::EX_NONE);
 
     /* Remove logical addresses */
@@ -682,9 +716,8 @@ UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_neg)
 /**
  * @brief L1 Positive Test for the HDMI CEC HAL removeLogicalAddresses() API
  *
- * This test verifies that the removeLogicalAddresses() API successfully removes
- * previously added logical addresses. It covers removing all at once, removing subsets,
- * and removing single addresses.
+ * This test verifies that removeLogicalAddresses() successfully removes the
+ * one or two logical addresses configured by the HFP.
  *
  * **Test Group ID:** Basic: 01@n
  * **Test Case ID:** 015@n
@@ -701,51 +734,40 @@ UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_neg)
  * |Variation / Step|Description|Test Data|Expected Result|Notes|
  * |----------------|-----------|---------|---------------|-----|
  * |01|Call open()|Valid controller listener|Return valid handle |should pass|
- * |02|Add full set of logical addresses|{0–14}|Return status=true|should pass|
- * |03|Remove full set of logical addresses|{0–14}|Return status=true|should pass|
- * |04|Add full set again|{0–14}|Return status=true|should pass|
- * |05|Remove subset of addresses|{0,1,2,3}|Return status=true|should pass|
- * |06|Remove single address|{4}|Return status=true|should pass|
- * |07|Remove another single address|{5}|Return status=true|should pass|
- * |08|Remove remaining subset|{6–14}|Return status=true|should pass|
- * |09|Add a single logical address|{0}|Return status=true|should pass|
- * |10|Remove that single logical address|{0}|Return status=true|should pass|
+ * |02|Add HFP logical addresses|HFP address list|Return status=true|One or two permitted addresses|
+ * |03|Remove HFP logical addresses|HFP address list|Return status=true|should pass|
+ * |04|Add HFP logical addresses again|HFP address list|Return status=true|should pass|
+ * |05|Remove each address|Each HFP address|Return status=true|should pass|
  * |11|Call close()|Valid controller handle|Return status=true  |should pass|
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, removeLogicalAddresses_pos)
 {
     sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
-    vector<int32_t> logicalAddresses_1 = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14};
-    vector<int32_t> removeLogicalAddresses_1 = {0, 1, 2, 3};
-    vector<int32_t> removeLogicalAddresses_2 = {4};
-    vector<int32_t> removeLogicalAddresses_3 = {5};
-    vector<int32_t> removeLogicalAddresses_4 = {6, 7, 8, 9, 10, 11, 12, 13, 14};
-    vector<int32_t> logicalAddresses_2 = {0};
+    vector<int32_t> logicalAddresses;
+
+    const bool hasConfiguredLogicalAddresses = hdmicecGetLogicalAddressesForDeviceTypes(
+        gHdmiCecDeviceInfo.primary_device_type,
+        gHdmiCecDeviceInfo.secondary_device_type,
+        logicalAddresses);
+    UT_ASSERT_TRUE(hasConfiguredLogicalAddresses);
+    if (!hasConfiguredLogicalAddresses)
+    {
+        return;
+    }
 
     /* Open HDMI CEC interface */
     HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
 
-    /* Add logical addresses */
-    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses_1);
+    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
+    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
 
-    /* Remove all logical addresses */
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses_1);
-
-    /* Add logical addresses again */
-    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses_1);
-
-    /* Remove logical addresses separately */
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, removeLogicalAddresses_1);
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, removeLogicalAddresses_2);
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, removeLogicalAddresses_3);
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, removeLogicalAddresses_4);
-
-    /* Add a single logical address */
-    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses_2);
-
-    /* Remove that single logical address */
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses_2);
+    HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
+    for (const int32_t logicalAddress : logicalAddresses)
+    {
+        vector<int32_t> singleLogicalAddress = {logicalAddress};
+        HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, singleLogicalAddress);
+    }
 
     /* Close HDMI CEC interface */
     HDMICEC_CLOSE_SUCCESS(gHDMICECHandle, hdmiCecController, true);
@@ -754,8 +776,8 @@ UT_ADD_TEST(VTS_L1_HDMICEC, removeLogicalAddresses_pos)
 /**
  * @brief L1 Negative Test for the HDMI CEC HAL removeLogicalAddresses() API
  *
- * This test verifies that the removeLogicalAddresses() API rejects invalid addresses,
- * addresses not previously added, out-of-range values, empty lists, and invalid state scenarios.
+ * This test verifies that removeLogicalAddresses() rejects addresses not previously
+ * added, out-of-range addresses, and invalid state scenarios.
  *
  * **Test Group ID:** Basic: 01@n
  * **Test Case ID:** 016@n
@@ -773,28 +795,41 @@ UT_ADD_TEST(VTS_L1_HDMICEC, removeLogicalAddresses_pos)
  * |----------------|-----------|---------|---------------|-----|
  * |01|Create controller listener|None|should create listener|should pass|
  * |02|Call open()|Valid controller|Return valid handle|should pass|
- * |03|Call removeLogicalAddresses() not added|{1,2,3}|Return status=false|should pass|
- * |04|Add valid logical addresses|{1,2,3}|Return status=true |should pass|
+ * |03|Call removeLogicalAddresses() not added|HFP address list|Return status=false|should pass|
+ * |04|Add valid logical addresses|HFP address list|Return status=true |should pass|
  * |05|Remove invalid address (-1)|{-1}|Return status=false|should pass|
  * |06|Remove invalid address (15)|{15}|Return status=false|should pass|
  * |07|Remove empty list|{}|Return status=false|should pass|
- * |08|Remove address not added|{4}|Return status=false|should pass|
- * |09|Remove mix of added and not added|{1,2,3,4}|Return status=false|should pass|
- * |10|Remove valid logical addresses|{1,2,3}|Return status=true |should pass|
- * |11|Attempt to remove same addresses again|{1,2,3}|Return status=false|should pass|
+ * |08|Remove address not added|{14}|Return status=false|should pass|
+ * |09|Remove mix of added and not added|HFP address list plus {14}|Return status=false|should pass|
+ * |10|Remove valid logical addresses|HFP address list|Return status=true |should pass|
+ * |11|Attempt to remove same addresses again|HFP address list|Return status=false|should pass|
  * |12|Call close()|Valid controller|Return status=true|should pass|
- * |13|Call removeLogicalAddresses() after close|{1,2,3}|Return status=false (ILLEGAL_STATE)|should pass|
+ * |13|Call removeLogicalAddresses() after close|HFP address list|Return status=false (ILLEGAL_STATE)|should pass|
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, removeLogicalAddresses_neg)
 {
     sp<IHdmiCecEventListener> controllerListener = new HdmiCecEventListener();
     sp<IHdmiCecController> hdmiCecController = nullptr;
-    vector<int32_t> logicalAddresses = {0, 1, 2, 3};
-    vector<int32_t> invalidRemoveLogicalAddresses_1 = {-1};
-    vector<int32_t> invalidRemoveLogicalAddresses_2 = {15};
-    vector<int32_t> invalidRemoveLogicalAddresses_3;
-    vector<int32_t> invalidRemoveLogicalAddresses_4 = {4};
-    vector<int32_t> invalidRemoveLogicalAddresses_5 = {1, 2, 3, 4};
+    vector<int32_t> logicalAddresses;
+    vector<int32_t> belowRangeLogicalAddresses = {-1};
+    vector<int32_t> aboveRangeLogicalAddresses = {15};
+    vector<int32_t> emptyLogicalAddresses;
+    vector<int32_t> notAddedLogicalAddresses = {14};
+    vector<int32_t> mixedLogicalAddresses;
+
+    const bool hasConfiguredLogicalAddresses = hdmicecGetLogicalAddressesForDeviceTypes(
+        gHdmiCecDeviceInfo.primary_device_type,
+        gHdmiCecDeviceInfo.secondary_device_type,
+        logicalAddresses);
+    UT_ASSERT_TRUE(hasConfiguredLogicalAddresses);
+    if (!hasConfiguredLogicalAddresses)
+    {
+        return;
+    }
+
+    mixedLogicalAddresses = logicalAddresses;
+    mixedLogicalAddresses.push_back(notAddedLogicalAddresses[0]);
 
     /* Open HDMI CEC interface */
     HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);
@@ -805,14 +840,11 @@ UT_ADD_TEST(VTS_L1_HDMICEC, removeLogicalAddresses_neg)
     /* Add valid logical addresses */
     HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
 
-    /* Attempt to remove invalid logical addresses */
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_FAILURE(hdmiCecController, invalidRemoveLogicalAddresses_1, Status::EX_NONE);
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_FAILURE(hdmiCecController, invalidRemoveLogicalAddresses_2, Status::EX_NONE);
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_FAILURE(hdmiCecController, invalidRemoveLogicalAddresses_3, Status::EX_NONE);
-
-    /* Attempt to remove which is not added */
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_FAILURE(hdmiCecController, invalidRemoveLogicalAddresses_4, Status::EX_NONE);
-    HDMICEC_REMOVE_LOGICAL_ADDRESS_FAILURE(hdmiCecController, invalidRemoveLogicalAddresses_5, Status::EX_NONE);
+    HDMICEC_REMOVE_LOGICAL_ADDRESS_FAILURE(hdmiCecController, belowRangeLogicalAddresses, Status::EX_NONE);
+    HDMICEC_REMOVE_LOGICAL_ADDRESS_FAILURE(hdmiCecController, aboveRangeLogicalAddresses, Status::EX_NONE);
+    HDMICEC_REMOVE_LOGICAL_ADDRESS_FAILURE(hdmiCecController, emptyLogicalAddresses, Status::EX_NONE);
+    HDMICEC_REMOVE_LOGICAL_ADDRESS_FAILURE(hdmiCecController, notAddedLogicalAddresses, Status::EX_NONE);
+    HDMICEC_REMOVE_LOGICAL_ADDRESS_FAILURE(hdmiCecController, mixedLogicalAddresses, Status::EX_NONE);
 
     /* Remove valid logical addresses */
     HDMICEC_REMOVE_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);

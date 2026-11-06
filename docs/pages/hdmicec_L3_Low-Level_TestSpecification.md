@@ -32,7 +32,7 @@ The goal is to ensure that:
 - `RAFT`   - Rapid Automation Framework for Testing
 - `YAML`   - YAML Ain't Markup Language
 - `AIDL`   - Android Interface Definition Language
-- `controller` - CEC message peer (vDevice/vComponent or hardware adaptor such as Pulse-Eight)
+- `controller` - CEC message peer used to send, receive, and verify messages
 
 ### References
 
@@ -53,7 +53,7 @@ The `VTS` binary running on the DUT provides two key L3 capabilities:
 ##### Objective
 
 To verify that the `DUT`:
-- Set logical address as defined in the test config.
+- Registers the logical address supplied for the current test invocation.
 - For each item in `cec_messages`:
     - Transmit the message exactly repeat times.
     - Wait `delay_between_messages` milliseconds before each transmission.
@@ -94,7 +94,7 @@ flowchart TD
 HdmiCec:
   L3:
     SendMessage:  # Test name
-      source_logical_address: [0] # Assign logical address ‘0’ to DUT
+      source_logical_address: [0] # Address owned by this SendMessage invocation
       delay_between_messages: 100 # delay between each sendMessage in msec
       cec_messages:
       - Parameters:
@@ -105,12 +105,14 @@ HdmiCec:
           metrics: {directedMessagesSent: 1, directedMessagesSentAndAcked: 1, broadcastMessagesSent: 0,
             broadcastMessagesSentAndAcked: 0, arbitrationFailures: 0} # metrics per message
 ```
-- **source_logical_address:** List of logical address assigned to `DUT` before sending messages.
+- **source_logical_address:** Logical address registered by the `DUT` for this invocation. The host test supplies exactly one address so that each invocation adds and removes only the source address it uses.
 - **delay_between_messages:** Delay between consecutive transmissions in milliseconds
 - **cec_messages:** List of `CEC` messages to send to the `controller`
 - **message:** List of `CEC` bytes to be sent to the `controller`
 - **repeat:** Number of times the `DUT` must transmit the message.
 - **metrics:** Expected metrics reported by the `HAL` for each sent message
+
+> **Note:** The host L3 test allocates one address for each active HFP device type and executes `SendMessage` separately for each address. Before each execution, it writes only the current address to `source_logical_address` and updates every CEC message initiator nibble to that address. The destination nibble from the checked-in message is preserved for broadcast messages and replaced with the controller address for directed messages. For direct DUT runs, ensure every message initiator is present in `source_logical_address`.
 
 #### ReceiveMessage
 
@@ -118,7 +120,7 @@ HdmiCec:
 
 The purpose of the `ReceiveMessage` Level 3 test is to verify that the `DUT` correctly receives `CEC` messages sent by the `controller` and that the `HAL` delivers these messages to the framework via callbacks. Specifically, the test ensures that:
 
-- The `DUT` is assigned each logical address provided in the configuration.
+- The `DUT` is assigned the one or two logical addresses allocated from its HFP device types.
 - The controller sends the configured message to the `DUT`.
 - The `HAL` triggers `onMessageReceived` with the exact payload.
 - Callbacks occur exactly repeat times.
@@ -158,18 +160,21 @@ flowchart TD
 HdmiCec:
   L3:
     ReceiveMessage:
-    - Parameters:
+      source_logical_address: [0] # Host-generated HFP address list; maximum two entries
+      cec_messages:
+      - Parameters:
         message: ['0x41', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
           '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
         repeat: 5
-        logical_address: [0, 3, 10] # Assign logical address to DUT
         wait_for_response_timeout: 5000
 ```
 
+- **source_logical_address:** Host-generated list of one or two logical addresses assigned to `DUT` before receiving messages.
 - **message:** List of `CEC` frame bytes sent by the `controller` to the `DUT`
-- **logical_address:** List of logical address assigned to `DUT` before sending messages.
 - **repeat:** Number of times the `DUT` must receive the same message
 - **wait_for_response_timeout:** wait time for the callbacks
+
+> **Note:** The host L3 tests replace the checked-in address defaults with addresses allocated from the active HFP. For direct DUT runs, set `source_logical_address` to the one or two addresses allocated for the active HFP.
 
 ### Host Side Implementation
 
@@ -182,11 +187,13 @@ HdmiCec:
 **Test Flow:**
 - Deploy VTS binaries to DUT.
 - Initialize and configure RAFT CEC controller.
-- Send CEC messages from `DUT` → `Controller`.
-- Verify that:
-  - HAL callbacks are triggered correctly.
-  - The message is received at the expected destination device.
-  - Metrics match expected counts.
+- Allocate one unused logical address for each HFP primary/secondary device type. Fail explicitly when a configured device type is unsupported or no candidate address is available.
+- For each allocated source address:
+  - Write that source address as the only `source_logical_address`.
+  - Update every message initiator nibble to the source address while preserving whether the configured message is directed or broadcast.
+  - Run the DUT `SendMessage` test.
+  - Verify that each message is received by the controller at the expected destination.
+- Report failure if either the DUT test result or any controller-side message check fails.
 
 #### Receive Message Test
 
@@ -197,6 +204,7 @@ Validate DUT’s ability to receive CEC frames correctly.
 
 - Deploy VTS binaries to DUT.
 - Configure the `CEC` device network.
+- Allocate one address for each HFP primary/secondary device type and write the resulting list to the L3 configuration.
 - Send `CEC` messages from `Controller` → `DUT`.
 - Validate the following scenarios:
   - Positive cases: HAL callback is triggered when:
@@ -205,4 +213,3 @@ Validate DUT’s ability to receive CEC frames correctly.
   - Negative cases: No HAL callbacks when:
     - DUT has no logical address assigned.
     - Message destination is different from the DUT’s logical address.
-

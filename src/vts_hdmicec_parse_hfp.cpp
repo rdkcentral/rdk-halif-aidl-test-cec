@@ -65,13 +65,76 @@
 #include "ut_kvp_profile.h"
 #include "vts_hdmicec_parse_hfp.h"
 
+#include <cstring>
+
 using namespace std;
 
-hdmicec_device_info gHdmiCecDeviceInfo = {0};
+namespace
+{
+using com::rdk::hal::hdmicec::DeviceType;
+
+bool parseDeviceType(const char* value, DeviceType& deviceType)
+{
+    if (strcmp(value, "NONE") == 0)
+    {
+        deviceType = DeviceType::NONE;
+    }
+    else if (strcmp(value, "TV") == 0)
+    {
+        deviceType = DeviceType::TV;
+    }
+    else if (strcmp(value, "RECORDING_DEVICE") == 0)
+    {
+        deviceType = DeviceType::RECORDING_DEVICE;
+    }
+    else if (strcmp(value, "TUNER") == 0)
+    {
+        deviceType = DeviceType::TUNER;
+    }
+    else if (strcmp(value, "PLAYBACK_DEVICE") == 0)
+    {
+        deviceType = DeviceType::PLAYBACK_DEVICE;
+    }
+    else if (strcmp(value, "AUDIO_SYSTEM") == 0)
+    {
+        deviceType = DeviceType::AUDIO_SYSTEM;
+    }
+    else if (strcmp(value, "CEC_SWITCH") == 0)
+    {
+        deviceType = DeviceType::CEC_SWITCH;
+    }
+    else if (strcmp(value, "PROCESSOR") == 0)
+    {
+        deviceType = DeviceType::PROCESSOR;
+    }
+    else
+    {
+        return false;
+    }
+
+    return true;
+}
+}
+
+hdmicec_device_info gHdmiCecDeviceInfo = {0, DeviceType::NONE, DeviceType::NONE};
 
 UT_status_t vts_hdmicec_parse_hfp()
 {
+    char primaryDeviceType[UT_KVP_MAX_ELEMENT_SIZE] = {0};
+    char secondaryDeviceType[UT_KVP_MAX_ELEMENT_SIZE] = {0};
+
     gHdmiCecDeviceInfo.hal_cec_version = static_cast<int8_t>(UT_KVP_PROFILE_GET_UINT8("hdmicec.HAL_CEC_VERSION"));
+
+    UT_KVP_PROFILE_GET_STRING("hdmicec.PRIMARY_DEVICE_TYPE", primaryDeviceType);
+    UT_KVP_PROFILE_GET_STRING("hdmicec.SECONDARY_DEVICE_TYPE", secondaryDeviceType);
+
+    if (!parseDeviceType(primaryDeviceType, gHdmiCecDeviceInfo.primary_device_type) ||
+        !parseDeviceType(secondaryDeviceType, gHdmiCecDeviceInfo.secondary_device_type))
+    {
+        UT_LOG_ERROR("Invalid HDMI CEC device type in HFP");
+        return UT_STATUS_FAILURE;
+    }
+
     return UT_STATUS_OK;
 }
 

@@ -83,6 +83,7 @@
 #include <utils/String16.h>
 
 #include "com/rdk/hal/hdmicec/BnHdmiCecEventListener.h"
+#include "com/rdk/hal/hdmicec/DeviceType.h"
 #include "com/rdk/hal/hdmicec/IHdmiCec.h"
 #include "com/rdk/hal/hdmicec/IHdmiCecController.h"
 #include "com/rdk/hal/hdmicec/IHdmiCecEventListener.h"
@@ -104,6 +105,12 @@ extern const ut_control_keyStringMapping_t statusHdmiCecException_mapTable[];
 
 std::string hdmicecVecIntToString(std::vector<int32_t>& addrs);
 std::string hdmicecVecByteToHexString(const std::vector<uint8_t>& data);
+bool hdmicecGetLogicalAddressForDeviceType(DeviceType deviceType, int32_t& logicalAddress);
+bool hdmicecGetLogicalAddressesForDeviceTypes(DeviceType primaryDeviceType,
+											   DeviceType secondaryDeviceType,
+											   std::vector<int32_t>& logicalAddresses);
+bool hdmicecValidateLogicalAddressList(const std::vector<int32_t>& logicalAddresses,
+									   bool allowEmpty);
 
 #endif //__VTS_HDMICEC_HELPER_H__
 
