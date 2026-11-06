@@ -50,6 +50,19 @@ HFP_DEVICE_TYPE_LOGICAL_ADDRESSES = {
     "PROCESSOR": [14],
 }
 
+DEVICE_TYPE_ALIASES = {
+    "TV": "TV",
+    "RECORDINGDEVICE": "RECORDING_DEVICE",
+    "TUNER": "TUNER",
+    "PLAYBACKDEVICE": "PLAYBACK_DEVICE",
+    "AUDIOSYSTEM": "AUDIO_SYSTEM",
+    "CECSWITCH": "CEC_SWITCH",
+    "PURECECSWITCH": "CEC_SWITCH",
+    "PROCESSOR": "PROCESSOR",
+    "VIDEOPROCESSOR": "PROCESSOR",
+    "NONE": "NONE",
+}
+
 class hdmiCecHelperClass(utHelperClass):
 
     def __init__(self, testName:str, configureNetwork:bool, qcId:str, log:logModule=None, testMenuConfigFile:str=None, moduleName:str=None, artifactDirPath:str=None):
@@ -165,27 +178,68 @@ class hdmiCecHelperClass(utHelperClass):
 
     def getAllocatedLogicalAddressesFromHfp(self):
         """Select one available logical address for each device type in the HFP."""
+        def normalize_device_type(device_type):
+            if not isinstance(device_type, str):
+                return None
+            # Accept both HFP enum names (AUDIO_SYSTEM) and controller names (AudioSystem).
+            alias = "".join(character for character in device_type.upper() if character.isalnum())
+            return DEVICE_TYPE_ALIASES.get(alias)
+
         with open(self.moduleHFPFile, "r") as profile_file:
             hfp = yaml.safe_load(profile_file)
 
         hdmicec_hfp = hfp.get("hdmicec", {})
-        device_types = [hdmicec_hfp.get("PRIMARY_DEVICE_TYPE")]
-        secondary_device_type = hdmicec_hfp.get("SECONDARY_DEVICE_TYPE", "NONE")
+        primary_device_type = normalize_device_type(hdmicec_hfp.get("PRIMARY_DEVICE_TYPE"))
+        secondary_device_type = normalize_device_type(hdmicec_hfp.get("SECONDARY_DEVICE_TYPE", "NONE"))
+        if primary_device_type is None or secondary_device_type is None:
+            self.log.error("HFP contains an unsupported HDMI CEC device type")
+            return None
+
+        device_types = [primary_device_type]
         if secondary_device_type != "NONE":
             device_types.append(secondary_device_type)
+
+        if self.hdmiCECController.controllerType.lower() == "virtual-cec-client":
+            # The virtual network models the DUT roles, so it must agree with the
+            # HFP before logical addresses are selected for those roles.
+            network_config = yaml.safe_load(self.hdmiCECController.controller.cecDeviceNetworkConfigString)
+            emulated_device = network_config.get("HdmiCec", {}).get("config", {}).get("emulated_device", {})
+            emulated_primary_device_type = normalize_device_type(emulated_device.get("device_type_primary"))
+            emulated_secondary_device_type = normalize_device_type(
+                emulated_device.get("device_type_secondary", "NONE"))
+            if emulated_primary_device_type is None or emulated_secondary_device_type is None:
+                self.log.error("Virtual CEC configuration contains an unsupported emulated device type")
+                return None
+
+            emulated_device_types = [emulated_primary_device_type]
+            if emulated_secondary_device_type != "NONE":
+                emulated_device_types.append(emulated_secondary_device_type)
+            if device_types != emulated_device_types:
+                self.log.error(
+                    f"HFP device types {device_types} do not match emulated device types "
+                    f"{emulated_device_types}")
+                return None
 
         used_logical_addresses = {device.get("logical address") for device in self.connectedDevices}
         allocated_logical_addresses = []
         for device_type in device_types:
             candidates = HFP_DEVICE_TYPE_LOGICAL_ADDRESSES.get(device_type)
             if not candidates:
+                self.log.error(f"No logical-address candidates for DUT device type {device_type}")
                 return None
 
+            self.log.info(
+                f"Allocating logical address: device_type={device_type}, candidates={candidates}, "
+                f"used={used_logical_addresses}, allocated={allocated_logical_addresses}")
+            # Do not reuse an address observed on the bus or selected for another DUT role.
             logical_address = next(
                 (address for address in candidates
                  if address not in used_logical_addresses and address not in allocated_logical_addresses),
                 None)
             if logical_address is None:
+                self.log.error(
+                    f"No available logical address for DUT device type {device_type}; "
+                    f"candidates={candidates}, used={used_logical_addresses}")
                 return None
 
             allocated_logical_addresses.append(logical_address)

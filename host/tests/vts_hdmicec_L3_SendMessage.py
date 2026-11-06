@@ -50,13 +50,13 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         configureNetwork = True
         super().__init__(self.testName, configureNetwork, qcId, log, testMenuConfigFile, moduleName, artifactDirPath)
 
-    def updateTestconfigurationFile(self, dutLogicalAddresses:list, messageSourceAddress:int, destinationLogicalAddress:int):
+    def updateTestconfigurationFile(self, messageSourceAddress:int, destinationLogicalAddress:int):
         """
         Updates the HDMI CEC L3 SendMessage YAML configuration file.
         """
         data = self.hdmiCecReadYaml(self.l3TestConfigFile)
         send_msg = data["HdmiCec"]["L3"]["SendMessage"]
-        send_msg["source_logical_address"] = dutLogicalAddresses
+        send_msg["source_logical_address"] = [messageSourceAddress]
 
         self.cecMessageList = []
         for cecmessage in send_msg.get("cec_messages", []):
@@ -98,7 +98,6 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         finalResult = True
         for messageSourceAddress in self.dutLogicalAddress:
             self.updateTestconfigurationFile(
-                self.dutLogicalAddress,
                 messageSourceAddress,
                 int(self.destinationLogicalAddress))
 
@@ -112,6 +111,7 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
                 results = False
 
             self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase}')
+            finalResult = finalResult and results
 
             time.sleep(30)  # Wait for messages to be sent and received
 

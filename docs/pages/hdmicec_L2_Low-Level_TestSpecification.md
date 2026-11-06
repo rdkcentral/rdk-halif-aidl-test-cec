@@ -150,7 +150,9 @@ If user chose to run the test in interactive mode, then the test case has to be 
 | Priority | High |
 
 **Pre-Conditions :**
-None
+- The HDMI CEC interface is initially in the `CLOSED` state.
+- No external HDMI CEC devices are connected.
+- The directed-message destination selected by the test is not registered by another follower.
 
 **Dependencies :**
 None
@@ -163,18 +165,18 @@ If user chose to run the test in interactive mode, then the test case has to be 
 | Variation / Steps | Description | Test Data | Expected Result | Notes |
 |-------------------|-------------|-----------|----------------|-------|
 | 1 | Open the HDMI CEC with event listener | event listener handle | Function should return valid controller handle ||
-| 2 | Add logical address | {0} | Function should return `True` ||
-| 3 | Send directed CEC message | Message: {header, 0x04}, where the source is the configured primary logical address and the destination is 5, or 10 when the source is 5 | Function should return success status ||
+| 2 | Add configured logical addresses | Primary logical address and optional secondary logical address | Function should return `True` ||
+| 3 | Send directed CEC message | Message: {header, 0x04}. The header source is the configured primary logical address. The destination is 5, or 10 when the source is 5, to avoid a self-addressed message | Function should return success status ||
 | 4 | Wait for message callback | | onMessageSent callback should be triggered with message and status ||
 | 5 | Verify callback message | | Message should match the directed message sent in step 3 ||
-| 6 | Verify callback status | | Status should be ACK_STATE_1 ||
+| 6 | Verify callback status | | Status should be `ACK_STATE_1`, indicating that the directly addressed follower did not acknowledge the message and at least one retransmission was attempted ||
 | 7 | Send maximum length directed message | Message: {header, 0x64, 0x00, ..., 0x00} (16 bytes), using the source and destination selected in step 3 | Function should return success status ||
 | 8 | Wait for message callback | | onMessageSent callback should be triggered with message and status ||
 | 9 | Verify callback message | | Message should match the 16-byte message sent ||
-| 10 | Verify callback status | | Status should be ACK_STATE_1 ||
+| 10 | Verify callback status | | Status should be `ACK_STATE_1`, indicating that the directly addressed follower did not acknowledge the message and at least one retransmission was attempted ||
 | 11 | Send broadcast CEC message | Message: {header, 0x85}, where the source is the configured primary logical address and the destination is 15 | Function should return success status ||
 | 12 | Wait for message callback | | onMessageSent callback should be triggered with message and status ||
 | 13 | Verify callback message | | Message should match the broadcast message sent in step 11 ||
-| 14 | Verify callback status | | Status should be ACK_STATE_1 ||
-| 15 | Remove logical address | {0} | Function should return `True` ||
+| 14 | Verify callback status | | Status should be `ACK_STATE_1`, indicating that the broadcast message was sent and not rejected by any device ||
+| 15 | Remove configured logical addresses | Primary logical address and optional secondary logical address | Function should return `True` ||
 | 16 | Close the HDMI CEC | | Function should return `True` ||
