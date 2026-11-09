@@ -387,10 +387,35 @@ UT_ADD_TEST(VTS_L2_HDMICEC, sendMessageValidation)
     }
 
     const uint8_t sourceAddress = static_cast<uint8_t>(logicalAddresses[0]);
-    constexpr uint8_t preferredDestinationAddress = 0x05; // Preferred destination address for direct messages
-    constexpr uint8_t fallbackDestinationAddress = 0x0A; // Fallback destination address for direct messages
-    const uint8_t destinationAddress =
-        sourceAddress == preferredDestinationAddress ? fallbackDestinationAddress : preferredDestinationAddress; // Choose destination address based on source address
+    uint8_t destinationAddress = 0;
+    bool hasUnconfiguredDestination = false;
+
+    // Find an unconfigured destination address for sending direct messages
+    for (uint8_t candidateAddress = 0; candidateAddress <= 0x0E; ++candidateAddress)
+    {
+        bool isConfiguredAddress = false;
+        for (const int32_t logicalAddress : logicalAddresses)
+        {
+            if (logicalAddress == candidateAddress)
+            {
+                isConfiguredAddress = true;
+                break;
+            }
+        }
+
+        if (!isConfiguredAddress)
+        {
+            destinationAddress = candidateAddress;
+            hasUnconfiguredDestination = true;
+            break;
+        }
+    }
+    UT_ASSERT_TRUE(hasUnconfiguredDestination);
+    if (!hasUnconfiguredDestination)
+    {
+        return;
+    }
+
     const uint8_t directMessageHeader = static_cast<uint8_t>((sourceAddress << 4) | destinationAddress); // Construct direct message header with source and destination addresses
     vector<uint8_t> directMsg_1 = {directMessageHeader, 0x04}; // Direct message with opcode 0x04
     vector<uint8_t> directMsg_2 = {directMessageHeader, 0x64, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

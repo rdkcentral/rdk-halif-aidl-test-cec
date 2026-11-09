@@ -164,13 +164,13 @@ UT_ADD_TEST(VTS_L1_HDMICEC, getProperty_pos)
         static_cast<int8_t>(gHdmiCecDeviceInfo.hal_cec_version));
 
     HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::PRIMARY_DEVICE_TYPE, primaryDeviceType);
-    UT_ASSERT_TRUE(primaryDeviceType.has_value());
+    UT_ASSERT_TRUE_FATAL(primaryDeviceType.has_value());
     UT_ASSERT_EQUAL(
         primaryDeviceType->value->get<PropertyValue::Value::Tag::intValue>(),
         static_cast<int32_t>(gHdmiCecDeviceInfo.primary_device_type));
 
     HDMICEC_GET_PROPERTY_SUCCESS(gHDMICECHandle, hdmicec::Property::SECONDARY_DEVICE_TYPE, secondaryDeviceType);
-    UT_ASSERT_TRUE(secondaryDeviceType.has_value());
+    UT_ASSERT_TRUE_FATAL(secondaryDeviceType.has_value());
     UT_ASSERT_EQUAL(
         secondaryDeviceType->value->get<PropertyValue::Value::Tag::intValue>(),
         static_cast<int32_t>(gHdmiCecDeviceInfo.secondary_device_type));
@@ -815,7 +815,7 @@ UT_ADD_TEST(VTS_L1_HDMICEC, removeLogicalAddresses_neg)
     vector<int32_t> belowRangeLogicalAddresses = {-1};
     vector<int32_t> aboveRangeLogicalAddresses = {15};
     vector<int32_t> emptyLogicalAddresses;
-    vector<int32_t> notAddedLogicalAddresses = {14};
+    vector<int32_t> notAddedLogicalAddresses;
     vector<int32_t> mixedLogicalAddresses;
 
     const bool hasConfiguredLogicalAddresses = hdmicecGetLogicalAddressesForDeviceTypes(
@@ -828,8 +828,33 @@ UT_ADD_TEST(VTS_L1_HDMICEC, removeLogicalAddresses_neg)
         return;
     }
 
-    mixedLogicalAddresses = logicalAddresses;
-    mixedLogicalAddresses.push_back(notAddedLogicalAddresses[0]);
+    // Find a logical address that is not part of the configured logical addresses
+    for (int32_t candidateAddress = 0; candidateAddress <= 14; ++candidateAddress)
+    {
+        bool isConfiguredAddress = false;
+        for (const int32_t logicalAddress : logicalAddresses)
+        {
+            if (logicalAddress == candidateAddress)
+            {
+                isConfiguredAddress = true;
+                break;
+            }
+        }
+
+        if (!isConfiguredAddress)
+        {
+            notAddedLogicalAddresses = {candidateAddress};
+            break;
+        }
+    }
+    UT_ASSERT_FALSE(notAddedLogicalAddresses.empty());
+    if (notAddedLogicalAddresses.empty())
+    {
+        return;
+    }
+
+    mixedLogicalAddresses = logicalAddresses; // Start with all configured logical addresses
+    mixedLogicalAddresses.push_back(notAddedLogicalAddresses[0]); // Add a logical address that was not previously added
 
     /* Open HDMI CEC interface */
     HDMICEC_OPEN_SUCCESS(gHDMICECHandle, controllerListener, hdmiCecController, true);

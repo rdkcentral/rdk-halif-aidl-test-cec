@@ -173,6 +173,9 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, target_config_path)
         results &= self.receiveMessage("DUT:[], Broadcast")
 
+        # Restore directed messages for the remaining negative-address scenario.
+        self.updateTestconfigurationFile([], self.dutLogicalAddress[0], 5, 5)
+
         # Scenario 4: Messages sent to different logical address other than DUT
         # pick logical address not assigned to DUT
         allPossibleAddresses = set(range(0, 15))

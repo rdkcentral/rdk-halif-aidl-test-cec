@@ -152,7 +152,7 @@ If user chose to run the test in interactive mode, then the test case has to be 
 **Pre-Conditions :**
 - The HDMI CEC interface is initially in the `CLOSED` state.
 - No external HDMI CEC devices are connected.
-- The directed-message destination selected by the test is not registered by another follower.
+- The directed-message destination selected by the test is not included in the configured primary or secondary logical-address list and is not registered by another follower.
 
 **Dependencies :**
 None
@@ -166,7 +166,7 @@ If user chose to run the test in interactive mode, then the test case has to be 
 |-------------------|-------------|-----------|----------------|-------|
 | 1 | Open the HDMI CEC with event listener | event listener handle | Function should return valid controller handle ||
 | 2 | Add configured logical addresses | Primary logical address and optional secondary logical address | Function should return `True` ||
-| 3 | Send directed CEC message | Message: {header, 0x04}. The header source is the configured primary logical address. The destination is 5, or 10 when the source is 5, to avoid a self-addressed message | Function should return success status ||
+| 3 | Send directed CEC message | Message: {header, 0x04}. The header source is the configured primary logical address. The destination is a directly addressable logical address from 0 to 14 that is absent from the configured primary and secondary logical-address list | Function should return success status ||
 | 4 | Wait for message callback | | onMessageSent callback should be triggered with message and status ||
 | 5 | Verify callback message | | Message should match the directed message sent in step 3 ||
 | 6 | Verify callback status | | Status should be `ACK_STATE_1`, indicating that the directly addressed follower did not acknowledge the message and at least one retransmission was attempted ||

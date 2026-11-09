@@ -32,7 +32,7 @@ The goal is to ensure that:
 - `RAFT`   - Rapid Automation Framework for Testing
 - `YAML`   - YAML Ain't Markup Language
 - `AIDL`   - Android Interface Definition Language
-- `controller` - CEC message peer used to send, receive, and verify messages
+- `controller` - CEC message peer used to send, receive, and verify messages(Ex: Pulse Eight Hardware Adaptor or vDevice/vComponent)
 
 ### References
 
@@ -163,10 +163,10 @@ HdmiCec:
       source_logical_address: [0] # Host-generated HFP address list; maximum two entries
       cec_messages:
       - Parameters:
-        message: ['0x41', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
-          '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
-        repeat: 5
-        wait_for_response_timeout: 5000
+          message: ['0x10', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
+            '0x65', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
+          repeat: 5
+          wait_for_response_timeout: 5000
 ```
 
 - **source_logical_address:** Host-generated list of one or two logical addresses assigned to `DUT` before receiving messages.
