@@ -178,7 +178,7 @@ bool hdmicecValidateLogicalAddressList(const std::vector<int32_t>& logicalAddres
 {
     if (logicalAddresses.empty())
     {
-        return allowEmpty;
+        return false;
     }
 
     if (logicalAddresses.size() > 2)

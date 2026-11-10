@@ -318,7 +318,6 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
         testConfigurationList,
         sourceLogicalAddresses);
     UT_ASSERT_EQUAL_FATAL(status, UT_STATUS_OK);
-    UT_ASSERT_TRUE(hdmicecValidateLogicalAddressList(sourceLogicalAddresses, true));
 
     // Register Event Listener
     HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);

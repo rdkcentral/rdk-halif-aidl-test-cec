@@ -62,10 +62,9 @@
  *
  */
 
+#include "ut_control_plane.h"
 #include "ut_kvp_profile.h"
 #include "vts_hdmicec_parse_hfp.h"
-
-#include <cstring>
 
 using namespace std;
 
@@ -73,45 +72,30 @@ namespace
 {
 using com::rdk::hal::hdmicec::DeviceType;
 
+const ut_control_keyStringMapping_t deviceTypeMap[] =
+{
+    {"NONE", static_cast<int32_t>(DeviceType::NONE)},
+    {"TV", static_cast<int32_t>(DeviceType::TV)},
+    {"RECORDING_DEVICE", static_cast<int32_t>(DeviceType::RECORDING_DEVICE)},
+    {"TUNER", static_cast<int32_t>(DeviceType::TUNER)},
+    {"PLAYBACK_DEVICE", static_cast<int32_t>(DeviceType::PLAYBACK_DEVICE)},
+    {"AUDIO_SYSTEM", static_cast<int32_t>(DeviceType::AUDIO_SYSTEM)},
+    {"CEC_SWITCH", static_cast<int32_t>(DeviceType::CEC_SWITCH)},
+    {"PROCESSOR", static_cast<int32_t>(DeviceType::PROCESSOR)},
+    {nullptr, 0}
+};
+
 bool parseDeviceType(const char* value, DeviceType& deviceType)
 {
-    if (strcmp(value, "NONE") == 0)
-    {
-        deviceType = DeviceType::NONE;
-    }
-    else if (strcmp(value, "TV") == 0)
-    {
-        deviceType = DeviceType::TV;
-    }
-    else if (strcmp(value, "RECORDING_DEVICE") == 0)
-    {
-        deviceType = DeviceType::RECORDING_DEVICE;
-    }
-    else if (strcmp(value, "TUNER") == 0)
-    {
-        deviceType = DeviceType::TUNER;
-    }
-    else if (strcmp(value, "PLAYBACK_DEVICE") == 0)
-    {
-        deviceType = DeviceType::PLAYBACK_DEVICE;
-    }
-    else if (strcmp(value, "AUDIO_SYSTEM") == 0)
-    {
-        deviceType = DeviceType::AUDIO_SYSTEM;
-    }
-    else if (strcmp(value, "CEC_SWITCH") == 0)
-    {
-        deviceType = DeviceType::CEC_SWITCH;
-    }
-    else if (strcmp(value, "PROCESSOR") == 0)
-    {
-        deviceType = DeviceType::PROCESSOR;
-    }
-    else
+    constexpr int32_t invalidDeviceType = -2;
+    const uint32_t mappedDeviceType = UT_Control_GetMapValue(
+        deviceTypeMap, const_cast<char*>(value), invalidDeviceType);
+    if (mappedDeviceType == static_cast<uint32_t>(invalidDeviceType))
     {
         return false;
     }
 
+    deviceType = static_cast<DeviceType>(static_cast<int32_t>(mappedDeviceType));
     return true;
 }
 }

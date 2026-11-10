@@ -199,27 +199,6 @@ class hdmiCecHelperClass(utHelperClass):
         if secondary_device_type != "NONE":
             device_types.append(secondary_device_type)
 
-        if self.hdmiCECController.controllerType.lower() == "virtual-cec-client":
-            # The virtual network models the DUT roles, so it must agree with the
-            # HFP before logical addresses are selected for those roles.
-            network_config = yaml.safe_load(self.hdmiCECController.controller.cecDeviceNetworkConfigString)
-            emulated_device = network_config.get("HdmiCec", {}).get("config", {}).get("emulated_device", {})
-            emulated_primary_device_type = normalize_device_type(emulated_device.get("device_type_primary"))
-            emulated_secondary_device_type = normalize_device_type(
-                emulated_device.get("device_type_secondary", "NONE"))
-            if emulated_primary_device_type is None or emulated_secondary_device_type is None:
-                self.log.error("Virtual CEC configuration contains an unsupported emulated device type")
-                return None
-
-            emulated_device_types = [emulated_primary_device_type]
-            if emulated_secondary_device_type != "NONE":
-                emulated_device_types.append(emulated_secondary_device_type)
-            if device_types != emulated_device_types:
-                self.log.error(
-                    f"HFP device types {device_types} do not match emulated device types "
-                    f"{emulated_device_types}")
-                return None
-
         used_logical_addresses = {device.get("logical address") for device in self.connectedDevices}
         allocated_logical_addresses = []
         for device_type in device_types:

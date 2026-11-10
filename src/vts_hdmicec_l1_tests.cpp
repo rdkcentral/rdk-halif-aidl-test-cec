@@ -659,11 +659,12 @@ UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_pos)
  * |07|Call addLogicalAddresses() with mixed duplicates|{1,2,1,3,2}|Return status=false|should pass|
  * |08|Call addLogicalAddresses() with an empty list|{}|Return status=false|should pass|
  * |09|Call addLogicalAddresses() with more than two addresses|{0,1,2}|Return status=false|should pass|
- * |10|Call addLogicalAddresses()|HFP address list|Return status=true|should pass|
- * |11|Call addLogicalAddresses() with already-added addresses|HFP address list|Return status=false|should pass|
- * |12|Call removeLogicalAddresses()|HFP address list|Return status=true|should pass|
- * |13|Call close()|Valid controller handle  |Return status=true|should pass|
- * |14|Call addLogicalAddresses() after close|HFP address list|Return status=false (ILLEGAL_STATE)|should pass|
+ * |10|Call addLogicalAddresses() with unsupported device-type address|Address not associated with the HFP primary or secondary type|Return status=false|should pass|
+ * |11|Call addLogicalAddresses()|HFP address list|Return status=true|should pass|
+ * |12|Call addLogicalAddresses() with already-added addresses|HFP address list|Return status=false|should pass|
+ * |13|Call removeLogicalAddresses()|HFP address list|Return status=true|should pass|
+ * |14|Call close()|Valid controller handle  |Return status=true|should pass|
+ * |15|Call addLogicalAddresses() after close|HFP address list|Return status=false (ILLEGAL_STATE)|should pass|
  */
 UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_neg)
 {
@@ -677,6 +678,7 @@ UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_neg)
     vector<int32_t> mixedDuplicateLogicalAddresses = {1, 2, 1, 3, 2};
     vector<int32_t> emptyLogicalAddresses;
     vector<int32_t> tooManyLogicalAddresses = {0, 1, 2};
+    vector<int32_t> unsupportedLogicalAddresses; // Logical addresses not associated with the HFP primary or secondary device types
 
     const bool hasConfiguredLogicalAddresses = hdmicecGetLogicalAddressesForDeviceTypes(
         gHdmiCecDeviceInfo.primary_device_type,
@@ -684,6 +686,31 @@ UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_neg)
         logicalAddresses);
     UT_ASSERT_TRUE(hasConfiguredLogicalAddresses);
     if (!hasConfiguredLogicalAddresses)
+    {
+        return;
+    }
+
+    const vector<int32_t> deviceTypeLogicalAddresses = {0, 1, 3, 4, 5, 13, 14}; // All possible logical addresses for device types
+    for (const int32_t candidateAddress : deviceTypeLogicalAddresses)
+    {
+        bool isConfiguredAddress = false;
+        for (const int32_t logicalAddress : logicalAddresses)
+        {
+            if (logicalAddress == candidateAddress)
+            {
+                isConfiguredAddress = true;
+                break;
+            }
+        }
+
+        if (!isConfiguredAddress)
+        {
+            unsupportedLogicalAddresses = {candidateAddress};
+            break;
+        }
+    }
+    UT_ASSERT_FALSE(unsupportedLogicalAddresses.empty());
+    if (unsupportedLogicalAddresses.empty())
     {
         return;
     }
@@ -698,6 +725,7 @@ UT_ADD_TEST(VTS_L1_HDMICEC, addLogicalAddresses_neg)
     HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, mixedDuplicateLogicalAddresses, Status::EX_NONE);
     HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, emptyLogicalAddresses, Status::EX_NONE);
     HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, tooManyLogicalAddresses, Status::EX_NONE);
+    HDMICEC_ADD_LOGICAL_ADDRESS_FAILURE(hdmiCecController, unsupportedLogicalAddresses, Status::EX_NONE);
 
     /* Addresses already added must be rejected. */
     HDMICEC_ADD_LOGICAL_ADDRESS_SUCCESS(hdmiCecController, logicalAddresses);
