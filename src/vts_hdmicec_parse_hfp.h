@@ -71,10 +71,13 @@
 #include <ut.h>
 #include <ut_kvp_profile.h>
 #include <ut_log.h>
+#include <com/rdk/hal/hdmicec/DeviceType.h>
 
 struct hdmicec_device_info
 {
     int8_t hal_cec_version;
+    com::rdk::hal::hdmicec::DeviceType primary_device_type;
+    com::rdk::hal::hdmicec::DeviceType secondary_device_type;
 };
 
 extern hdmicec_device_info gHdmiCecDeviceInfo;

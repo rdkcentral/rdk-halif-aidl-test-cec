@@ -113,6 +113,98 @@ std::string hdmicecVecByteToHexString(const std::vector<uint8_t>& data)
     return oss.str();
 }
 
+bool hdmicecGetLogicalAddressForDeviceType(DeviceType deviceType, int32_t& logicalAddress)
+{
+    switch (deviceType)
+    {
+        case DeviceType::TV:
+            logicalAddress = 0;
+            return true;
+        case DeviceType::RECORDING_DEVICE:
+            logicalAddress = 1;
+            return true;
+        case DeviceType::TUNER:
+            logicalAddress = 3;
+            return true;
+        case DeviceType::PLAYBACK_DEVICE:
+            logicalAddress = 4;
+            return true;
+        case DeviceType::AUDIO_SYSTEM:
+            logicalAddress = 5;
+            return true;
+        case DeviceType::CEC_SWITCH:
+            logicalAddress = 13;
+            return true;
+        case DeviceType::PROCESSOR:
+            logicalAddress = 14;
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool hdmicecGetLogicalAddressesForDeviceTypes(DeviceType primaryDeviceType,
+                                               DeviceType secondaryDeviceType,
+                                               std::vector<int32_t>& logicalAddresses)
+{
+    int32_t primaryLogicalAddress = -1;
+    int32_t secondaryLogicalAddress = -1;
+
+    logicalAddresses.clear();
+    if (!hdmicecGetLogicalAddressForDeviceType(primaryDeviceType, primaryLogicalAddress))
+    {
+        return false;
+    }
+
+    logicalAddresses.push_back(primaryLogicalAddress);
+    if (secondaryDeviceType == DeviceType::NONE)
+    {
+        return true;
+    }
+
+    if (!hdmicecGetLogicalAddressForDeviceType(secondaryDeviceType, secondaryLogicalAddress) ||
+        secondaryLogicalAddress == primaryLogicalAddress)
+    {
+        logicalAddresses.clear();
+        return false;
+    }
+
+    logicalAddresses.push_back(secondaryLogicalAddress);
+    return true;
+}
+
+bool hdmicecValidateLogicalAddressList(const std::vector<int32_t>& logicalAddresses,
+                                       bool allowEmpty)
+{
+    if (logicalAddresses.empty())
+    {
+        return false;
+    }
+
+    if (logicalAddresses.size() > 2)
+    {
+        return false;
+    }
+
+    for (size_t index = 0; index < logicalAddresses.size(); ++index)
+    {
+        if (logicalAddresses[index] < 0 || logicalAddresses[index] > 14)
+        {
+            return false;
+        }
+
+        for (size_t compareIndex = index + 1; compareIndex < logicalAddresses.size(); ++compareIndex)
+        {
+            if (logicalAddresses[index] == logicalAddresses[compareIndex])
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 /** @} */ // End of HDMI_CEC_HALTEST_HELPER
 /** @} */ // End of HDMI_CEC_HALTEST
 /** @} */ // End of HDMI_CEC
