@@ -39,6 +39,7 @@ from raft.framework.plugins.ut_raft.utBaseUtils import utBaseUtils
 HDMICEC_TEST_MENU_CONFIGURATION_FILE = os.path.join(dir_path, "vts_hdmicec_testMenuConfiguration.yaml")
 HDMICEC_TESTCASES_CONFIGURATION_FILE = os.path.join(os.path.join(dir_path, "../configs"), "vts_hdmicec_testcase_configuration.yaml")
 HDMICEC_L3_TEST_CONFIG_FILE = os.path.join(os.path.join(dir_path, "../../test_configuration"), "vts_l3_HdmiCec.yaml")
+HDMICEC_HFP_FILE = os.path.join(os.path.join(dir_path, "../../profiles"), "hfp-hdmicec.yaml")
 
 HFP_DEVICE_TYPE_LOGICAL_ADDRESSES = {
     "TV": [0],
@@ -185,8 +186,13 @@ class hdmiCecHelperClass(utHelperClass):
             alias = "".join(character for character in device_type.upper() if character.isalnum())
             return DEVICE_TYPE_ALIASES.get(alias)
 
-        with open(self.moduleHFPFile, "r") as profile_file:
-            hfp = yaml.safe_load(profile_file)
+        if self.moduleName is None:
+            with open(self.moduleHFPFile, "r") as profile_file:
+                hfp = yaml.safe_load(profile_file)
+        else:
+            # Unified test environment
+            with open(HDMICEC_HFP_FILE, "r") as profile_file:
+                hfp = yaml.safe_load(profile_file)
 
         hdmicec_hfp = hfp.get("hdmicec", {})
         primary_device_type = normalize_device_type(hdmicec_hfp.get("PRIMARY_DEVICE_TYPE"))
