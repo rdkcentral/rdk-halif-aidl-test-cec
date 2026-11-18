@@ -186,13 +186,8 @@ class hdmiCecHelperClass(utHelperClass):
             alias = "".join(character for character in device_type.upper() if character.isalnum())
             return DEVICE_TYPE_ALIASES.get(alias)
 
-        if self.moduleName is None:
-            with open(self.moduleHFPFile, "r") as profile_file:
-                hfp = yaml.safe_load(profile_file)
-        else:
-            # Unified test environment
-            with open(HDMICEC_HFP_FILE, "r") as profile_file:
-                hfp = yaml.safe_load(profile_file)
+        with open(HDMICEC_HFP_FILE, "r") as profile_file:
+            hfp = yaml.safe_load(profile_file)
 
         hdmicec_hfp = hfp.get("hdmicec", {})
         primary_device_type = normalize_device_type(hdmicec_hfp.get("PRIMARY_DEVICE_TYPE"))
