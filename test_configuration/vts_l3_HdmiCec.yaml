@@ -58,6 +58,14 @@ HdmiCec:
       source_logical_address: [0] # DUT logical address
       cec_messages:
       - Parameters:
+          message: ['0x1F', '0x32', '0x65', '0x6E', '0x67']
+          repeat: 0
+          wait_for_response_timeout: 7000
+      - Parameters:
+          message: ['0x1F', '0x87', '0x00', '0x19', '0xA2']
+          repeat: 0
+          wait_for_response_timeout: 7000
+      - Parameters:
           # Sends set OSD Name message from controller to DUT
           message: ['0x10', '0x47', '0x52', '0x44', '0x4B', '0x20', '0x76', '0x44',
             '0x65', '0x76', '0x69', '0x63', '0x65', '0x20', '0x54', '0x56']
@@ -66,12 +74,4 @@ HdmiCec:
       - Parameters:
           message: ['0x10', '0x9F', '0x05']
           repeat: 5
-          wait_for_response_timeout: 7000
-      - Parameters:
-          message: ['0x1F', '0x32', '0x65', '0x6E', '0x67']
-          repeat: 0
-          wait_for_response_timeout: 7000
-      - Parameters:
-          message: ['0x1F', '0x87', '0x00', '0x19', '0xA2']
-          repeat: 0
           wait_for_response_timeout: 7000
