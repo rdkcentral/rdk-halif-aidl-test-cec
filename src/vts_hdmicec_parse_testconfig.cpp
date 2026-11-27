@@ -136,7 +136,6 @@ UT_status_t vts_hdmicec_parse_sendMessage_config(char *configurationFile, const 
                                                  const char *testName, vector<hdmicecSendMsgConfiguration_t>& testConfigurationList,
                                                  std::vector<int32_t>& sourceLogicalAddresses, int32_t& delayBetweenMsgsMsec)
 {
-    char resultKVP[UT_KVP_MAX_ELEMENT_SIZE] = {0};
     hdmicecSendMsgConfiguration_t testConfiguration;
 
     void *testconfig = vcomponentkvp_create_instance(configurationFile);

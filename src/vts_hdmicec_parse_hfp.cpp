@@ -62,16 +62,63 @@
  *
  */
 
+#include "ut_control_plane.h"
 #include "ut_kvp_profile.h"
 #include "vts_hdmicec_parse_hfp.h"
 
 using namespace std;
 
-hdmicec_device_info gHdmiCecDeviceInfo = {0};
+namespace
+{
+using com::rdk::hal::hdmicec::DeviceType;
+
+const ut_control_keyStringMapping_t deviceTypeMap[] =
+{
+    {"NONE", static_cast<int32_t>(DeviceType::NONE)},
+    {"TV", static_cast<int32_t>(DeviceType::TV)},
+    {"RECORDING_DEVICE", static_cast<int32_t>(DeviceType::RECORDING_DEVICE)},
+    {"TUNER", static_cast<int32_t>(DeviceType::TUNER)},
+    {"PLAYBACK_DEVICE", static_cast<int32_t>(DeviceType::PLAYBACK_DEVICE)},
+    {"AUDIO_SYSTEM", static_cast<int32_t>(DeviceType::AUDIO_SYSTEM)},
+    {"CEC_SWITCH", static_cast<int32_t>(DeviceType::CEC_SWITCH)},
+    {"PROCESSOR", static_cast<int32_t>(DeviceType::PROCESSOR)},
+    {nullptr, 0}
+};
+
+bool parseDeviceType(const char* value, DeviceType& deviceType)
+{
+    constexpr int32_t invalidDeviceType = -2;
+    const uint32_t mappedDeviceType = UT_Control_GetMapValue(
+        deviceTypeMap, const_cast<char*>(value), invalidDeviceType);
+    if (mappedDeviceType == static_cast<uint32_t>(invalidDeviceType))
+    {
+        return false;
+    }
+
+    deviceType = static_cast<DeviceType>(static_cast<int32_t>(mappedDeviceType));
+    return true;
+}
+}
+
+hdmicec_device_info gHdmiCecDeviceInfo = {0, DeviceType::NONE, DeviceType::NONE};
 
 UT_status_t vts_hdmicec_parse_hfp()
 {
+    char primaryDeviceType[UT_KVP_MAX_ELEMENT_SIZE] = {0};
+    char secondaryDeviceType[UT_KVP_MAX_ELEMENT_SIZE] = {0};
+
     gHdmiCecDeviceInfo.hal_cec_version = static_cast<int8_t>(UT_KVP_PROFILE_GET_UINT8("hdmicec.HAL_CEC_VERSION"));
+
+    UT_KVP_PROFILE_GET_STRING("hdmicec.PRIMARY_DEVICE_TYPE", primaryDeviceType);
+    UT_KVP_PROFILE_GET_STRING("hdmicec.SECONDARY_DEVICE_TYPE", secondaryDeviceType);
+
+    if (!parseDeviceType(primaryDeviceType, gHdmiCecDeviceInfo.primary_device_type) ||
+        !parseDeviceType(secondaryDeviceType, gHdmiCecDeviceInfo.secondary_device_type))
+    {
+        UT_LOG_ERROR("Invalid HDMI CEC device type in HFP");
+        return UT_STATUS_FAILURE;
+    }
+
     return UT_STATUS_OK;
 }
 

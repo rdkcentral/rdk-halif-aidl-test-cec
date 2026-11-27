@@ -51,7 +51,8 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         configureNetwork = True
         super().__init__(self.testName, configureNetwork, qcId, log, testMenuConfigFile, moduleName, artifactDirPath)
 
-    def updateTestconfigurationFile(self, dutLogicalAddress:list=[], testDestinationAddress:int=None, broadcastRepeatCount:int=5):
+    def updateTestconfigurationFile(self, dutLogicalAddress:list=[], testDestinationAddress:int=None,
+                                    broadcastRepeatCount:int=5, directedRepeatCount:int=None):
         """
         Updates the HDMI CEC L3 ReceiveMessage YAML configuration file.
         """
@@ -75,6 +76,8 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
                 parameters["Parameters"]["repeat"] = broadcastRepeatCount
             else:
                 final_dest = testDestinationAddress
+                if directedRepeatCount is not None:
+                    parameters["Parameters"]["repeat"] = directedRepeatCount
 
             parameters["Parameters"]["message"][0] = f"0x{(self.controllerLogicalAddress << 4 | final_dest):02X}"
             self.sendMessageList.append({
@@ -139,8 +142,7 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
         results = True
         self.testcase = "ReceiveMessage"
 
-        possibleLogicalAddresses = self.getPossibleLogicalAddresses(self.device_type)
-        self.dutLogicalAddress = self.pickLogicalAddressForDut(possibleLogicalAddresses)
+        self.dutLogicalAddress = self.getAllocatedLogicalAddressesFromHfp()
         self.controllerLogicalAddress = self.pickValidLogicalAddressForController()
 
         if self.dutLogicalAddress is None or self.controllerLogicalAddress is None:
@@ -158,22 +160,30 @@ class  VTS_HDMICEC_L3_ReceiveMessage(hdmiCecHelperClass):
 
             results &= self.receiveMessage(f"DUT:{self.dutLogicalAddress}, Destination:{addr}")
 
-        # Scenario 2: Messages sent to DUT without assigning logical address to DUT
+        # Scenario 2: Directed messages sent to DUT without assigning a logical address
         for addr in self.dutLogicalAddress:
-            self.updateTestconfigurationFile([], addr, 5)
+            self.updateTestconfigurationFile([], addr, 0)
 
             self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, target_config_path)
 
             results &= self.receiveMessage(f"DUT:[], Destination:{addr}")
 
-        # Scenario 3: Messages sent to different logical address than DUT
+        # Scenario 3: Broadcast messages must be received without a logical address.
+        self.updateTestconfigurationFile([], self.dutLogicalAddress[0], 5, 0)
+        self.utilities.sftpCopy(self.hal_session, self.l3TestConfigFile, target_config_path)
+        results &= self.receiveMessage("DUT:[], Broadcast")
+
+        # Restore directed messages for the remaining negative-address scenario.
+        self.updateTestconfigurationFile([], self.dutLogicalAddress[0], 5, 5)
+
+        # Scenario 4: Messages sent to different logical address other than DUT
         # pick logical address not assigned to DUT
         allPossibleAddresses = set(range(0, 15))
         dutAddresses = set(self.dutLogicalAddress)
         availableAddresses = list(allPossibleAddresses - dutAddresses)
 
         if not availableAddresses:
-            self.log.stepResult(False, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Description: No available logical addresses for Scenario 3')
+            self.log.stepResult(False, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Description: No available logical addresses for Scenario 4')
             return False
 
         otherAddr = availableAddresses[0]

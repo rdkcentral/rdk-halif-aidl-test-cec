@@ -188,6 +188,24 @@ UT_ADD_TEST(VTS_L3_HDMICEC, SendMessage)
                                                   testConfigurationList, sourceLogicalAddresses, delayBetweenMsgsMsec);
 
     UT_ASSERT_EQUAL_FATAL(status, UT_STATUS_OK);
+    UT_ASSERT_TRUE(hdmicecValidateLogicalAddressList(sourceLogicalAddresses, false));
+
+    for (const auto &testConfiguration : testConfigurationList)
+    {
+        const int32_t messageSourceAddress = testConfiguration.message[0] >> 4;
+        bool isSourceAddressRegistered = false;
+
+        for (const int32_t logicalAddress : sourceLogicalAddresses)
+        {
+            if (logicalAddress == messageSourceAddress)
+            {
+                isSourceAddressRegistered = true;
+                break;
+            }
+        }
+
+        UT_ASSERT_TRUE(isSourceAddressRegistered);
+    }
 
     // Register Event Listener
     HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);
@@ -292,7 +310,14 @@ UT_ADD_TEST(VTS_L3_HDMICEC, ReceiveMessage)
     sp<IHdmiCecController> hdmiCecController = nullptr;
     vector<uint8_t> getMessage;
 
-    vts_hdmicec_parse_receiveMessage_config(VTS_HDMICEC_TEST_CONFIG_PATH, gModuleName, gTestGroup, testName, testConfigurationList, sourceLogicalAddresses);
+    UT_status_t status = vts_hdmicec_parse_receiveMessage_config(
+        VTS_HDMICEC_TEST_CONFIG_PATH,
+        gModuleName,
+        gTestGroup,
+        testName,
+        testConfigurationList,
+        sourceLogicalAddresses);
+    UT_ASSERT_EQUAL_FATAL(status, UT_STATUS_OK);
 
     // Register Event Listener
     HDMICEC_REGISTER_EVENT_SUCCESS(gHDMICECHandle, eventListener);

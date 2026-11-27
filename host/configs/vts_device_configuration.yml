@@ -29,7 +29,6 @@ deviceConfig:
         soc_vendor: "intel"
         target_directory: "/tmp/"
         hdmicec_process_name: "Vendor-HdmiCec"
-        device_type: ["TV"] # Possible values: ["TV", "RecordingDevice", "Tuner", "PlaybackDevice", "AudioSystem", "VideoProcessor", "PureCecSwitch", "Reserved"]
         prompt: "~#" # Prompt string on console
         wait_time: 320 #Configurable timeout value to limit the total duration of individual tests
         test:

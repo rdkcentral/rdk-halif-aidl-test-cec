@@ -244,7 +244,7 @@ using namespace com::rdk::hal::hdmicec;
                     break; \
                 case PropertyValue::Value::Tag::stringValue: \
                     UT_LOG_DEBUG("Result getProperty(IN:property[%s], OUT:propertyValue[%s]), status:[isOK:%s, exception:%s]", hdmicec::toString(property).c_str(), \
-                    propertyValue->value->get<PropertyValue::Value::Tag::stringValue>().string(), \
+                    propertyValue->value->get<PropertyValue::Value::Tag::stringValue>().c_str(), \
                     UT_Control_GetMapString(bool_mapTable_cec, status.isOk()), \
                     UT_Control_GetMapString(statusHdmiCecException_mapTable, status.exceptionCode())); \
                     break; \

@@ -50,13 +50,13 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         configureNetwork = True
         super().__init__(self.testName, configureNetwork, qcId, log, testMenuConfigFile, moduleName, artifactDirPath)
 
-    def updateTestconfigurationFile(self, dutLogicalAddress:int, destinationLogicalAddress:int):
+    def updateTestconfigurationFile(self, messageSourceAddress:int, destinationLogicalAddress:int):
         """
         Updates the HDMI CEC L3 SendMessage YAML configuration file.
         """
         data = self.hdmiCecReadYaml(self.l3TestConfigFile)
         send_msg = data["HdmiCec"]["L3"]["SendMessage"]
-        send_msg["source_logical_address"] = [dutLogicalAddress]
+        send_msg["source_logical_address"] = [messageSourceAddress]
 
         self.cecMessageList = []
         for cecmessage in send_msg.get("cec_messages", []):
@@ -65,9 +65,9 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
             dest_addr = int(current_dest, 16) & 0x0F if isinstance(current_dest, str) else current_dest & 0x0F
             # Use existing destination if it's 0xF, otherwise use destinationLogicalAddress
             final_dest = dest_addr if dest_addr == 0x0F else destinationLogicalAddress
-            cecmessage["Parameters"]["message"][0] = f"0x{(dutLogicalAddress << 4 | final_dest):02X}"
+            cecmessage["Parameters"]["message"][0] = f"0x{(messageSourceAddress << 4 | final_dest):02X}"
             self.cecMessageList.append({
-                "sourceAddress": dutLogicalAddress,
+                "sourceAddress": messageSourceAddress,
                 "destAddress": final_dest,
                 "opcode": cecmessage["Parameters"]["message"][1],
                 "payload": cecmessage["Parameters"]["message"][2:],
@@ -88,48 +88,48 @@ class  VTS_HDMICEC_L3_SendMessage(hdmiCecHelperClass):
         """
         self.testcase = "SendMessage"
         self.utilities.change_directory(self.hal_session, self.targetWorkspace)
-        possibleLogicalAddresses = self.getPossibleLogicalAddresses(self.device_type)
-        self.dutLogicalAddress = self.pickLogicalAddressForDut(possibleLogicalAddresses)
+        self.dutLogicalAddress = self.getAllocatedLogicalAddressesFromHfp()
         self.destinationLogicalAddress = self.pickValidLogicalAddressForController()
 
         if self.dutLogicalAddress is None or self.destinationLogicalAddress is None:
             self.log.stepResult(False, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Description: Failed to assign DUT address')
             return False
 
-        self.updateTestconfigurationFile(self.dutLogicalAddress[0], int(self.destinationLogicalAddress))
-
-        self.utMenu.start()
-
-        self.log.stepStart(f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase}')
-        output = self.utMenu.select(HDMICEC_L3_TEST_SUITE_NAME, self.testcase, None, self.waitTime, False)
-
-        results = self.utMenu.collect_results(output, True)
-        if results is None:
-            results = False
-
-        self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase}')
-
-        time.sleep(30)  # Wait for messages to be sent and received
-
         finalResult = True
+        for messageSourceAddress in self.dutLogicalAddress:
+            self.updateTestconfigurationFile(
+                messageSourceAddress,
+                int(self.destinationLogicalAddress))
 
-        for cecmessage in self.cecMessageList:
-            for _ in range(cecmessage["repeat"]):
-                # Check if the message is sent to the CEC BUS
-                self.log.stepStart(f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Check data for message receipt')
+            self.utMenu.start()
 
+            self.log.stepStart(f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase}')
+            output = self.utMenu.select(HDMICEC_L3_TEST_SUITE_NAME, self.testcase, None, self.waitTime, False)
 
-                results = self.hdmiCECController.checkMessageReceived(f"{cecmessage['sourceAddress']:x}",
-                                                                      f"{cecmessage['destAddress']:x}",
-                                                                      cecmessage["opcode"],
-                                                                      10,
-                                                                      cecmessage.get("payload", []))
+            results = self.utMenu.collect_results(output, True)
+            if results is None:
+                results = False
 
-                self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Check data for message receipt')
+            self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase}')
+            finalResult = finalResult and results
 
-                finalResult = finalResult and results
+            time.sleep(30)  # Wait for messages to be sent and received
 
-        self.utMenu.stop()
+            for cecmessage in self.cecMessageList:
+                for _ in range(cecmessage["repeat"]):
+                    self.log.stepStart(f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Check data for message receipt')
+
+                    results = self.hdmiCECController.checkMessageReceived(f"{cecmessage['sourceAddress']:x}",
+                                                                          f"{cecmessage['destAddress']:x}",
+                                                                          cecmessage["opcode"],
+                                                                          10,
+                                                                          cecmessage.get("payload", []))
+
+                    self.log.stepResult(results, f'Test Suit: {HDMICEC_L3_TEST_SUITE_NAME} Test Case: {self.testcase} Check data for message receipt')
+
+                    finalResult = finalResult and results
+
+            self.utMenu.stop()
 
         return finalResult
 
